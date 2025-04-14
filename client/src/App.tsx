@@ -18,14 +18,34 @@ function Router() {
       <Route path="/auth">
         <AuthPageSimple />
       </Route>
+      {/* Direct access routes for development and preview */}
+      <Route path="/dashboard">
+        <Dashboard />
+      </Route>
+      <Route path="/prospects">
+        <Prospects />
+      </Route>
+      <Route path="/clients">
+        <Clients />
+      </Route>
+      <Route path="/heroes">
+        <Heroes />
+      </Route>
+      <Route path="/contracts">
+        <Contracts />
+      </Route>
+      <Route path="/invoices">
+        <Invoices />
+      </Route>
+      <Route path="/users">
+        <UserManagement />
+      </Route>
+      <Route path="/settings">
+        <Settings />
+      </Route>
+      
+      {/* Protected routes (will be used once auth is fully working) */}
       <ProtectedRoute path="/" component={Dashboard} />
-      <ProtectedRoute path="/prospects" component={Prospects} />
-      <ProtectedRoute path="/clients" component={Clients} />
-      <ProtectedRoute path="/heroes" component={Heroes} />
-      <ProtectedRoute path="/contracts" component={Contracts} />
-      <ProtectedRoute path="/invoices" component={Invoices} />
-      <ProtectedRoute path="/users" component={UserManagement} />
-      <ProtectedRoute path="/settings" component={Settings} />
       <Route>
         <NotFound />
       </Route>
