@@ -1,0 +1,311 @@
+import { useState } from "react";
+import Dashboard from "@/components/layout/Dashboard";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Hero, Prospect, Client, Company, Contract } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+
+export default function HeroesPage() {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [isCreateHeroDialogOpen, setIsCreateHeroDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Check if user has admin access
+  const isAdmin = user && (user.role === "admin" || user.role === "super_admin");
+
+  // Fetch heroes
+  const { data: heroes = [], isLoading: isHeroesLoading } = useQuery<Hero[]>({
+    queryKey: ["/api/heroes"],
+  });
+
+  // Fetch prospects (to create new heroes)
+  const { data: prospects = [] } = useQuery<Prospect[]>({
+    queryKey: ["/api/prospects"],
+  });
+
+  // Fetch clients
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ["/api/clients"],
+  });
+
+  // Fetch companies
+  const { data: companies = [] } = useQuery<Company[]>({
+    queryKey: ["/api/companies"],
+  });
+
+  // Fetch contracts
+  const { data: contracts = [] } = useQuery<Contract[]>({
+    queryKey: ["/api/contracts"],
+  });
+
+  // Filter heroes based on search query
+  const filteredHeroes = heroes.filter(hero => {
+    const prospect = prospects.find(p => p.id === hero.prospectId);
+    
+    if (!prospect) return false;
+    
+    return searchQuery === "" || 
+      `${prospect.firstName} ${prospect.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      prospect.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      prospect.email.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  // Get client name by ID
+  const getClientName = (clientId: number) => {
+    const client = clients.find(c => c.id === clientId);
+    return client ? client.name : `Client #${clientId}`;
+  };
+
+  // Get company name by ID
+  const getCompanyName = (companyId: number) => {
+    const company = companies.find(c => c.id === companyId);
+    return company ? company.name : `Company #${companyId}`;
+  };
+
+  // Get prospect name by ID
+  const getProspectName = (prospectId: number) => {
+    const prospect = prospects.find(p => p.id === prospectId);
+    return prospect ? `${prospect.firstName} ${prospect.lastName}` : `Prospect #${prospectId}`;
+  };
+
+  // Get prospect position by ID
+  const getProspectPosition = (prospectId: number) => {
+    const prospect = prospects.find(p => p.id === prospectId);
+    return prospect ? prospect.position : "Unknown Position";
+  };
+
+  // Get contract status by ID
+  const getContractStatus = (contractId: number | null | undefined) => {
+    if (!contractId) return "No Contract";
+    const contract = contracts.find(c => c.id === contractId);
+    return contract ? contract.status : "Unknown";
+  };
+
+  // Create hero mutation
+  const createHeroMutation = useMutation({
+    mutationFn: async (data: { 
+      prospectId: number; 
+      clientId: number; 
+      companyId: number; 
+      startDate?: string;
+    }) => {
+      const res = await apiRequest("POST", "/api/heroes", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Hero created successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/heroes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects"] });
+      setIsCreateHeroDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Available prospects for conversion to Heroes
+  const availableProspects = prospects.filter(
+    prospect => prospect.status === "contract" && !heroes.some(hero => hero.prospectId === prospect.id)
+  );
+
+  return (
+    <Dashboard>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Heroes</h1>
+        {isAdmin && availableProspects.length > 0 && (
+          <Button onClick={() => setIsCreateHeroDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Hero
+          </Button>
+        )}
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <CardTitle>Hired Heroes</CardTitle>
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search heroes..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isHeroesLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Hero Name</TableHead>
+                    <TableHead>Position</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>Contract Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredHeroes.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        No heroes found. {isAdmin && availableProspects.length > 0 ? "Create a new hero from available prospects." : ""}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredHeroes.map((hero) => (
+                      <TableRow key={hero.id}>
+                        <TableCell className="font-medium">{getProspectName(hero.prospectId)}</TableCell>
+                        <TableCell>{getProspectPosition(hero.prospectId)}</TableCell>
+                        <TableCell>{getClientName(hero.clientId)}</TableCell>
+                        <TableCell>{getCompanyName(hero.companyId)}</TableCell>
+                        <TableCell>
+                          {hero.startDate ? new Date(hero.startDate).toLocaleDateString() : "Not set"}
+                        </TableCell>
+                        <TableCell>
+                          {getContractStatus(hero.contractId)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>View Details</DropdownMenuItem>
+                              {isAdmin && !hero.contractId && (
+                                <DropdownMenuItem>Create Contract</DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create Hero Dialog */}
+      <Dialog open={isCreateHeroDialogOpen} onOpenChange={setIsCreateHeroDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Hero from Prospect</DialogTitle>
+          </DialogHeader>
+          {availableProspects.length > 0 ? (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                Select a prospect who has reached the contract stage to create a hero.
+              </p>
+              <div className="max-h-[300px] overflow-y-auto">
+                {availableProspects.map(prospect => {
+                  const canCreateHero = prospect.clientId && prospect.companyId;
+                  
+                  return (
+                    <div key={prospect.id} className="p-3 border rounded-md mb-2">
+                      <div className="font-medium">{prospect.firstName} {prospect.lastName}</div>
+                      <div className="text-sm text-muted-foreground">{prospect.position}</div>
+                      <div className="text-sm mt-1">
+                        <span className="text-muted-foreground mr-1">Client:</span>
+                        {prospect.clientId ? getClientName(prospect.clientId) : "Not assigned"}
+                      </div>
+                      <div className="text-sm">
+                        <span className="text-muted-foreground mr-1">Company:</span>
+                        {prospect.companyId ? getCompanyName(prospect.companyId) : "Not assigned"}
+                      </div>
+                      
+                      <Button 
+                        className="mt-2 w-full"
+                        variant={canCreateHero ? "default" : "outline"}
+                        disabled={!canCreateHero || createHeroMutation.isPending}
+                        onClick={() => {
+                          if (canCreateHero && prospect.clientId && prospect.companyId) {
+                            createHeroMutation.mutate({
+                              prospectId: prospect.id,
+                              clientId: prospect.clientId,
+                              companyId: prospect.companyId,
+                              startDate: new Date().toISOString()
+                            });
+                          }
+                        }}
+                      >
+                        {createHeroMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating...
+                          </>
+                        ) : (
+                          "Create Hero"
+                        )}
+                      </Button>
+                      
+                      {!canCreateHero && (
+                        <p className="text-xs text-red-500 mt-1">
+                          This prospect needs a client and company assignment to create a hero.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p>No prospects in the contract stage are available.</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Move prospects to the contract stage to create heroes.
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </Dashboard>
+  );
+}

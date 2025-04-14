@@ -1,0 +1,160 @@
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+// User models
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  email: text("email").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  avatar: text("avatar"),
+  role: text("role", { enum: ["super_admin", "admin", "recruiter"] }).notNull().default("recruiter"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Client models
+export const clients = pgTable("clients", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  contactPerson: text("contact_person").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  status: text("status", { enum: ["active", "inactive"] }).notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertClientSchema = createInsertSchema(clients).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Company models
+export const companies = pgTable("companies", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  clientId: integer("client_id").notNull(),
+  industry: text("industry"),
+  size: text("size"),
+  location: text("location"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCompanySchema = createInsertSchema(companies).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Prospect models
+export const prospects = pgTable("prospects", {
+  id: serial("id").primaryKey(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  position: text("position").notNull(),
+  skills: text("skills"),
+  resume: text("resume"),
+  status: text("status", { 
+    enum: ["sourcing", "interview", "client_review", "budget", "contract", "hired", "rejected"] 
+  }).notNull().default("sourcing"),
+  clientId: integer("client_id"),
+  companyId: integer("company_id"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  
+  // Workflow tracking boolean fields
+  isInterviewed: boolean("is_interviewed").default(false),
+  isClientApproved: boolean("is_client_approved").default(false),
+  isBudgetAgreed: boolean("is_budget_agreed").default(false),
+});
+
+export const insertProspectSchema = createInsertSchema(prospects).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Hero models (hired prospects)
+export const heroes = pgTable("heroes", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospect_id").notNull().unique(),
+  startDate: timestamp("start_date"),
+  contractId: integer("contract_id"),
+  clientId: integer("client_id").notNull(),
+  companyId: integer("company_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertHeroSchema = createInsertSchema(heroes).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Contract models
+export const contracts = pgTable("contracts", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  heroId: integer("hero_id").notNull(),
+  clientId: integer("client_id").notNull(),
+  companyId: integer("company_id").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  compensation: doublePrecision("compensation").notNull(),
+  status: text("status", { enum: ["draft", "signed", "active", "completed", "terminated"] }).notNull().default("draft"),
+  document: text("document"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertContractSchema = createInsertSchema(contracts).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Invoice models
+export const invoices = pgTable("invoices", {
+  id: serial("id").primaryKey(),
+  invoiceNumber: text("invoice_number").notNull().unique(),
+  contractId: integer("contract_id").notNull(),
+  heroId: integer("hero_id").notNull(),
+  clientId: integer("client_id").notNull(),
+  companyId: integer("company_id").notNull(),
+  amount: doublePrecision("amount").notNull(),
+  status: text("status", { enum: ["pending", "paid", "overdue", "cancelled"] }).notNull().default("pending"),
+  dueDate: timestamp("due_date").notNull(),
+  paidDate: timestamp("paid_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Define types from schemas
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+export type InsertClient = z.infer<typeof insertClientSchema>;
+export type Client = typeof clients.$inferSelect;
+
+export type InsertCompany = z.infer<typeof insertCompanySchema>;
+export type Company = typeof companies.$inferSelect;
+
+export type InsertProspect = z.infer<typeof insertProspectSchema>;
+export type Prospect = typeof prospects.$inferSelect;
+
+export type InsertHero = z.infer<typeof insertHeroSchema>;
+export type Hero = typeof heroes.$inferSelect;
+
+export type InsertContract = z.infer<typeof insertContractSchema>;
+export type Contract = typeof contracts.$inferSelect;
+
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type Invoice = typeof invoices.$inferSelect;
