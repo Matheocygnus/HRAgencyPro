@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
-import Sidebar from "./Sidebar";
-import Header from "./Header";
+import SidebarDev from "./SidebarDev";
+import HeaderDev from "./HeaderDev";
 
 // Use static mock user data for development
 const mockUser = {
@@ -21,10 +21,10 @@ export default function DashboardDev({ children }: { children: ReactNode }) {
   
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar isMobileOpen={isMobileOpen} setMobileOpen={setMobileOpen} />
+      <SidebarDev isMobileOpen={isMobileOpen} setMobileOpen={setMobileOpen} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header setMobileOpen={setMobileOpen} />
+        <HeaderDev setMobileOpen={setMobileOpen} />
         
         <main className="flex-1 overflow-y-auto p-6">
           {/* Role indicator */}

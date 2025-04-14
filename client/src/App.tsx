@@ -4,6 +4,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import NotFound from "@/pages/not-found";
 import AuthPageSimple from "@/pages/auth-page-simple";
 import Dashboard from "@/pages/dashboard";
+import DashboardDev from "@/pages/dashboard-dev";
 import Prospects from "@/pages/prospects";
 import Clients from "@/pages/clients";
 import Heroes from "@/pages/heroes";
@@ -20,7 +21,7 @@ function Router() {
       </Route>
       {/* Direct access routes for development and preview */}
       <Route path="/dashboard">
-        <Dashboard />
+        <DashboardDev />
       </Route>
       <Route path="/prospects">
         <Prospects />
