@@ -31,11 +31,11 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import ClientForm from "@/components/forms/ClientForm";
 import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/hooks/use-auth";
+import { useMockAuth } from "@/hooks/use-mock-auth";
 
 export default function ClientsPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useMockAuth();
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
   const [isAddCompanyDialogOpen, setIsAddCompanyDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

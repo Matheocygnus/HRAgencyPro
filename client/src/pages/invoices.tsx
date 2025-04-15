@@ -29,7 +29,7 @@ import { Invoice, Contract, Hero, Client, Company } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useMockAuth } from "@/hooks/use-mock-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Invoice status badge configuration
@@ -42,7 +42,7 @@ const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outli
 
 export default function InvoicesPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useMockAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");

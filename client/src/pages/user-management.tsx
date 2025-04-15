@@ -37,7 +37,7 @@ import { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, MoreHorizontal, Plus, Search, UserPlus } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useMockAuth } from "@/hooks/use-mock-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,7 +58,7 @@ const roleUpdateSchema = z.object({
 
 export default function UserManagementPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useMockAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);

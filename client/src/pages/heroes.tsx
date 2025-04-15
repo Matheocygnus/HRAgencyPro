@@ -28,11 +28,11 @@ import { Hero, Prospect, Client, Company, Contract } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useMockAuth } from "@/hooks/use-mock-auth";
 
 export default function HeroesPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useMockAuth();
   const [isCreateHeroDialogOpen, setIsCreateHeroDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
