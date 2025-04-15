@@ -76,7 +76,7 @@ export default function Header({
             <DropdownMenuTrigger asChild>
               <button className="flex items-center">
                 <Avatar className="w-8 h-8 ring-2 ring-slate-100">
-                  <AvatarImage src={user?.avatar} />
+                  <AvatarImage src={user?.avatar || undefined} />
                   <AvatarFallback className="bg-primary text-white font-medium">{userInitials}</AvatarFallback>
                 </Avatar>
               </button>

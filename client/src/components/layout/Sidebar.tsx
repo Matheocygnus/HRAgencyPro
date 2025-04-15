@@ -57,12 +57,8 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: {
       )}
       <aside className={sidebarClasses}>
         <div className="p-4 border-b border-blue-800 flex items-center">
-          <div className="bg-white rounded-lg p-1.5 mr-3 flex items-center justify-center">
-            <img 
-              src="/client/src/assets/logo.jpg" 
-              alt="Remote Hero Logo"
-              className="w-8 h-8 object-contain"
-            />
+          <div className="bg-white rounded-lg p-1.5 mr-3 flex items-center justify-center w-10 h-10">
+            <span className="text-primary font-bold text-lg">RH</span>
           </div>
           <div className="text-white font-semibold text-lg">Remote <span className="font-bold">Hero</span></div>
         </div>

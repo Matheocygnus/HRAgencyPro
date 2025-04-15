@@ -1,56 +1,43 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
+import { Calendar, Clock, Users } from "lucide-react";
 
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon: string;
-  change?: string | null;
-  trend?: "up" | "down" | "neutral";
-  color: "primary" | "success" | "warning" | "info" | "error";
+  subtitle?: string;
+  icon?: LucideIcon;
+  iconColor?: string;
+  className?: string;
 }
 
 export default function StatCard({
   title,
   value,
-  icon,
-  change,
-  trend,
-  color
+  subtitle,
+  icon: Icon,
+  iconColor = "text-primary",
+  className
 }: StatCardProps) {
-  // Define color classes
-  const colorClasses = {
-    primary: "bg-primary-light bg-opacity-10 text-primary",
-    success: "bg-status-success bg-opacity-10 text-status-success",
-    warning: "bg-status-warning bg-opacity-10 text-status-warning",
-    info: "bg-status-info bg-opacity-10 text-status-info",
-    error: "bg-status-error bg-opacity-10 text-status-error"
-  };
-  
-  const trendColorClasses = {
-    up: "text-status-success",
-    down: "text-status-error",
-    neutral: "text-neutral-dark"
-  };
-  
   return (
-    <Card className="p-5">
-      <div className="flex items-center">
-        <div className={cn("p-3 rounded-full", colorClasses[color])}>
-          <i className={`fas ${icon} text-xl`}></i>
+    <Card className={cn("p-6 border border-slate-200 shadow-sm", className)}>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-medium text-slate-600">{title}</h3>
+          <div className="flex items-baseline mt-2">
+            <p className="text-3xl font-bold">{value}</p>
+            {subtitle && (
+              <span className="ml-2 text-sm text-slate-500">{subtitle}</span>
+            )}
+          </div>
         </div>
-        <div className="ml-4">
-          <h3 className="text-neutral-medium text-sm font-medium">{title}</h3>
-          <p className="text-2xl font-semibold">{value}</p>
-        </div>
+        {Icon && (
+          <div className={cn("p-3 rounded-full bg-blue-50", iconColor)}>
+            <Icon className="w-6 h-6" />
+          </div>
+        )}
       </div>
-      {change && trend && (
-        <div className={cn("mt-3 text-sm flex items-center", trendColorClasses[trend])}>
-          {trend === "up" && <i className="fas fa-arrow-up mr-1"></i>}
-          {trend === "down" && <i className="fas fa-arrow-down mr-1"></i>}
-          <span>{change}</span>
-        </div>
-      )}
     </Card>
   );
 }
