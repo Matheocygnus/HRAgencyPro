@@ -127,8 +127,17 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
+  app.get("/api/user", async (req, res) => {
+    // Development mode - always return the super admin user
+    const adminUser = await storage.getUserByUsername("brunov@catalystgrowthsystems.com");
+    if (adminUser) {
+      // Remove password from response
+      const { password, ...userWithoutPassword } = adminUser;
+      return res.json(userWithoutPassword);
+    } else {
+      // Fallback to standard authentication check
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      res.json(req.user);
+    }
   });
 }

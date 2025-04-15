@@ -223,6 +223,321 @@ export class MemStorage implements IStorage {
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // 24 hours
     });
+    
+    // Initialize with mock data
+    this.initializeMockData();
+  }
+  
+  private async initializeMockData() {
+    // Create an admin user
+    await this.createUser({
+      username: "admin@remotehero.com",
+      password: "password123",
+      email: "admin@remotehero.com",
+      firstName: "Admin",
+      lastName: "User",
+      role: "admin"
+    });
+    
+    // Add mock clients
+    const clients = [
+      {
+        name: "Acme Corporation",
+        contactPerson: "John Smith",
+        email: "john@acme.com",
+        phone: "+1 (555) 123-4567",
+        status: "active",
+      },
+      {
+        name: "Globex Industries",
+        contactPerson: "Jane Doe",
+        email: "jane@globex.com",
+        phone: "+1 (555) 987-6543",
+        status: "active",
+      },
+      {
+        name: "Stark Enterprises",
+        contactPerson: "Tony Stark",
+        email: "tony@stark.com",
+        phone: "+1 (555) 111-2222",
+        status: "active",
+      },
+      {
+        name: "Wayne Industries",
+        contactPerson: "Bruce Wayne",
+        email: "bruce@wayne.com",
+        phone: "+1 (555) 333-4444",
+        status: "inactive",
+      },
+      {
+        name: "Umbrella Corp",
+        contactPerson: "Albert Wesker",
+        email: "wesker@umbrella.com",
+        phone: "+1 (555) 666-7777",
+        status: "active",
+      }
+    ];
+
+    for (const client of clients) {
+      await this.createClient(client as InsertClient);
+    }
+
+    // Add mock companies for each client
+    const companies = [
+      {
+        name: "Acme Software",
+        clientId: 1,
+        industry: "Technology",
+        size: "Large",
+        location: "New York",
+      },
+      {
+        name: "Acme Hardware",
+        clientId: 1,
+        industry: "Manufacturing",
+        size: "Medium",
+        location: "Chicago",
+      },
+      {
+        name: "Globex Tech",
+        clientId: 2,
+        industry: "Technology",
+        size: "Large",
+        location: "San Francisco",
+      },
+      {
+        name: "Stark Innovations",
+        clientId: 3,
+        industry: "R&D",
+        size: "Large",
+        location: "Los Angeles",
+      },
+      {
+        name: "Stark Energy",
+        clientId: 3,
+        industry: "Energy",
+        size: "Medium",
+        location: "Houston",
+      },
+      {
+        name: "Wayne Biotech",
+        clientId: 4,
+        industry: "Healthcare",
+        size: "Medium",
+        location: "Gotham City",
+      },
+      {
+        name: "Umbrella Pharmaceuticals",
+        clientId: 5,
+        industry: "Pharmaceuticals",
+        size: "Large",
+        location: "Raccoon City",
+      }
+    ];
+
+    for (const company of companies) {
+      await this.createCompany(company as InsertCompany);
+    }
+
+    // Add mock prospects
+    const prospects = [
+      {
+        firstName: "Michael",
+        lastName: "Johnson",
+        email: "michael@example.com",
+        phone: "+1 (555) 111-2233",
+        position: "Senior Developer",
+        skills: "JavaScript, React, Node.js",
+        status: "sourcing",
+        clientId: 1,
+        companyId: 1,
+      },
+      {
+        firstName: "Sarah",
+        lastName: "Williams",
+        email: "sarah@example.com",
+        phone: "+1 (555) 444-5566",
+        position: "UI/UX Designer",
+        skills: "Figma, Adobe XD, UI Design",
+        status: "interview",
+        clientId: 1,
+        companyId: 1,
+      },
+      {
+        firstName: "David",
+        lastName: "Brown",
+        email: "david@example.com",
+        phone: "+1 (555) 777-8899",
+        position: "DevOps Engineer",
+        skills: "AWS, Docker, Kubernetes",
+        status: "client_review",
+        clientId: 2,
+        companyId: 3,
+      },
+      {
+        firstName: "Emily",
+        lastName: "Jones",
+        email: "emily@example.com",
+        phone: "+1 (555) 222-3333",
+        position: "Data Scientist",
+        skills: "Python, R, Machine Learning",
+        status: "budget",
+        clientId: 3,
+        companyId: 4,
+      },
+      {
+        firstName: "James",
+        lastName: "Wilson",
+        email: "james@example.com",
+        phone: "+1 (555) 555-6666",
+        position: "Product Manager",
+        skills: "Agile, Scrum, Product Strategy",
+        status: "contract",
+        clientId: 3,
+        companyId: 5,
+      },
+      {
+        firstName: "Alexandra",
+        lastName: "Garcia",
+        email: "alex@example.com",
+        phone: "+1 (555) 888-9999",
+        position: "Backend Developer",
+        skills: "Java, Spring, Microservices",
+        status: "hired",
+        clientId: 5,
+        companyId: 7,
+      },
+      {
+        firstName: "Robert",
+        lastName: "Miller",
+        email: "robert@example.com",
+        phone: "+1 (555) 333-4444",
+        position: "Network Engineer",
+        skills: "Cisco, Networking, Security",
+        status: "rejected",
+        clientId: 4,
+        companyId: 6,
+      },
+      {
+        firstName: "Jennifer",
+        lastName: "Davis",
+        email: "jennifer@example.com",
+        phone: "+1 (555) 999-0000",
+        position: "Frontend Developer",
+        skills: "HTML, CSS, JavaScript, React",
+        status: "sourcing",
+        clientId: 2,
+        companyId: 3,
+      },
+      {
+        firstName: "Thomas",
+        lastName: "Taylor",
+        email: "thomas@example.com",
+        phone: "+1 (555) 123-3456",
+        position: "Cloud Architect",
+        skills: "AWS, Azure, GCP, Infrastructure",
+        status: "interview",
+        clientId: 1,
+        companyId: 2,
+      },
+      {
+        firstName: "Lisa",
+        lastName: "Anderson",
+        email: "lisa@example.com",
+        phone: "+1 (555) 456-7890",
+        position: "iOS Developer",
+        skills: "Swift, Objective-C, iOS SDK",
+        status: "client_review",
+        clientId: 5,
+        companyId: 7,
+      }
+    ];
+
+    for (const prospect of prospects) {
+      await this.createProspect(prospect as InsertProspect);
+    }
+
+    // Add mock heroes for hired prospects
+    const heroes = [
+      {
+        prospectId: 6,
+        startDate: new Date("2023-11-01"),
+        clientId: 5,
+        companyId: 7,
+      }
+    ];
+
+    for (const hero of heroes) {
+      await this.createHero(hero as InsertHero);
+    }
+
+    // Add mock contracts
+    const contracts = [
+      {
+        title: "Development Contract",
+        heroId: 1,
+        clientId: 5,
+        companyId: 7,
+        startDate: new Date("2023-11-01"),
+        endDate: new Date("2024-11-01"),
+        compensation: 120000,
+        status: "active",
+        document: "contract_1.pdf",
+      }
+    ];
+
+    for (const contract of contracts) {
+      await this.createContract(contract as InsertContract);
+    }
+
+    // Add mock invoices
+    const invoices = [
+      {
+        invoiceNumber: "INV-1001",
+        contractId: 1,
+        heroId: 1,
+        clientId: 5,
+        companyId: 7,
+        amount: 10000,
+        status: "paid",
+        dueDate: new Date("2023-12-01"),
+        paidDate: new Date("2023-11-28"),
+      },
+      {
+        invoiceNumber: "INV-1002",
+        contractId: 1,
+        heroId: 1,
+        clientId: 5,
+        companyId: 7,
+        amount: 10000,
+        status: "pending",
+        dueDate: new Date("2024-01-01"),
+      },
+      {
+        invoiceNumber: "INV-1003",
+        contractId: 1,
+        heroId: 1,
+        clientId: 5,
+        companyId: 7,
+        amount: 10000,
+        status: "pending",
+        dueDate: new Date("2024-02-01"),
+      },
+      {
+        invoiceNumber: "INV-1004",
+        contractId: 1,
+        heroId: 1,
+        clientId: 5,
+        companyId: 7,
+        amount: 10000,
+        status: "overdue",
+        dueDate: new Date("2023-10-01"),
+      }
+    ];
+
+    for (const invoice of invoices) {
+      await this.createInvoice(invoice as InsertInvoice);
+    }
   }
   
   // User methods
