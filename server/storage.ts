@@ -6,7 +6,9 @@ import {
   heroes, type Hero, type InsertHero,
   contracts, type Contract, type InsertContract,
   invoices, type Invoice, type InsertInvoice,
-  interviews, type Interview, type InsertInterview
+  interviews, type Interview, type InsertInterview,
+  jobOpenings, type JobOpening, type InsertJobOpening,
+  jobApplications, type JobApplication, type InsertJobApplication
 } from "@shared/schema";
 import createMemoryStore from "memorystore";
 import session from "express-session";
@@ -176,6 +178,21 @@ export interface IStorage {
   createInterview(interview: InsertInterview): Promise<Interview>;
   updateInterview(id: number, interview: Partial<Interview>): Promise<Interview | undefined>;
   
+  // Job Opening methods
+  getJobOpening(id: number): Promise<JobOpening | undefined>;
+  getJobOpenings(): Promise<JobOpening[]>;
+  getActiveJobOpenings(): Promise<JobOpening[]>;
+  createJobOpening(jobOpening: InsertJobOpening): Promise<JobOpening>;
+  updateJobOpening(id: number, jobOpening: Partial<JobOpening>): Promise<JobOpening | undefined>;
+  
+  // Job Application methods
+  getJobApplication(id: number): Promise<JobApplication | undefined>;
+  getJobApplications(): Promise<JobApplication[]>;
+  getJobApplicationsByJobOpening(jobOpeningId: number): Promise<JobApplication[]>;
+  getJobApplicationsByStatus(status: string): Promise<JobApplication[]>;
+  createJobApplication(jobApplication: InsertJobApplication): Promise<JobApplication>;
+  updateJobApplication(id: number, jobApplication: Partial<JobApplication>): Promise<JobApplication | undefined>;
+  
   // Session store
   sessionStore: any; // Using 'any' temporarily to resolve type issues
 }
@@ -206,6 +223,39 @@ function ensureInterviewFields(interviewData: any): Interview {
   };
 }
 
+// Helper functions for job openings and applications
+function ensureJobOpeningFields(jobOpeningData: any): JobOpening {
+  return {
+    id: jobOpeningData.id,
+    title: jobOpeningData.title,
+    description: jobOpeningData.description,
+    requirements: jobOpeningData.requirements,
+    location: jobOpeningData.location,
+    jobType: jobOpeningData.jobType,
+    salary: jobOpeningData.salary || null,
+    isActive: jobOpeningData.isActive !== undefined ? jobOpeningData.isActive : true,
+    clientId: jobOpeningData.clientId || null,
+    companyId: jobOpeningData.companyId || null,
+    createdAt: jobOpeningData.createdAt
+  };
+}
+
+function ensureJobApplicationFields(jobApplicationData: any): JobApplication {
+  return {
+    id: jobApplicationData.id,
+    jobOpeningId: jobApplicationData.jobOpeningId,
+    firstName: jobApplicationData.firstName,
+    lastName: jobApplicationData.lastName,
+    email: jobApplicationData.email,
+    phone: jobApplicationData.phone,
+    resumeUrl: jobApplicationData.resumeUrl || null,
+    coverLetter: jobApplicationData.coverLetter || null,
+    status: jobApplicationData.status || "new",
+    notes: jobApplicationData.notes || null,
+    createdAt: jobApplicationData.createdAt
+  };
+}
+
 export class MemStorage implements IStorage {
   // Storage maps
   private usersMap: Map<number, User>;
@@ -216,6 +266,8 @@ export class MemStorage implements IStorage {
   private contractsMap: Map<number, Contract>;
   private invoicesMap: Map<number, Invoice>;
   private interviewsMap: Map<number, Interview>;
+  private jobOpeningsMap: Map<number, JobOpening>;
+  private jobApplicationsMap: Map<number, JobApplication>;
   
   // Auto-increment counters
   private userIdCounter: number;
@@ -227,6 +279,8 @@ export class MemStorage implements IStorage {
   private invoiceIdCounter: number;
   private invoiceNumberCounter: number;
   private interviewIdCounter: number;
+  private jobOpeningIdCounter: number;
+  private jobApplicationIdCounter: number;
   
   // Session store
   sessionStore: any;
@@ -241,6 +295,8 @@ export class MemStorage implements IStorage {
     this.contractsMap = new Map();
     this.invoicesMap = new Map();
     this.interviewsMap = new Map();
+    this.jobOpeningsMap = new Map();
+    this.jobApplicationsMap = new Map();
     
     // Initialize counters
     this.userIdCounter = 1;
@@ -252,6 +308,8 @@ export class MemStorage implements IStorage {
     this.invoiceIdCounter = 1;
     this.invoiceNumberCounter = 10001;
     this.interviewIdCounter = 1;
+    this.jobOpeningIdCounter = 1;
+    this.jobApplicationIdCounter = 1;
     
     // Initialize session store with memory store
     this.sessionStore = new MemoryStore({

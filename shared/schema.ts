@@ -180,3 +180,49 @@ export type Invoice = typeof invoices.$inferSelect;
 
 export type InsertInterview = z.infer<typeof insertInterviewSchema>;
 export type Interview = typeof interviews.$inferSelect;
+
+// Job Openings
+export const jobOpenings = pgTable("job_openings", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  requirements: text("requirements").notNull(),
+  location: text("location").notNull(),
+  jobType: text("job_type", { enum: ["full_time", "part_time", "contract", "remote"] }).notNull(),
+  salary: text("salary"),
+  isActive: boolean("is_active").default(true).notNull(),
+  clientId: integer("client_id"),
+  companyId: integer("company_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertJobOpeningSchema = createInsertSchema(jobOpenings).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertJobOpening = z.infer<typeof insertJobOpeningSchema>;
+export type JobOpening = typeof jobOpenings.$inferSelect;
+
+// Job Applications
+export const jobApplications = pgTable("job_applications", {
+  id: serial("id").primaryKey(),
+  jobOpeningId: integer("job_opening_id").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  resumeUrl: text("resume_url"),
+  coverLetter: text("cover_letter"),
+  status: text("status", { enum: ["new", "reviewing", "interview", "offered", "hired", "rejected"] }).default("new").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertJobApplicationSchema = createInsertSchema(jobApplications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertJobApplication = z.infer<typeof insertJobApplicationSchema>;
+export type JobApplication = typeof jobApplications.$inferSelect;
