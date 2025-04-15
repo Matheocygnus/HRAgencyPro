@@ -16,6 +16,8 @@ import UserManagement from "@/pages/user-management";
 import Settings from "@/pages/settings";
 import Careers from "@/pages/careers";
 import JobManagement from "@/pages/job-management";
+import JobRequests from "@/pages/job-requests";
+import JobRequestManagement from "@/pages/job-request-management";
 
 function Router() {
   return (
@@ -57,6 +59,16 @@ function Router() {
       {/* Job management */}
       <Route path="/jobs">
         <JobManagement />
+      </Route>
+      
+      {/* Job requests */}
+      <Route path="/job-requests">
+        {typeof JobRequests === 'function' ? <JobRequests /> : <div>Loading...</div>}
+      </Route>
+      
+      {/* Job request management (admin) */}
+      <Route path="/job-request-management">
+        {typeof JobRequestManagement === 'function' ? <JobRequestManagement /> : <div>Loading...</div>}
       </Route>
       
       {/* Public careers page */}
