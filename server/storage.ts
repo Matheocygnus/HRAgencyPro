@@ -343,6 +343,7 @@ export class MemStorage implements IStorage {
     this.interviewIdCounter = 1;
     this.jobOpeningIdCounter = 1;
     this.jobApplicationIdCounter = 1;
+    this.jobRequestIdCounter = 1;
     
     // Initialize session store with memory store
     this.sessionStore = new MemoryStore({
@@ -1060,6 +1061,115 @@ export class MemStorage implements IStorage {
     const updatedJobApplication = ensureJobApplicationFields({ ...jobApplication, ...jobApplicationData });
     this.jobApplicationsMap.set(id, updatedJobApplication);
     return updatedJobApplication;
+  }
+  
+  // Job Request methods
+  async getJobRequest(id: number): Promise<JobRequest | undefined> {
+    return this.jobRequestsMap.get(id);
+  }
+  
+  async getJobRequests(): Promise<JobRequest[]> {
+    return Array.from(this.jobRequestsMap.values());
+  }
+  
+  async getJobRequestsByClient(clientId: number): Promise<JobRequest[]> {
+    return Array.from(this.jobRequestsMap.values()).filter(
+      (request) => request.clientId === clientId
+    );
+  }
+  
+  async getJobRequestsByStatus(status: string): Promise<JobRequest[]> {
+    return Array.from(this.jobRequestsMap.values()).filter(
+      (request) => request.status === status
+    );
+  }
+  
+  async createJobRequest(jobRequestData: InsertJobRequest): Promise<JobRequest> {
+    const id = this.jobRequestIdCounter++;
+    const createdAt = new Date();
+    const updatedAt = createdAt;
+    const jobRequest = ensureJobRequestFields({ 
+      id, 
+      ...jobRequestData, 
+      createdAt,
+      updatedAt,
+      status: jobRequestData.status || "pending" 
+    });
+    this.jobRequestsMap.set(id, jobRequest);
+    return jobRequest;
+  }
+  
+  async updateJobRequest(id: number, jobRequestData: Partial<JobRequest>): Promise<JobRequest | undefined> {
+    const jobRequest = await this.getJobRequest(id);
+    if (!jobRequest) return undefined;
+    
+    const updatedAt = new Date();
+    const updatedJobRequest = ensureJobRequestFields({ 
+      ...jobRequest, 
+      ...jobRequestData,
+      updatedAt 
+    });
+    this.jobRequestsMap.set(id, updatedJobRequest);
+    return updatedJobRequest;
+  }
+  
+  async approveJobRequest(id: number, notes?: string): Promise<JobRequest | undefined> {
+    const jobRequest = await this.getJobRequest(id);
+    if (!jobRequest) return undefined;
+    
+    const updatedAt = new Date();
+    const updatedJobRequest = ensureJobRequestFields({
+      ...jobRequest,
+      status: "approved",
+      notes: notes || jobRequest.notes,
+      updatedAt
+    });
+    this.jobRequestsMap.set(id, updatedJobRequest);
+    return updatedJobRequest;
+  }
+  
+  async rejectJobRequest(id: number, notes?: string): Promise<JobRequest | undefined> {
+    const jobRequest = await this.getJobRequest(id);
+    if (!jobRequest) return undefined;
+    
+    const updatedAt = new Date();
+    const updatedJobRequest = ensureJobRequestFields({
+      ...jobRequest,
+      status: "rejected",
+      notes: notes || jobRequest.notes,
+      updatedAt
+    });
+    this.jobRequestsMap.set(id, updatedJobRequest);
+    return updatedJobRequest;
+  }
+  
+  async publishJobRequest(id: number): Promise<JobOpening | undefined> {
+    const jobRequest = await this.getJobRequest(id);
+    if (!jobRequest || jobRequest.status !== "approved") return undefined;
+    
+    // Create a job opening from the approved request
+    const jobOpeningData: InsertJobOpening = {
+      title: jobRequest.title,
+      description: jobRequest.description,
+      requirements: jobRequest.requirements,
+      location: jobRequest.location,
+      jobType: jobRequest.jobType,
+      salary: jobRequest.salary,
+      isActive: true,
+      clientId: jobRequest.clientId,
+      companyId: jobRequest.companyId
+    };
+    
+    // Create the job opening
+    const jobOpening = await this.createJobOpening(jobOpeningData);
+    
+    // Update the job request status to 'published'
+    await this.updateJobRequest(id, { 
+      status: "published",
+      updatedAt: new Date()
+    });
+    
+    return jobOpening;
   }
 }
 
