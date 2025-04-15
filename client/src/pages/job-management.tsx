@@ -64,7 +64,9 @@ const jobOpeningSchema = z.object({
   description: z.string().min(20, { message: 'Description must be at least 20 characters' }),
   requirements: z.string().min(20, { message: 'Requirements must be at least 20 characters' }),
   location: z.string().min(2, { message: 'Location is required' }),
-  jobType: z.string().min(2, { message: 'Job type is required' }),
+  jobType: z.enum(["full_time", "part_time", "contract", "remote"], { 
+    errorMap: () => ({ message: 'Please select a valid job type' })
+  }),
   salary: z.string().optional(),
   isActive: z.boolean().default(true),
   clientId: z.number().nullable().optional(),
@@ -95,7 +97,7 @@ export default function JobManagementPage() {
       description: '',
       requirements: '',
       location: '',
-      jobType: 'Full-time',
+      jobType: 'full_time',
       salary: '',
       isActive: true,
       clientId: null,
@@ -308,7 +310,7 @@ export default function JobManagementPage() {
               description: '',
               requirements: '',
               location: '',
-              jobType: 'Full-time',
+              jobType: 'full_time',
               salary: '',
               isActive: true,
               clientId: null,
@@ -518,11 +520,10 @@ export default function JobManagementPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Full-time">Full-time</SelectItem>
-                          <SelectItem value="Part-time">Part-time</SelectItem>
-                          <SelectItem value="Contract">Contract</SelectItem>
-                          <SelectItem value="Freelance">Freelance</SelectItem>
-                          <SelectItem value="Internship">Internship</SelectItem>
+                          <SelectItem value="full_time">Full-time</SelectItem>
+                          <SelectItem value="part_time">Part-time</SelectItem>
+                          <SelectItem value="contract">Contract</SelectItem>
+                          <SelectItem value="remote">Remote</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
