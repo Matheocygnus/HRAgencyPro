@@ -8,7 +8,8 @@ import {
   insertProspectSchema, 
   insertHeroSchema, 
   insertContractSchema, 
-  insertInvoiceSchema 
+  insertInvoiceSchema,
+  insertInterviewSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -353,6 +354,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return handleZodError(error, res);
       }
       res.status(500).json({ message: "Failed to update invoice" });
+    }
+  });
+  
+  // Interview routes
+  app.get("/api/interviews", isAuthenticated, async (req, res) => {
+    try {
+      const interviews = await storage.getInterviews();
+      res.json(interviews);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve interviews" });
+    }
+  });
+  
+  app.get("/api/interviews/upcoming", isAuthenticated, async (req, res) => {
+    try {
+      const interviews = await storage.getUpcomingInterviews();
+      res.json(interviews);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve upcoming interviews" });
+    }
+  });
+  
+  app.get("/api/interviews/:id", isAuthenticated, async (req, res) => {
+    try {
+      const interview = await storage.getInterview(parseInt(req.params.id));
+      if (!interview) {
+        return res.status(404).json({ message: "Interview not found" });
+      }
+      res.json(interview);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve interview" });
+    }
+  });
+  
+  app.get("/api/prospects/:id/interviews", isAuthenticated, async (req, res) => {
+    try {
+      const prospectId = parseInt(req.params.id);
+      const interviews = await storage.getInterviewsByProspect(prospectId);
+      res.json(interviews);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve prospect interviews" });
+    }
+  });
+  
+  app.post("/api/interviews", isAuthenticated, async (req, res) => {
+    try {
+      const interviewData = insertInterviewSchema.parse(req.body);
+      const interview = await storage.createInterview(interviewData);
+      res.status(201).json(interview);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to create interview" });
+    }
+  });
+  
+  app.put("/api/interviews/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const interview = await storage.getInterview(id);
+      
+      if (!interview) {
+        return res.status(404).json({ message: "Interview not found" });
+      }
+      
+      const interviewData = insertInterviewSchema.partial().parse(req.body);
+      const updatedInterview = await storage.updateInterview(id, interviewData);
+      res.json(updatedInterview);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to update interview" });
     }
   });
   

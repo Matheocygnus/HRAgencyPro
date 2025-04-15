@@ -150,7 +150,10 @@ export default function Prospects() {
     // Optimistic UI update - update local state immediately
     const updatedProspects = prospects.map(prospect => 
       prospect.id === prospectId 
-        ? { ...prospect, status: newStatus }
+        ? { 
+            ...prospect, 
+            status: newStatus as "sourcing" | "interview" | "client_review" | "budget" | "contract" | "hired" | "rejected" 
+          }
         : prospect
     );
     setProspects(updatedProspects);
