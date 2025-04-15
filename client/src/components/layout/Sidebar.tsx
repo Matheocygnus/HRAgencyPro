@@ -69,17 +69,21 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: {
               const Icon = item.icon;
               return (
                 <li key={item.path} className="px-3 mb-1">
-                  <Link href={item.path} onClick={handleNavClick}>
-                    <a className={cn(
-                      "flex items-center px-3 py-2.5 rounded-md text-sm font-medium",
+                  <div 
+                    onClick={() => {
+                      handleNavClick();
+                      window.location.href = item.path;
+                    }}
+                    className={cn(
+                      "flex items-center px-3 py-2.5 rounded-md text-sm font-medium cursor-pointer",
                       location === item.path
                         ? "bg-blue-700 text-white"
                         : "text-blue-100 hover:text-white hover:bg-blue-700"
-                    )}>
-                      <Icon className="w-5 h-5 mr-3" />
-                      <span>{item.name}</span>
-                    </a>
-                  </Link>
+                    )}
+                  >
+                    <Icon className="w-5 h-5 mr-3" />
+                    <span>{item.name}</span>
+                  </div>
                 </li>
               );
             })}
@@ -95,17 +99,21 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: {
                   return (
                     <li key={item.path} className="px-3 mb-1">
                       {(item.path !== '/users' || isSuperAdmin) && (
-                        <Link href={item.path} onClick={handleNavClick}>
-                          <a className={cn(
-                            "flex items-center px-3 py-2.5 rounded-md text-sm font-medium",
+                        <div 
+                          onClick={() => {
+                            handleNavClick();
+                            window.location.href = item.path;
+                          }}
+                          className={cn(
+                            "flex items-center px-3 py-2.5 rounded-md text-sm font-medium cursor-pointer",
                             location === item.path
                               ? "bg-blue-700 text-white"
                               : "text-blue-100 hover:text-white hover:bg-blue-700"
-                          )}>
-                            <Icon className="w-5 h-5 mr-3" />
-                            <span>{item.name}</span>
-                          </a>
-                        </Link>
+                          )}
+                        >
+                          <Icon className="w-5 h-5 mr-3" />
+                          <span>{item.name}</span>
+                        </div>
                       )}
                     </li>
                   );

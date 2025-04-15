@@ -4,20 +4,16 @@ import {
   Card, 
   CardContent, 
   CardHeader, 
-  CardTitle 
+  CardTitle,
+  CardDescription,
+  CardFooter
 } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -29,24 +25,49 @@ import { Prospect, Client, Company } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import ProspectForm from "@/components/forms/ProspectForm";
-import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
+import { 
+  Loader2, 
+  MoreHorizontal, 
+  Plus, 
+  Search, 
+  User, 
+  Mail, 
+  Phone, 
+  Calendar, 
+  BookOpen,
+  MapPin,
+  Building,
+  DollarSign
+} from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 // Status badge configuration
-const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | "primary" | null }> = {
-  "sourcing": { label: "Sourcing", variant: "primary" },
-  "interview": { label: "Interview", variant: "secondary" },
-  "client_review": { label: "Client Review", variant: "outline" },
-  "budget": { label: "Budget", variant: "secondary" },
-  "contract": { label: "Contract", variant: "primary" },
-  "hired": { label: "Hired", variant: "default" },
-  "rejected": { label: "Rejected", variant: "destructive" }
+const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | "primary" | null, color: string }> = {
+  "sourcing": { label: "Sourcing", variant: "outline", color: "bg-gray-100" },
+  "interview": { label: "Interview", variant: "secondary", color: "bg-blue-100" },
+  "client_review": { label: "Client Review", variant: "outline", color: "bg-purple-100" },
+  "budget": { label: "Budget", variant: "primary", color: "bg-green-100" },
+  "contract": { label: "Contract", variant: "default", color: "bg-amber-100" },
+  "hired": { label: "Hired", variant: "default", color: "bg-emerald-100" },
+  "rejected": { label: "Rejected", variant: "destructive", color: "bg-red-100" }
 };
 
-export default function ProspectsPage() {
+const COLUMNS = [
+  { id: "sourcing", title: "Sourcing", color: "bg-gray-100" },
+  { id: "interview", title: "Interview", color: "bg-blue-100" },
+  { id: "client_review", title: "Client Review", color: "bg-purple-100" },
+  { id: "budget", title: "Budget", color: "bg-green-100" },
+  { id: "contract", title: "Contract", color: "bg-amber-100" },
+  { id: "hired", title: "Hired", color: "bg-emerald-100" },
+  { id: "rejected", title: "Rejected", color: "bg-red-100" }
+];
+
+export default function Prospects() {
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -120,10 +141,32 @@ export default function ProspectsPage() {
     updateProspectMutation.mutate({ id: prospectId, status: newStatus });
   };
 
+  const handleDragEnd = (result: any) => {
+    const { source, destination, draggableId } = result;
+    
+    // Check if dropped outside any droppable area
+    if (!destination) return;
+    
+    // Check if dropped in the same place
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    ) {
+      return;
+    }
+    
+    // Get the prospect ID and update its status
+    const prospectId = parseInt(draggableId);
+    const newStatus = destination.droppableId;
+    
+    // Update the status
+    handleStatusChange(prospectId, newStatus);
+  };
+
   return (
     <Dashboard>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Prospects</h1>
+        <h1 className="text-2xl font-bold">Prospects Pipeline</h1>
         <Button onClick={() => setIsAddDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Prospect
@@ -132,7 +175,7 @@ export default function ProspectsPage() {
       
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Manage Prospects</CardTitle>
+          <CardTitle>Recruiting Pipeline</CardTitle>
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -163,6 +206,7 @@ export default function ProspectsPage() {
             </Select>
           </div>
         </CardHeader>
+        
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
@@ -174,358 +218,169 @@ export default function ProspectsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto pb-4">
-              <div className="flex gap-4 min-w-[1200px]">
-                {/* Sourcing Column */}
-                <div className="w-1/7 min-w-[250px]">
-                  <div className="bg-gray-100 p-2 rounded-t-md">
-                    <h3 className="font-semibold text-sm">Sourcing</h3>
-                  </div>
-                  <div className="bg-gray-50 p-2 rounded-b-md min-h-[400px]">
-                    {filteredProspects
-                      .filter(prospect => prospect.status === 'sourcing')
-                      .map(prospect => (
-                        <Card key={prospect.id} className="mb-2 cursor-pointer hover:shadow-md">
-                          <CardContent className="p-3">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="font-medium text-sm">
-                                {prospect.firstName} {prospect.lastName}
-                              </div>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-7 w-7 p-0">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSelectedProspect(prospect);
-                                      setIsEditDialogOpen(true);
-                                    }}
-                                  >
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleStatusChange(prospect.id, "interview")}
-                                  >
-                                    Move to Interview
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                            <div className="text-xs text-gray-500 mb-1">{prospect.position}</div>
-                            <div className="text-xs text-gray-500">{getClientName(prospect.clientId)}</div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
+              <DragDropContext onDragEnd={handleDragEnd}>
+                <div className="flex gap-4 min-w-[1200px]">
+                  {COLUMNS.map(column => (
+                    <Droppable droppableId={column.id} key={column.id}>
+                      {(provided, snapshot) => (
+                        <div 
+                          className="w-1/7 min-w-[250px]"
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                        >
+                          <div className={`${column.color} p-2 rounded-t-md`}>
+                            <h3 className="font-semibold text-sm">{column.title}</h3>
+                          </div>
+                          <div 
+                            className={`p-2 rounded-b-md min-h-[400px] ${
+                              snapshot.isDraggingOver ? 'bg-blue-50' : column.color.replace('100', '50')
+                            }`}
+                          >
+                            {filteredProspects
+                              .filter(prospect => prospect.status === column.id)
+                              .map((prospect, index) => (
+                                <Draggable 
+                                  key={prospect.id} 
+                                  draggableId={prospect.id.toString()} 
+                                  index={index}
+                                >
+                                  {(provided, snapshot) => (
+                                    <Card 
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                      className={`mb-2 hover:shadow-md ${
+                                        snapshot.isDragging ? 'shadow-lg' : ''
+                                      }`}
+                                      style={{
+                                        ...provided.draggableProps.style,
+                                      }}
+                                      onClick={() => {
+                                        setSelectedProspect(prospect);
+                                        setIsDetailDialogOpen(true);
+                                      }}
+                                    >
+                                      <CardContent className="p-3">
+                                        <div className="flex justify-between items-start mb-2">
+                                          <div className="font-medium text-sm">
+                                            {prospect.firstName} {prospect.lastName}
+                                          </div>
+                                          <DropdownMenu>
+                                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                              <Button variant="ghost" className="h-7 w-7 p-0">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                              </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                              <DropdownMenuItem
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setSelectedProspect(prospect);
+                                                  setIsEditDialogOpen(true);
+                                                }}
+                                              >
+                                                Edit
+                                              </DropdownMenuItem>
+                                              {column.id !== "sourcing" && (
+                                                <DropdownMenuItem
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusChange(prospect.id, "sourcing");
+                                                  }}
+                                                >
+                                                  Move to Sourcing
+                                                </DropdownMenuItem>
+                                              )}
+                                              {column.id !== "interview" && (
+                                                <DropdownMenuItem
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusChange(prospect.id, "interview");
+                                                  }}
+                                                >
+                                                  Move to Interview
+                                                </DropdownMenuItem>
+                                              )}
+                                              {column.id !== "client_review" && (
+                                                <DropdownMenuItem
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusChange(prospect.id, "client_review");
+                                                  }}
+                                                >
+                                                  Move to Client Review
+                                                </DropdownMenuItem>
+                                              )}
+                                              {column.id !== "budget" && (
+                                                <DropdownMenuItem
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusChange(prospect.id, "budget");
+                                                  }}
+                                                >
+                                                  Move to Budget
+                                                </DropdownMenuItem>
+                                              )}
+                                              {column.id !== "contract" && (
+                                                <DropdownMenuItem
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusChange(prospect.id, "contract");
+                                                  }}
+                                                >
+                                                  Move to Contract
+                                                </DropdownMenuItem>
+                                              )}
+                                              {column.id !== "hired" && (
+                                                <DropdownMenuItem
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusChange(prospect.id, "hired");
+                                                  }}
+                                                >
+                                                  Move to Hired
+                                                </DropdownMenuItem>
+                                              )}
+                                              {column.id !== "rejected" && (
+                                                <DropdownMenuItem
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusChange(prospect.id, "rejected");
+                                                  }}
+                                                >
+                                                  Move to Rejected
+                                                </DropdownMenuItem>
+                                              )}
+                                            </DropdownMenuContent>
+                                          </DropdownMenu>
+                                        </div>
+                                        <div className="text-xs text-gray-500 mb-1">{prospect.position}</div>
+                                        <div className="text-xs text-gray-500">{getClientName(prospect.clientId)}</div>
+                                      </CardContent>
+                                    </Card>
+                                  )}
+                                </Draggable>
+                              ))}
+                            {provided.placeholder}
+                          </div>
+                        </div>
+                      )}
+                    </Droppable>
+                  ))}
                 </div>
-
-                {/* Interview Column */}
-                <div className="w-1/7 min-w-[250px]">
-                  <div className="bg-blue-100 p-2 rounded-t-md">
-                    <h3 className="font-semibold text-sm">Interview</h3>
-                  </div>
-                  <div className="bg-blue-50 p-2 rounded-b-md min-h-[400px]">
-                    {filteredProspects
-                      .filter(prospect => prospect.status === 'interview')
-                      .map(prospect => (
-                        <Card key={prospect.id} className="mb-2 cursor-pointer hover:shadow-md">
-                          <CardContent className="p-3">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="font-medium text-sm">
-                                {prospect.firstName} {prospect.lastName}
-                              </div>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-7 w-7 p-0">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSelectedProspect(prospect);
-                                      setIsEditDialogOpen(true);
-                                    }}
-                                  >
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleStatusChange(prospect.id, "sourcing")}
-                                  >
-                                    Move to Sourcing
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleStatusChange(prospect.id, "client_review")}
-                                  >
-                                    Move to Client Review
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                            <div className="text-xs text-gray-500 mb-1">{prospect.position}</div>
-                            <div className="text-xs text-gray-500">{getClientName(prospect.clientId)}</div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                </div>
-
-                {/* Client Review Column */}
-                <div className="w-1/7 min-w-[250px]">
-                  <div className="bg-purple-100 p-2 rounded-t-md">
-                    <h3 className="font-semibold text-sm">Client Review</h3>
-                  </div>
-                  <div className="bg-purple-50 p-2 rounded-b-md min-h-[400px]">
-                    {filteredProspects
-                      .filter(prospect => prospect.status === 'client_review')
-                      .map(prospect => (
-                        <Card key={prospect.id} className="mb-2 cursor-pointer hover:shadow-md">
-                          <CardContent className="p-3">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="font-medium text-sm">
-                                {prospect.firstName} {prospect.lastName}
-                              </div>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-7 w-7 p-0">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSelectedProspect(prospect);
-                                      setIsEditDialogOpen(true);
-                                    }}
-                                  >
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleStatusChange(prospect.id, "interview")}
-                                  >
-                                    Move to Interview
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleStatusChange(prospect.id, "budget")}
-                                  >
-                                    Move to Budget
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                            <div className="text-xs text-gray-500 mb-1">{prospect.position}</div>
-                            <div className="text-xs text-gray-500">{getClientName(prospect.clientId)}</div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                </div>
-
-                {/* Budget Column */}
-                <div className="w-1/7 min-w-[250px]">
-                  <div className="bg-green-100 p-2 rounded-t-md">
-                    <h3 className="font-semibold text-sm">Budget</h3>
-                  </div>
-                  <div className="bg-green-50 p-2 rounded-b-md min-h-[400px]">
-                    {filteredProspects
-                      .filter(prospect => prospect.status === 'budget')
-                      .map(prospect => (
-                        <Card key={prospect.id} className="mb-2 cursor-pointer hover:shadow-md">
-                          <CardContent className="p-3">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="font-medium text-sm">
-                                {prospect.firstName} {prospect.lastName}
-                              </div>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-7 w-7 p-0">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSelectedProspect(prospect);
-                                      setIsEditDialogOpen(true);
-                                    }}
-                                  >
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleStatusChange(prospect.id, "client_review")}
-                                  >
-                                    Move to Client Review
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleStatusChange(prospect.id, "contract")}
-                                  >
-                                    Move to Contract
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                            <div className="text-xs text-gray-500 mb-1">{prospect.position}</div>
-                            <div className="text-xs text-gray-500">{getClientName(prospect.clientId)}</div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                </div>
-
-                {/* Contract Column */}
-                <div className="w-1/7 min-w-[250px]">
-                  <div className="bg-amber-100 p-2 rounded-t-md">
-                    <h3 className="font-semibold text-sm">Contract</h3>
-                  </div>
-                  <div className="bg-amber-50 p-2 rounded-b-md min-h-[400px]">
-                    {filteredProspects
-                      .filter(prospect => prospect.status === 'contract')
-                      .map(prospect => (
-                        <Card key={prospect.id} className="mb-2 cursor-pointer hover:shadow-md">
-                          <CardContent className="p-3">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="font-medium text-sm">
-                                {prospect.firstName} {prospect.lastName}
-                              </div>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-7 w-7 p-0">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSelectedProspect(prospect);
-                                      setIsEditDialogOpen(true);
-                                    }}
-                                  >
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleStatusChange(prospect.id, "budget")}
-                                  >
-                                    Move to Budget
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleStatusChange(prospect.id, "hired")}
-                                  >
-                                    Mark as Hired
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                            <div className="text-xs text-gray-500 mb-1">{prospect.position}</div>
-                            <div className="text-xs text-gray-500">{getClientName(prospect.clientId)}</div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                </div>
-
-                {/* Hired Column */}
-                <div className="w-1/7 min-w-[250px]">
-                  <div className="bg-blue-200 p-2 rounded-t-md">
-                    <h3 className="font-semibold text-sm">Hired</h3>
-                  </div>
-                  <div className="bg-blue-50 p-2 rounded-b-md min-h-[400px]">
-                    {filteredProspects
-                      .filter(prospect => prospect.status === 'hired')
-                      .map(prospect => (
-                        <Card key={prospect.id} className="mb-2 cursor-pointer hover:shadow-md border-blue-400">
-                          <CardContent className="p-3">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="font-medium text-sm">
-                                {prospect.firstName} {prospect.lastName}
-                              </div>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-7 w-7 p-0">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSelectedProspect(prospect);
-                                      setIsEditDialogOpen(true);
-                                    }}
-                                  >
-                                    Edit
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                            <div className="text-xs text-gray-500 mb-1">{prospect.position}</div>
-                            <div className="text-xs text-gray-500">{getClientName(prospect.clientId)}</div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                </div>
-
-                {/* Rejected Column */}
-                <div className="w-1/7 min-w-[250px]">
-                  <div className="bg-red-100 p-2 rounded-t-md">
-                    <h3 className="font-semibold text-sm">Rejected</h3>
-                  </div>
-                  <div className="bg-red-50 p-2 rounded-b-md min-h-[400px]">
-                    {filteredProspects
-                      .filter(prospect => prospect.status === 'rejected')
-                      .map(prospect => (
-                        <Card key={prospect.id} className="mb-2 cursor-pointer hover:shadow-md border-red-200">
-                          <CardContent className="p-3">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="font-medium text-sm">
-                                {prospect.firstName} {prospect.lastName}
-                              </div>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-7 w-7 p-0">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSelectedProspect(prospect);
-                                      setIsEditDialogOpen(true);
-                                    }}
-                                  >
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleStatusChange(prospect.id, "sourcing")}
-                                  >
-                                    Reconsider (Move to Sourcing)
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                            <div className="text-xs text-gray-500 mb-1">{prospect.position}</div>
-                            <div className="text-xs text-gray-500">{getClientName(prospect.clientId)}</div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                </div>
-              </div>
+              </DragDropContext>
             </div>
-          )
+          )}
         </CardContent>
       </Card>
 
-      {/* Add Prospect Dialog */}
+      {/* Add New Prospect Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Add New Prospect</DialogTitle>
           </DialogHeader>
-          <ProspectForm 
-            onSuccess={() => setIsAddDialogOpen(false)}
-          />
+          <ProspectForm onSuccess={() => setIsAddDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 
@@ -540,6 +395,138 @@ export default function ProspectsPage() {
               initialStage={selectedProspect.status}
               onSuccess={() => setIsEditDialogOpen(false)}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Prospect Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Prospect Details</DialogTitle>
+          </DialogHeader>
+          {selectedProspect && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <User className="mr-2 h-5 w-5 text-primary" />
+                      Personal Information
+                    </h3>
+                    <div className="mt-2 space-y-2">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Full Name</Label>
+                        <p className="text-base">{selectedProspect.firstName} {selectedProspect.lastName}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Email</Label>
+                        <p className="text-base flex items-center">
+                          <Mail className="mr-1 h-4 w-4 text-muted-foreground" />
+                          {selectedProspect.email}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Phone</Label>
+                        <p className="text-base flex items-center">
+                          <Phone className="mr-1 h-4 w-4 text-muted-foreground" />
+                          {selectedProspect.phone || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Location</Label>
+                        <p className="text-base flex items-center">
+                          <MapPin className="mr-1 h-4 w-4 text-muted-foreground" />
+                          {selectedProspect.location || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <Building className="mr-2 h-5 w-5 text-primary" />
+                      Company Information
+                    </h3>
+                    <div className="mt-2 space-y-2">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Client</Label>
+                        <p className="text-base">{getClientName(selectedProspect.clientId)}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Position</Label>
+                        <p className="text-base">{selectedProspect.position}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <Calendar className="mr-2 h-5 w-5 text-primary" />
+                      Status Information
+                    </h3>
+                    <div className="mt-2 space-y-2">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Current Stage</Label>
+                        <Badge className={`${STATUS_BADGES[selectedProspect.status].color} text-sm font-medium mt-1`}>
+                          {STATUS_BADGES[selectedProspect.status].label}
+                        </Badge>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Created Date</Label>
+                        <p className="text-base">{new Date(selectedProspect.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Updated Date</Label>
+                        <p className="text-base">{new Date(selectedProspect.updatedAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <DollarSign className="mr-2 h-5 w-5 text-primary" />
+                      Compensation
+                    </h3>
+                    <div className="mt-2 space-y-2">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Salary Expectation</Label>
+                        <p className="text-base">${selectedProspect.salaryExpectation?.toLocaleString() || "N/A"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold flex items-center">
+                  <BookOpen className="mr-2 h-5 w-5 text-primary" />
+                  Additional Information
+                </h3>
+                <div className="mt-2">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Notes</Label>
+                    <p className="text-base bg-gray-50 p-3 rounded-md mt-1">
+                      {selectedProspect.notes || "No notes available."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
+                  Close
+                </Button>
+                <Button onClick={() => {
+                  setIsDetailDialogOpen(false);
+                  setIsEditDialogOpen(true);
+                }}>
+                  Edit Prospect
+                </Button>
+              </DialogFooter>
+            </div>
           )}
         </DialogContent>
       </Dialog>
