@@ -19,6 +19,10 @@ function Router() {
       <Route path="/auth">
         <AuthPageSimple />
       </Route>
+      {/* Redirect from root to dashboard in development mode */}
+      <Route path="/">
+        <DashboardDev />
+      </Route>
       {/* Direct access routes for development and preview */}
       <Route path="/dashboard">
         <DashboardDev />
@@ -45,8 +49,7 @@ function Router() {
         <Settings />
       </Route>
       
-      {/* Protected routes (will be used once auth is fully working) */}
-      <ProtectedRoute path="/" component={Dashboard} />
+      {/* 404 page for non-existing routes */}
       <Route>
         <NotFound />
       </Route>
