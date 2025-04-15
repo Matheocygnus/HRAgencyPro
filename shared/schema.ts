@@ -226,3 +226,30 @@ export const insertJobApplicationSchema = createInsertSchema(jobApplications).om
 
 export type InsertJobApplication = z.infer<typeof insertJobApplicationSchema>;
 export type JobApplication = typeof jobApplications.$inferSelect;
+
+// Job Requests (from clients)
+export const jobRequests = pgTable("job_requests", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull(),
+  companyId: integer("company_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  requirements: text("requirements").notNull(),
+  location: text("location").notNull(),
+  jobType: text("job_type", { enum: ["full_time", "part_time", "contract", "remote"] }).notNull(),
+  salary: text("salary"),
+  status: text("status", { enum: ["pending", "approved", "rejected", "published"] }).default("pending").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertJobRequestSchema = createInsertSchema(jobRequests).omit({
+  id: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertJobRequest = z.infer<typeof insertJobRequestSchema>;
+export type JobRequest = typeof jobRequests.$inferSelect;
