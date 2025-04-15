@@ -1093,7 +1093,7 @@ export class MemStorage implements IStorage {
       ...jobRequestData, 
       createdAt,
       updatedAt,
-      status: jobRequestData.status || "pending" 
+      status: "pending" // Default status for new job requests
     });
     this.jobRequestsMap.set(id, jobRequest);
     return jobRequest;

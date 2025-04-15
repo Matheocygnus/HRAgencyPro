@@ -590,6 +590,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Job Request routes
+  app.get("/api/job-requests", hasRole(["super_admin", "admin"]), async (req, res) => {
+    try {
+      const jobRequests = await storage.getJobRequests();
+      res.json(jobRequests);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve job requests" });
+    }
+  });
+  
+  app.get("/api/job-requests/:id", hasRole(["super_admin", "admin", "client"]), async (req, res) => {
+    try {
+      const jobRequest = await storage.getJobRequest(parseInt(req.params.id));
+      if (!jobRequest) {
+        return res.status(404).json({ message: "Job request not found" });
+      }
+      res.json(jobRequest);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve job request" });
+    }
+  });
+  
+  app.get("/api/job-requests/status/:status", hasRole(["super_admin", "admin"]), async (req, res) => {
+    try {
+      const jobRequests = await storage.getJobRequestsByStatus(req.params.status);
+      res.json(jobRequests);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve job requests by status" });
+    }
+  });
+  
+  app.get("/api/clients/:clientId/job-requests", hasRole(["super_admin", "admin", "client"]), async (req, res) => {
+    try {
+      const jobRequests = await storage.getJobRequestsByClient(parseInt(req.params.clientId));
+      res.json(jobRequests);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve job requests for client" });
+    }
+  });
+  
+  app.post("/api/job-requests", hasRole(["super_admin", "admin", "client"]), async (req, res) => {
+    try {
+      const jobRequestData = insertJobRequestSchema.parse(req.body);
+      const jobRequest = await storage.createJobRequest(jobRequestData);
+      res.status(201).json(jobRequest);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to create job request" });
+    }
+  });
+  
+  app.put("/api/job-requests/:id", hasRole(["super_admin", "admin", "client"]), async (req, res) => {
+    try {
+      const jobRequestData = insertJobRequestSchema.partial().parse(req.body);
+      const updatedJobRequest = await storage.updateJobRequest(parseInt(req.params.id), jobRequestData);
+      if (!updatedJobRequest) {
+        return res.status(404).json({ message: "Job request not found" });
+      }
+      res.json(updatedJobRequest);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to update job request" });
+    }
+  });
+  
+  app.post("/api/job-requests/:id/approve", hasRole(["super_admin", "admin"]), async (req, res) => {
+    try {
+      const notes = req.body.notes;
+      const jobRequest = await storage.approveJobRequest(parseInt(req.params.id), notes);
+      
+      if (!jobRequest) {
+        return res.status(404).json({ message: "Job request not found" });
+      }
+      
+      res.json(jobRequest);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to approve job request" });
+    }
+  });
+  
+  app.post("/api/job-requests/:id/reject", hasRole(["super_admin", "admin"]), async (req, res) => {
+    try {
+      const notes = req.body.notes;
+      const jobRequest = await storage.rejectJobRequest(parseInt(req.params.id), notes);
+      
+      if (!jobRequest) {
+        return res.status(404).json({ message: "Job request not found" });
+      }
+      
+      res.json(jobRequest);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to reject job request" });
+    }
+  });
+  
+  app.post("/api/job-requests/:id/publish", hasRole(["super_admin", "admin"]), async (req, res) => {
+    try {
+      const jobOpening = await storage.publishJobRequest(parseInt(req.params.id));
+      
+      if (!jobOpening) {
+        return res.status(404).json({ message: "Job request not found or not approved" });
+      }
+      
+      res.json(jobOpening);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to publish job request" });
+    }
+  });
+  
   const httpServer = createServer(app);
   return httpServer;
 }
