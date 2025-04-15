@@ -397,7 +397,7 @@ export default function Prospects() {
 
       {/* Add New Prospect Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Prospect</DialogTitle>
           </DialogHeader>
@@ -407,7 +407,7 @@ export default function Prospects() {
 
       {/* Edit Prospect Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Prospect</DialogTitle>
           </DialogHeader>
@@ -422,7 +422,7 @@ export default function Prospects() {
       
       {/* Prospect Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Prospect Details</DialogTitle>
           </DialogHeader>
