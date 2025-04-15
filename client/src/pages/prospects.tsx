@@ -434,10 +434,10 @@ export default function Prospects() {
                         </p>
                       </div>
                       <div>
-                        <Label className="text-sm text-muted-foreground">Location</Label>
+                        <Label className="text-sm text-muted-foreground">Skills</Label>
                         <p className="text-base flex items-center">
                           <MapPin className="mr-1 h-4 w-4 text-muted-foreground" />
-                          {selectedProspect.location || "N/A"}
+                          {selectedProspect.skills || "N/A"}
                         </p>
                       </div>
                     </div>
@@ -478,22 +478,21 @@ export default function Prospects() {
                         <Label className="text-sm text-muted-foreground">Created Date</Label>
                         <p className="text-base">{new Date(selectedProspect.createdAt).toLocaleDateString()}</p>
                       </div>
-                      <div>
-                        <Label className="text-sm text-muted-foreground">Updated Date</Label>
-                        <p className="text-base">{new Date(selectedProspect.updatedAt).toLocaleDateString()}</p>
-                      </div>
+                      {/* Removed updated date field since it's not in the schema */}
                     </div>
                   </div>
                   
                   <div>
                     <h3 className="text-lg font-semibold flex items-center">
                       <DollarSign className="mr-2 h-5 w-5 text-primary" />
-                      Compensation
+                      Budget Status
                     </h3>
                     <div className="mt-2 space-y-2">
                       <div>
-                        <Label className="text-sm text-muted-foreground">Salary Expectation</Label>
-                        <p className="text-base">${selectedProspect.salaryExpectation?.toLocaleString() || "N/A"}</p>
+                        <Label className="text-sm text-muted-foreground">Budget Agreed</Label>
+                        <p className="text-base">
+                          {selectedProspect.isBudgetAgreed ? "Yes" : "No"}
+                        </p>
                       </div>
                     </div>
                   </div>

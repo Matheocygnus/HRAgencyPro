@@ -6,7 +6,7 @@ import AuthPageSimple from "@/pages/auth-page-simple";
 import LoginPage from "@/pages/login-page";
 import Dashboard from "@/pages/dashboard";
 import DashboardDev from "@/pages/dashboard-dev";
-import Prospects from "@/pages/prospects-new";
+import Prospects from "@/pages/prospects";
 import Clients from "@/pages/clients";
 import Heroes from "@/pages/heroes";
 import Contracts from "@/pages/contracts";
