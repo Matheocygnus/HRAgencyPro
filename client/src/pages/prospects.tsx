@@ -73,9 +73,17 @@ export default function Prospects() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Fetch prospects
-  const { data: prospects = [], isLoading } = useQuery<Prospect[]>({
+  const { data: serverProspects = [], isLoading } = useQuery<Prospect[]>({
     queryKey: ["/api/prospects"],
   });
+  
+  // Use local state to make UI updates feel more responsive
+  const [prospects, setProspects] = useState<Prospect[]>([]);
+  
+  // Update local state when server data changes
+  useEffect(() => {
+    setProspects(serverProspects);
+  }, [serverProspects]);
 
   // Fetch clients for dropdown
   const { data: clients = [] } = useQuery<Client[]>({
@@ -386,7 +394,7 @@ export default function Prospects() {
 
       {/* Edit Prospect Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Edit Prospect</DialogTitle>
           </DialogHeader>
@@ -438,6 +446,22 @@ export default function Prospects() {
                         <p className="text-base flex items-center">
                           <MapPin className="mr-1 h-4 w-4 text-muted-foreground" />
                           {selectedProspect.skills || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Resume</Label>
+                        <p className="text-base flex items-center">
+                          <FileText className="mr-1 h-4 w-4 text-muted-foreground" />
+                          {selectedProspect.resume ? (
+                            <a 
+                              href={selectedProspect.resume} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              View Resume
+                            </a>
+                          ) : "Not available"}
                         </p>
                       </div>
                     </div>
