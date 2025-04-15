@@ -296,7 +296,7 @@ export default function JobRequestsPage() {
 
       {/* Job Request Form Dialog */}
       <Dialog open={isRequestFormOpen} onOpenChange={setIsRequestFormOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditMode ? 'Edit Job Request' : 'New Job Request'}</DialogTitle>
             <DialogDescription>
@@ -304,8 +304,8 @@ export default function JobRequestsPage() {
             </DialogDescription>
           </DialogHeader>
           <Form {...requestForm}>
-            <form onSubmit={requestForm.handleSubmit(handleRequestFormSubmit)} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={requestForm.handleSubmit(handleRequestFormSubmit)} className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
                 <FormField
                   control={requestForm.control}
                   name="title"
@@ -332,9 +332,22 @@ export default function JobRequestsPage() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={requestForm.control}
+                  name="salary"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Salary Range (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. $80,000 - $100,000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <FormField
                   control={requestForm.control}
                   name="jobType"
@@ -358,56 +371,48 @@ export default function JobRequestsPage() {
                     </FormItem>
                   )}
                 />
+                <div className="col-span-2">
+                  {/* Empty space for alignment */}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={requestForm.control}
-                  name="salary"
+                  name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Salary Range (Optional)</FormLabel>
+                      <FormLabel>Job Description</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. $80,000 - $100,000" {...field} />
+                        <Textarea 
+                          placeholder="Describe the role, responsibilities, and what you're looking for in a candidate." 
+                          className="min-h-[80px]" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={requestForm.control}
+                  name="requirements"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Requirements</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="List the skills, qualifications, and experience required for this position." 
+                          className="min-h-[80px]" 
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-              
-              <FormField
-                control={requestForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Job Description</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Describe the role, responsibilities, and what you're looking for in a candidate." 
-                        className="min-h-[120px]" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={requestForm.control}
-                name="requirements"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Requirements</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="List the skills, qualifications, and experience required for this position." 
-                        className="min-h-[120px]" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               
               <FormField
                 control={requestForm.control}
@@ -418,7 +423,7 @@ export default function JobRequestsPage() {
                     <FormControl>
                       <Textarea 
                         placeholder="Any additional information about the position or hiring process." 
-                        className="min-h-[80px]" 
+                        className="min-h-[60px]" 
                         {...field} 
                       />
                     </FormControl>
@@ -427,7 +432,7 @@ export default function JobRequestsPage() {
                 )}
               />
               
-              <DialogFooter>
+              <DialogFooter className="mt-2">
                 <Button 
                   type="button" 
                   variant="outline" 

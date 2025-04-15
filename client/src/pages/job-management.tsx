@@ -463,7 +463,7 @@ export default function JobManagementPage() {
 
       {/* Job Form Dialog */}
       <Dialog open={isJobFormOpen} onOpenChange={setIsJobFormOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditMode ? 'Edit Job Posting' : 'Create New Job Posting'}</DialogTitle>
             <DialogDescription>

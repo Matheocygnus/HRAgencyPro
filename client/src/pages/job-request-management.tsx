@@ -334,7 +334,7 @@ export default function JobRequestManagementPage() {
 
       {/* Job Request Detail Sheet */}
       <Sheet open={isDetailSheetOpen} onOpenChange={setIsDetailSheetOpen}>
-        <SheetContent className="sm:max-w-xl overflow-y-auto">
+        <SheetContent className="sm:max-w-2xl lg:max-w-4xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Job Request Details</SheetTitle>
             <SheetDescription>
@@ -342,13 +342,13 @@ export default function JobRequestManagementPage() {
             </SheetDescription>
           </SheetHeader>
           {selectedRequest && (
-            <div className="mt-6 space-y-6">
+            <div className="mt-4 space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold">{selectedRequest.title}</h3>
                 {getStatusBadge(selectedRequest.status)}
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground">Location</h4>
                   <p>{selectedRequest.location}</p>
@@ -357,31 +357,38 @@ export default function JobRequestManagementPage() {
                   <h4 className="text-sm font-medium text-muted-foreground">Job Type</h4>
                   <p>{selectedRequest.jobType}</p>
                 </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground">Salary Range</h4>
+                  <p>{selectedRequest.salary || "Not specified"}</p>
+                </div>
               </div>
               
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">Salary Range</h4>
-                <p>{selectedRequest.salary || "Not specified"}</p>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">Job Description</h4>
-                <p className="whitespace-pre-line">{selectedRequest.description}</p>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">Requirements</h4>
-                <p className="whitespace-pre-line">{selectedRequest.requirements}</p>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground">Job Description</h4>
+                  <div className="max-h-[160px] overflow-y-auto border rounded-md p-3 bg-gray-50">
+                    <p className="whitespace-pre-line text-sm">{selectedRequest.description}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground">Requirements</h4>
+                  <div className="max-h-[160px] overflow-y-auto border rounded-md p-3 bg-gray-50">
+                    <p className="whitespace-pre-line text-sm">{selectedRequest.requirements}</p>
+                  </div>
+                </div>
               </div>
               
               {selectedRequest.notes && (
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground">Additional Notes</h4>
-                  <p className="whitespace-pre-line">{selectedRequest.notes}</p>
+                  <div className="max-h-[100px] overflow-y-auto border rounded-md p-3 bg-gray-50">
+                    <p className="whitespace-pre-line text-sm">{selectedRequest.notes}</p>
+                  </div>
                 </div>
               )}
               
-              <div className="pt-4 border-t">
+              <div className="pt-3 border-t">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Feedback Notes</h4>
                 <Form {...reviewForm}>
                   <form>
@@ -393,7 +400,7 @@ export default function JobRequestManagementPage() {
                           <FormControl>
                             <Textarea 
                               placeholder="Add your feedback or notes about this request" 
-                              className="min-h-[80px]" 
+                              className="min-h-[60px]" 
                               {...field} 
                             />
                           </FormControl>
