@@ -17,25 +17,40 @@ import Settings from "@/pages/settings";
 function Router() {
   return (
     <Switch>
-      <Route path="/auth">
-        <LoginPage />
+      {/* Use DashboardDev everywhere since it doesn't rely on authentication */}
+      <Route path="/">
+        <DashboardDev />
+      </Route>
+      <Route path="/dashboard">
+        <DashboardDev />
+      </Route>
+      <Route path="/prospects">
+        <DashboardDev />
+      </Route>
+      <Route path="/clients">
+        <DashboardDev />
+      </Route>
+      <Route path="/heroes">
+        <DashboardDev />
+      </Route>
+      <Route path="/contracts">
+        <DashboardDev />
+      </Route>
+      <Route path="/invoices">
+        <DashboardDev />
+      </Route>
+      <Route path="/users">
+        <DashboardDev />
+      </Route>
+      <Route path="/settings">
+        <DashboardDev />
       </Route>
       <Route path="/login">
-        <LoginPage />
+        <DashboardDev />
       </Route>
-      
-      {/* Protected routes (requires authentication) */}
-      <ProtectedRoute path="/" component={Dashboard} />
-      <ProtectedRoute path="/dashboard" component={Dashboard} />
-      <ProtectedRoute path="/prospects" component={Prospects} />
-      <ProtectedRoute path="/clients" component={Clients} />
-      <ProtectedRoute path="/heroes" component={Heroes} />
-      <ProtectedRoute path="/contracts" component={Contracts} />
-      <ProtectedRoute path="/invoices" component={Invoices} />
-      <ProtectedRoute path="/users" component={UserManagement} />
-      <ProtectedRoute path="/settings" component={Settings} />
-      
-      {/* Development routes (for testing without auth) */}
+      <Route path="/auth">
+        <DashboardDev />
+      </Route>
       <Route path="/dev">
         <DashboardDev />
       </Route>

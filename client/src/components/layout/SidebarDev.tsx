@@ -63,17 +63,21 @@ export default function SidebarDev({ isMobileOpen, setMobileOpen }: {
             <ul>
               {navigation.main.map((item) => (
                 <li key={item.path} className="mb-1">
-                  <Link href={item.path} onClick={handleNavClick}>
-                    <a className={cn(
-                      "flex items-center px-3 py-2 rounded-md",
+                  <div 
+                    onClick={() => {
+                      handleNavClick();
+                      window.location.href = item.path;
+                    }}
+                    className={cn(
+                      "flex items-center px-3 py-2 rounded-md cursor-pointer",
                       location === item.path
                         ? "text-white bg-primary-dark"
                         : "text-neutral-light hover:text-white hover:bg-primary-dark"
-                    )}>
-                      <i className={`fas ${item.icon} w-5 h-5 mr-3`}></i>
-                      <span>{item.name}</span>
-                    </a>
-                  </Link>
+                    )}
+                  >
+                    <i className={`fas ${item.icon} w-5 h-5 mr-3`}></i>
+                    <span>{item.name}</span>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -87,17 +91,21 @@ export default function SidebarDev({ isMobileOpen, setMobileOpen }: {
                 {navigation.admin.map((item) => (
                   <li key={item.path} className="mb-1">
                     {(item.path !== '/users' || isSuperAdmin) && (
-                      <Link href={item.path} onClick={handleNavClick}>
-                        <a className={cn(
-                          "flex items-center px-3 py-2 rounded-md",
+                      <div 
+                        onClick={() => {
+                          handleNavClick();
+                          window.location.href = item.path;
+                        }}
+                        className={cn(
+                          "flex items-center px-3 py-2 rounded-md cursor-pointer",
                           location === item.path
                             ? "text-white bg-primary-dark"
                             : "text-neutral-light hover:text-white hover:bg-primary-dark"
-                        )}>
-                          <i className={`fas ${item.icon} w-5 h-5 mr-3`}></i>
-                          <span>{item.name}</span>
-                        </a>
-                      </Link>
+                        )}
+                      >
+                        <i className={`fas ${item.icon} w-5 h-5 mr-3`}></i>
+                        <span>{item.name}</span>
+                      </div>
                     )}
                   </li>
                 ))}
