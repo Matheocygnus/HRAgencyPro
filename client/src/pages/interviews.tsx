@@ -212,7 +212,7 @@ function InterviewForm({ interview, onSuccess }: InterviewFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
             name="prospectId"
@@ -329,7 +329,7 @@ function InterviewForm({ interview, onSuccess }: InterviewFormProps) {
             control={form.control}
             name="interviewerIds"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="md:col-span-2">
                 <FormLabel>Interviewers</FormLabel>
                 <FormControl>
                   <div className="flex flex-wrap gap-2 p-2 border rounded-md">
@@ -373,7 +373,7 @@ function InterviewForm({ interview, onSuccess }: InterviewFormProps) {
             control={form.control}
             name="meetingLink"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="md:col-span-2">
                 <FormLabel>Meeting Link</FormLabel>
                 <div className="flex space-x-2">
                   <FormControl>
@@ -434,7 +434,7 @@ function InterviewForm({ interview, onSuccess }: InterviewFormProps) {
               <FormControl>
                 <Textarea
                   placeholder="Add any notes or preparation instructions for the interview"
-                  className="min-h-[100px]"
+                  className="min-h-[80px]"
                   {...field}
                 />
               </FormControl>
