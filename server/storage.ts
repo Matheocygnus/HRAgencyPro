@@ -5,7 +5,8 @@ import {
   prospects, type Prospect, type InsertProspect,
   heroes, type Hero, type InsertHero,
   contracts, type Contract, type InsertContract,
-  invoices, type Invoice, type InsertInvoice
+  invoices, type Invoice, type InsertInvoice,
+  interviews, type Interview, type InsertInterview
 } from "@shared/schema";
 import createMemoryStore from "memorystore";
 import session from "express-session";
@@ -167,6 +168,14 @@ export interface IStorage {
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
   updateInvoice(id: number, invoice: Partial<Invoice>): Promise<Invoice | undefined>;
   
+  // Interview methods
+  getInterview(id: number): Promise<Interview | undefined>;
+  getInterviews(): Promise<Interview[]>;
+  getInterviewsByProspect(prospectId: number): Promise<Interview[]>;
+  getUpcomingInterviews(): Promise<Interview[]>;
+  createInterview(interview: InsertInterview): Promise<Interview>;
+  updateInterview(id: number, interview: Partial<Interview>): Promise<Interview | undefined>;
+  
   // Session store
   sessionStore: any; // Using 'any' temporarily to resolve type issues
 }
@@ -175,6 +184,22 @@ export interface IStorage {
 export class PgStorage implements IStorage {
   // Session store and implementation will go here
 } */
+
+// Helper function for interview fields
+function ensureInterviewFields(interviewData: any): Interview {
+  return {
+    id: interviewData.id,
+    prospectId: interviewData.prospectId,
+    title: interviewData.title,
+    scheduledDate: interviewData.scheduledDate,
+    duration: interviewData.duration,
+    meetingLink: interviewData.meetingLink || null,
+    interviewerIds: interviewData.interviewerIds || [],
+    notes: interviewData.notes || null,
+    status: interviewData.status || "scheduled",
+    createdAt: interviewData.createdAt
+  };
+}
 
 export class MemStorage implements IStorage {
   // Storage maps
@@ -185,6 +210,7 @@ export class MemStorage implements IStorage {
   private heroesMap: Map<number, Hero>;
   private contractsMap: Map<number, Contract>;
   private invoicesMap: Map<number, Invoice>;
+  private interviewsMap: Map<number, Interview>;
   
   // Auto-increment counters
   private userIdCounter: number;
@@ -195,6 +221,7 @@ export class MemStorage implements IStorage {
   private contractIdCounter: number;
   private invoiceIdCounter: number;
   private invoiceNumberCounter: number;
+  private interviewIdCounter: number;
   
   // Session store
   sessionStore: any;
@@ -208,6 +235,7 @@ export class MemStorage implements IStorage {
     this.heroesMap = new Map();
     this.contractsMap = new Map();
     this.invoicesMap = new Map();
+    this.interviewsMap = new Map();
     
     // Initialize counters
     this.userIdCounter = 1;
@@ -218,6 +246,7 @@ export class MemStorage implements IStorage {
     this.contractIdCounter = 1;
     this.invoiceIdCounter = 1;
     this.invoiceNumberCounter = 10001;
+    this.interviewIdCounter = 1;
     
     // Initialize session store with memory store
     this.sessionStore = new MemoryStore({
@@ -764,6 +793,54 @@ export class MemStorage implements IStorage {
     const updatedInvoice = ensureInvoiceFields({ ...invoice, ...invoiceData });
     this.invoicesMap.set(id, updatedInvoice);
     return updatedInvoice;
+  }
+  
+  // Interview methods
+  async getInterview(id: number): Promise<Interview | undefined> {
+    return this.interviewsMap.get(id);
+  }
+  
+  async getInterviews(): Promise<Interview[]> {
+    return Array.from(this.interviewsMap.values());
+  }
+  
+  async getInterviewsByProspect(prospectId: number): Promise<Interview[]> {
+    return Array.from(this.interviewsMap.values()).filter(
+      (interview) => interview.prospectId === prospectId
+    );
+  }
+  
+  async getUpcomingInterviews(): Promise<Interview[]> {
+    const now = new Date();
+    return Array.from(this.interviewsMap.values()).filter(
+      (interview) => interview.scheduledDate > now && interview.status === "scheduled"
+    );
+  }
+  
+  async createInterview(interviewData: InsertInterview): Promise<Interview> {
+    const id = this.interviewIdCounter++;
+    const createdAt = new Date();
+    const interview = ensureInterviewFields({ id, ...interviewData, createdAt });
+    this.interviewsMap.set(id, interview);
+    
+    // Update prospect to mark as interviewed
+    if (interviewData.prospectId) {
+      const prospect = await this.getProspect(interviewData.prospectId);
+      if (prospect) {
+        await this.updateProspect(prospect.id, { isInterviewed: true });
+      }
+    }
+    
+    return interview;
+  }
+  
+  async updateInterview(id: number, interviewData: Partial<Interview>): Promise<Interview | undefined> {
+    const interview = await this.getInterview(id);
+    if (!interview) return undefined;
+    
+    const updatedInterview = ensureInterviewFields({ ...interview, ...interviewData });
+    this.interviewsMap.set(id, updatedInterview);
+    return updatedInterview;
   }
 }
 

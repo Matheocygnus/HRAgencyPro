@@ -156,5 +156,27 @@ export type Hero = typeof heroes.$inferSelect;
 export type InsertContract = z.infer<typeof insertContractSchema>;
 export type Contract = typeof contracts.$inferSelect;
 
+// Interview models
+export const interviews = pgTable("interviews", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospect_id").notNull(),
+  title: text("title").notNull(),
+  scheduledDate: timestamp("scheduled_date").notNull(),
+  duration: integer("duration").notNull(), // in minutes
+  meetingLink: text("meeting_link"),
+  interviewerIds: text("interviewer_ids").array(), // array of user IDs
+  notes: text("notes"),
+  status: text("status", { enum: ["scheduled", "completed", "cancelled"] }).notNull().default("scheduled"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertInterviewSchema = createInsertSchema(interviews).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type Invoice = typeof invoices.$inferSelect;
+
+export type InsertInterview = z.infer<typeof insertInterviewSchema>;
+export type Interview = typeof interviews.$inferSelect;
