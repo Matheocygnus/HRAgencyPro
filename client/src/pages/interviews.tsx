@@ -733,7 +733,7 @@ export default function InterviewsPage() {
       
       {/* Add New Interview Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[700px]">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Schedule New Interview</DialogTitle>
             <DialogDescription>
@@ -746,7 +746,7 @@ export default function InterviewsPage() {
       
       {/* Edit Interview Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[700px]">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Interview</DialogTitle>
             <DialogDescription>
