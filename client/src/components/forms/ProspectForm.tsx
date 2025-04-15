@@ -56,7 +56,7 @@ export default function ProspectForm({ initialStage = "sourcing", onSuccess }: P
       phone: "",
       position: "",
       skills: "",
-      status: initialStage,
+      status: initialStage as "sourcing" | "interview" | "client_review" | "budget" | "contract" | "hired" | "rejected",
       clientId: undefined,
       companyId: undefined,
       notes: "",
@@ -150,7 +150,7 @@ export default function ProspectForm({ initialStage = "sourcing", onSuccess }: P
               <FormItem>
                 <FormLabel>Phone</FormLabel>
                 <FormControl>
-                  <Input placeholder="Phone number" {...field} />
+                  <Input placeholder="Phone number" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -178,7 +178,7 @@ export default function ProspectForm({ initialStage = "sourcing", onSuccess }: P
               <FormItem>
                 <FormLabel>Skills</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. React, Node.js, TypeScript" {...field} />
+                  <Input placeholder="e.g. React, Node.js, TypeScript" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -263,7 +263,8 @@ export default function ProspectForm({ initialStage = "sourcing", onSuccess }: P
                 <Textarea 
                   placeholder="Additional information about the prospect" 
                   className="min-h-[80px]"
-                  {...field} 
+                  {...field}
+                  value={field.value ?? ""}
                 />
               </FormControl>
               <FormMessage />
