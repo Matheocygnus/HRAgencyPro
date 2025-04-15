@@ -630,6 +630,58 @@ export class MemStorage implements IStorage {
     for (const invoice of invoices) {
       await this.createInvoice(invoice as InsertInvoice);
     }
+    
+    // Add mock job openings
+    const jobOpenings = [
+      {
+        title: "Senior React Developer",
+        description: "We're looking for a senior React developer with 5+ years of experience to join our team. You'll be working on cutting-edge projects for our clients.",
+        requirements: "- 5+ years of experience with React\n- Strong TypeScript skills\n- Experience with state management libraries\n- Good understanding of web performance optimization",
+        location: "Remote - US",
+        jobType: "Full-time",
+        salary: "$120,000 - $150,000",
+        isActive: true,
+        clientId: 1,
+        companyId: 1
+      },
+      {
+        title: "DevOps Engineer",
+        description: "Join our team as a DevOps Engineer and help us build and maintain our cloud infrastructure. You'll be responsible for automation, CI/CD pipelines, and more.",
+        requirements: "- Experience with AWS or Azure\n- Knowledge of Docker and Kubernetes\n- Experience with CI/CD tools\n- Understanding of infrastructure as code",
+        location: "New York, NY",
+        jobType: "Full-time",
+        salary: "$130,000 - $160,000",
+        isActive: true,
+        clientId: 3,
+        companyId: 4
+      },
+      {
+        title: "UI/UX Designer",
+        description: "We're seeking a talented UI/UX Designer to create beautiful and functional user interfaces for our web and mobile applications.",
+        requirements: "- Portfolio demonstrating UI/UX work\n- Experience with Figma or Adobe XD\n- Understanding of user-centered design principles\n- Ability to create wireframes, prototypes, and high-fidelity designs",
+        location: "Remote",
+        jobType: "Contract",
+        salary: "$90,000 - $110,000",
+        isActive: true,
+        clientId: 2,
+        companyId: 3
+      },
+      {
+        title: "Frontend Developer",
+        description: "Join our fast-growing tech team as a Frontend Developer. You'll be building responsive, accessible, and performant web applications.",
+        requirements: "- 3+ years of experience with HTML, CSS, and JavaScript\n- Experience with a modern JavaScript framework (React, Vue, Angular)\n- Understanding of web accessibility standards\n- Experience with responsive design",
+        location: "Chicago, IL",
+        jobType: "Full-time",
+        salary: "$90,000 - $120,000",
+        isActive: false,
+        clientId: 5,
+        companyId: 7
+      }
+    ];
+    
+    for (const jobOpening of jobOpenings) {
+      await this.createJobOpening(jobOpening as InsertJobOpening);
+    }
   }
   
   // User methods
@@ -904,6 +956,77 @@ export class MemStorage implements IStorage {
     const updatedInterview = ensureInterviewFields({ ...interview, ...interviewData });
     this.interviewsMap.set(id, updatedInterview);
     return updatedInterview;
+  }
+
+  // Job Opening methods
+  async getJobOpening(id: number): Promise<JobOpening | undefined> {
+    return this.jobOpeningsMap.get(id);
+  }
+  
+  async getJobOpenings(): Promise<JobOpening[]> {
+    return Array.from(this.jobOpeningsMap.values());
+  }
+  
+  async getActiveJobOpenings(): Promise<JobOpening[]> {
+    return Array.from(this.jobOpeningsMap.values()).filter(
+      (jobOpening) => jobOpening.isActive
+    );
+  }
+  
+  async createJobOpening(jobOpeningData: InsertJobOpening): Promise<JobOpening> {
+    const id = this.jobOpeningIdCounter++;
+    const createdAt = new Date();
+    const jobOpening = ensureJobOpeningFields({ id, ...jobOpeningData, createdAt });
+    this.jobOpeningsMap.set(id, jobOpening);
+    return jobOpening;
+  }
+  
+  async updateJobOpening(id: number, jobOpeningData: Partial<JobOpening>): Promise<JobOpening | undefined> {
+    const jobOpening = await this.getJobOpening(id);
+    if (!jobOpening) return undefined;
+    
+    const updatedJobOpening = ensureJobOpeningFields({ ...jobOpening, ...jobOpeningData });
+    this.jobOpeningsMap.set(id, updatedJobOpening);
+    return updatedJobOpening;
+  }
+  
+  // Job Application methods
+  async getJobApplication(id: number): Promise<JobApplication | undefined> {
+    return this.jobApplicationsMap.get(id);
+  }
+  
+  async getJobApplications(): Promise<JobApplication[]> {
+    return Array.from(this.jobApplicationsMap.values());
+  }
+  
+  async getJobApplicationsByJobOpening(jobOpeningId: number): Promise<JobApplication[]> {
+    return Array.from(this.jobApplicationsMap.values()).filter(
+      (jobApplication) => jobApplication.jobOpeningId === jobOpeningId
+    );
+  }
+  
+  async getJobApplicationsByStatus(status: string): Promise<JobApplication[]> {
+    return Array.from(this.jobApplicationsMap.values()).filter(
+      (jobApplication) => jobApplication.status === status
+    );
+  }
+  
+  async createJobApplication(jobApplicationData: InsertJobApplication): Promise<JobApplication> {
+    const id = this.jobApplicationIdCounter++;
+    const createdAt = new Date();
+    const jobApplication = ensureJobApplicationFields({ id, ...jobApplicationData, createdAt });
+    this.jobApplicationsMap.set(id, jobApplication);
+    
+    return jobApplication;
+  }
+  
+  async updateJobApplication(id: number, jobApplicationData: Partial<JobApplication>): Promise<JobApplication | undefined> {
+    const jobApplication = await this.getJobApplication(id);
+    if (!jobApplication) return undefined;
+    
+    const updatedJobApplication = ensureJobApplicationFields({ ...jobApplication, ...jobApplicationData });
+    this.jobApplicationsMap.set(id, updatedJobApplication);
+    return updatedJobApplication;
   }
 }
 

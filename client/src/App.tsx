@@ -14,6 +14,8 @@ import Invoices from "@/pages/invoices";
 import Interviews from "@/pages/interviews";
 import UserManagement from "@/pages/user-management";
 import Settings from "@/pages/settings";
+import Careers from "@/pages/careers";
+import JobManagement from "@/pages/job-management";
 
 function Router() {
   return (

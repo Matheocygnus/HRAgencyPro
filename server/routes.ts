@@ -9,7 +9,9 @@ import {
   insertHeroSchema, 
   insertContractSchema, 
   insertInvoiceSchema,
-  insertInterviewSchema
+  insertInterviewSchema,
+  insertJobOpeningSchema,
+  insertJobApplicationSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -463,6 +465,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userWithoutPassword);
     } catch (error) {
       res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+  
+  // Job Opening routes
+  app.get("/api/job-openings", async (req, res) => {
+    try {
+      const jobOpenings = await storage.getJobOpenings();
+      res.json(jobOpenings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve job openings" });
+    }
+  });
+  
+  app.get("/api/job-openings/active", async (req, res) => {
+    try {
+      const activeJobOpenings = await storage.getActiveJobOpenings();
+      res.json(activeJobOpenings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve active job openings" });
+    }
+  });
+  
+  app.get("/api/job-openings/:id", async (req, res) => {
+    try {
+      const jobOpening = await storage.getJobOpening(parseInt(req.params.id));
+      if (!jobOpening) {
+        return res.status(404).json({ message: "Job opening not found" });
+      }
+      res.json(jobOpening);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve job opening" });
+    }
+  });
+  
+  app.post("/api/job-openings", hasRole(["super_admin", "admin"]), async (req, res) => {
+    try {
+      const jobOpeningData = insertJobOpeningSchema.parse(req.body);
+      const jobOpening = await storage.createJobOpening(jobOpeningData);
+      res.status(201).json(jobOpening);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to create job opening" });
+    }
+  });
+  
+  app.put("/api/job-openings/:id", hasRole(["super_admin", "admin"]), async (req, res) => {
+    try {
+      const jobOpeningData = insertJobOpeningSchema.partial().parse(req.body);
+      const updatedJobOpening = await storage.updateJobOpening(parseInt(req.params.id), jobOpeningData);
+      if (!updatedJobOpening) {
+        return res.status(404).json({ message: "Job opening not found" });
+      }
+      res.json(updatedJobOpening);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to update job opening" });
+    }
+  });
+  
+  // Job Application routes
+  app.get("/api/job-applications", hasRole(["super_admin", "admin", "recruiter"]), async (req, res) => {
+    try {
+      const jobApplications = await storage.getJobApplications();
+      res.json(jobApplications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve job applications" });
+    }
+  });
+  
+  app.get("/api/job-applications/:id", hasRole(["super_admin", "admin", "recruiter"]), async (req, res) => {
+    try {
+      const jobApplication = await storage.getJobApplication(parseInt(req.params.id));
+      if (!jobApplication) {
+        return res.status(404).json({ message: "Job application not found" });
+      }
+      res.json(jobApplication);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve job application" });
+    }
+  });
+  
+  app.get("/api/job-openings/:id/applications", hasRole(["super_admin", "admin", "recruiter"]), async (req, res) => {
+    try {
+      const jobOpeningId = parseInt(req.params.id);
+      const jobApplications = await storage.getJobApplicationsByJobOpening(jobOpeningId);
+      res.json(jobApplications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve job applications for this job opening" });
+    }
+  });
+  
+  app.post("/api/job-applications", async (req, res) => {
+    try {
+      const jobApplicationData = insertJobApplicationSchema.parse(req.body);
+      const jobApplication = await storage.createJobApplication(jobApplicationData);
+      res.status(201).json(jobApplication);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to submit job application" });
+    }
+  });
+  
+  app.put("/api/job-applications/:id", hasRole(["super_admin", "admin", "recruiter"]), async (req, res) => {
+    try {
+      const jobApplicationData = insertJobApplicationSchema.partial().parse(req.body);
+      const updatedJobApplication = await storage.updateJobApplication(parseInt(req.params.id), jobApplicationData);
+      if (!updatedJobApplication) {
+        return res.status(404).json({ message: "Job application not found" });
+      }
+      res.json(updatedJobApplication);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to update job application" });
     }
   });
   
