@@ -187,11 +187,16 @@ export class PgStorage implements IStorage {
 
 // Helper function for interview fields
 function ensureInterviewFields(interviewData: any): Interview {
+  // Convert ISO date string to Date object if it's a string
+  const scheduledDate = typeof interviewData.scheduledDate === 'string' 
+    ? new Date(interviewData.scheduledDate) 
+    : interviewData.scheduledDate;
+    
   return {
     id: interviewData.id,
     prospectId: interviewData.prospectId,
     title: interviewData.title,
-    scheduledDate: interviewData.scheduledDate,
+    scheduledDate: scheduledDate,
     duration: interviewData.duration,
     meetingLink: interviewData.meetingLink || null,
     interviewerIds: interviewData.interviewerIds || [],

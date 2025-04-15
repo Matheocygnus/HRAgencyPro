@@ -152,13 +152,19 @@ function InterviewForm({ interview, onSuccess }: InterviewFormProps) {
   // Create or update interview
   const mutation = useMutation({
     mutationFn: async (data: InterviewFormValues) => {
+      // Convert date to ISO string to ensure proper serialization
+      const formattedData = {
+        ...data,
+        scheduledDate: data.scheduledDate.toISOString(),
+      };
+      
       if (interview) {
         // Update existing interview
-        const res = await apiRequest('PUT', `/api/interviews/${interview.id}`, data);
+        const res = await apiRequest('PUT', `/api/interviews/${interview.id}`, formattedData);
         return await res.json();
       } else {
         // Create new interview
-        const res = await apiRequest('POST', '/api/interviews', data);
+        const res = await apiRequest('POST', '/api/interviews', formattedData);
         return await res.json();
       }
     },
@@ -474,6 +480,7 @@ export default function InterviewsPage() {
   // Update interview status mutation
   const updateInterviewMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      // For status-only updates, we don't need to worry about the date conversion
       const res = await apiRequest('PUT', `/api/interviews/${id}`, { status });
       return await res.json();
     },
