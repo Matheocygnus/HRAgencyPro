@@ -128,122 +128,123 @@ export default function ClientsPage() {
               />
             </div>
           </div>
+        </CardHeader>
+        <CardContent>
           <Tabs defaultValue="clients" value={currentTab} onValueChange={setCurrentTab} className="mt-4">
             <TabsList className="grid w-full sm:w-[400px] grid-cols-2">
               <TabsTrigger value="clients">Clients</TabsTrigger>
               <TabsTrigger value="companies">Companies</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="clients" className="mt-4">
+              {isClientsLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Client Name</TableHead>
+                        <TableHead>Contact Person</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredClients.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8">
+                            No clients found. {isAdmin ? "Add a new client to get started." : ""}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredClients.map((client) => (
+                          <TableRow key={client.id}>
+                            <TableCell className="font-medium">{client.name}</TableCell>
+                            <TableCell>{client.contactPerson}</TableCell>
+                            <TableCell>{client.email}</TableCell>
+                            <TableCell>{client.phone || "N/A"}</TableCell>
+                            <TableCell>
+                              <Badge variant={client.status === "active" ? "default" : "secondary"}>
+                                {client.status === "active" ? "Active" : "Inactive"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {isAdmin && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                      <span className="sr-only">Open menu</span>
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() => updateClientStatusMutation.mutate({ 
+                                        id: client.id, 
+                                        status: client.status === "active" ? "inactive" : "active" 
+                                      })}
+                                    >
+                                      {client.status === "active" ? "Mark as Inactive" : "Mark as Active"}
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="companies" className="mt-4">
+              {isCompaniesLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Company Name</TableHead>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Industry</TableHead>
+                        <TableHead>Size</TableHead>
+                        <TableHead>Location</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCompanies.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8">
+                            No companies found. {isAdmin ? "Add a new company to get started." : ""}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredCompanies.map((company) => (
+                          <TableRow key={company.id}>
+                            <TableCell className="font-medium">{company.name}</TableCell>
+                            <TableCell>{getClientName(company.clientId)}</TableCell>
+                            <TableCell>{company.industry || "N/A"}</TableCell>
+                            <TableCell>{company.size || "N/A"}</TableCell>
+                            <TableCell>{company.location || "N/A"}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </TabsContent>
           </Tabs>
-        </CardHeader>
-        <CardContent>
-          <TabsContent value="clients" className="mt-0">
-            {isClientsLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Client Name</TableHead>
-                      <TableHead>Contact Person</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredClients.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
-                          No clients found. {isAdmin ? "Add a new client to get started." : ""}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredClients.map((client) => (
-                        <TableRow key={client.id}>
-                          <TableCell className="font-medium">{client.name}</TableCell>
-                          <TableCell>{client.contactPerson}</TableCell>
-                          <TableCell>{client.email}</TableCell>
-                          <TableCell>{client.phone || "N/A"}</TableCell>
-                          <TableCell>
-                            <Badge variant={client.status === "active" ? "default" : "secondary"}>
-                              {client.status === "active" ? "Active" : "Inactive"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {isAdmin && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => updateClientStatusMutation.mutate({ 
-                                      id: client.id, 
-                                      status: client.status === "active" ? "inactive" : "active" 
-                                    })}
-                                  >
-                                    {client.status === "active" ? "Mark as Inactive" : "Mark as Active"}
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="companies" className="mt-0">
-            {isCompaniesLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Company Name</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Industry</TableHead>
-                      <TableHead>Size</TableHead>
-                      <TableHead>Location</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCompanies.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8">
-                          No companies found. {isAdmin ? "Add a new company to get started." : ""}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredCompanies.map((company) => (
-                        <TableRow key={company.id}>
-                          <TableCell className="font-medium">{company.name}</TableCell>
-                          <TableCell>{getClientName(company.clientId)}</TableCell>
-                          <TableCell>{company.industry || "N/A"}</TableCell>
-                          <TableCell>{company.size || "N/A"}</TableCell>
-                          <TableCell>{company.location || "N/A"}</TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </TabsContent>
         </CardContent>
       </Card>
 
