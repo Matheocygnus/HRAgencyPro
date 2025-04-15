@@ -29,11 +29,12 @@ import { Invoice, Contract, Hero, Client, Company } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
+import InvoiceFormDialog from "@/components/dialogs/InvoiceFormDialog";
 import { useMockAuth } from "@/hooks/use-mock-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Invoice status badge configuration
-const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | "primary" | null }> = {
+const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | null }> = {
   "pending": { label: "Pending", variant: "secondary" },
   "paid": { label: "Paid", variant: "default" },
   "overdue": { label: "Overdue", variant: "destructive" },
@@ -275,22 +276,16 @@ export default function InvoicesPage() {
       </Card>
 
       {/* Create Invoice Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Create New Invoice</DialogTitle>
-          </DialogHeader>
-          <div className="text-center py-6">
-            <p>Invoice form will be implemented here.</p>
-            <Button 
-              className="mt-4" 
-              onClick={() => setIsAddDialogOpen(false)}
-            >
-              Close
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <InvoiceFormDialog 
+        isOpen={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={() => {
+          toast({
+            title: "Success",
+            description: "Invoice created successfully",
+          });
+        }}
+      />
     </Dashboard>
   );
 }

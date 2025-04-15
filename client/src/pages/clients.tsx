@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import ClientForm from "@/components/forms/ClientForm";
 import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
+import CompanyFormDialog from "@/components/dialogs/CompanyFormDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMockAuth } from "@/hooks/use-mock-auth";
 
@@ -259,23 +260,16 @@ export default function ClientsPage() {
       </Dialog>
 
       {/* Add Company Dialog */}
-      <Dialog open={isAddCompanyDialogOpen} onOpenChange={setIsAddCompanyDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add New Company</DialogTitle>
-          </DialogHeader>
-          {/* CompanyForm component would be implemented similar to ClientForm */}
-          <div className="text-center py-6">
-            <p>Company form will be implemented here.</p>
-            <Button 
-              className="mt-4" 
-              onClick={() => setIsAddCompanyDialogOpen(false)}
-            >
-              Close
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CompanyFormDialog 
+        isOpen={isAddCompanyDialogOpen}
+        onOpenChange={setIsAddCompanyDialogOpen}
+        onSuccess={() => {
+          toast({
+            title: "Success",
+            description: "Company added successfully",
+          });
+        }}
+      />
     </Dashboard>
   );
 }
