@@ -57,6 +57,7 @@ import {
   XCircle,
   Clock
 } from 'lucide-react';
+import Dashboard from '@/components/layout/Dashboard';
 
 // Form schema for job posting with validation
 const jobOpeningSchema = z.object({
@@ -290,7 +291,8 @@ export default function JobManagementPage() {
   };
 
   return (
-    <div className="p-6">
+    <Dashboard>
+      <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Job Management</h1>
         <div className="flex items-center gap-4">
@@ -829,5 +831,6 @@ export default function JobManagementPage() {
         </SheetContent>
       </Sheet>
     </div>
+    </Dashboard>
   );
 }
