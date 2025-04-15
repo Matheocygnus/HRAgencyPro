@@ -11,7 +11,8 @@ import {
   insertInvoiceSchema,
   insertInterviewSchema,
   insertJobOpeningSchema,
-  insertJobApplicationSchema
+  insertJobApplicationSchema,
+  insertJobRequestSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
