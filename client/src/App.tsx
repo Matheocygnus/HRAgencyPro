@@ -6,7 +6,7 @@ import AuthPageSimple from "@/pages/auth-page-simple";
 import LoginPage from "@/pages/login-page";
 import Dashboard from "@/pages/dashboard";
 import DashboardDev from "@/pages/dashboard-dev";
-import Prospects from "@/pages/prospects";
+import Prospects from "@/pages/prospects-new";
 import Clients from "@/pages/clients";
 import Heroes from "@/pages/heroes";
 import Contracts from "@/pages/contracts";
@@ -17,40 +17,46 @@ import Settings from "@/pages/settings";
 function Router() {
   return (
     <Switch>
-      {/* Use DashboardDev everywhere since it doesn't rely on authentication */}
+      {/* Main dashboard - accessible from / */}
       <Route path="/">
-        <DashboardDev />
+        <Dashboard />
       </Route>
       <Route path="/dashboard">
-        <DashboardDev />
+        <Dashboard />
       </Route>
+      
+      {/* Specialized pages with appropriate visualizations */}
       <Route path="/prospects">
-        <DashboardDev />
+        <Prospects />
       </Route>
       <Route path="/clients">
-        <DashboardDev />
+        <Clients />
       </Route>
       <Route path="/heroes">
-        <DashboardDev />
+        <Heroes />
       </Route>
       <Route path="/contracts">
-        <DashboardDev />
+        <Contracts />
       </Route>
       <Route path="/invoices">
-        <DashboardDev />
+        <Invoices />
       </Route>
       <Route path="/users">
-        <DashboardDev />
+        <UserManagement />
       </Route>
       <Route path="/settings">
-        <DashboardDev />
+        <Settings />
       </Route>
+      
+      {/* Login and auth pages redirect to dashboard in dev mode */}
       <Route path="/login">
-        <DashboardDev />
+        <Dashboard />
       </Route>
       <Route path="/auth">
-        <DashboardDev />
+        <Dashboard />
       </Route>
+      
+      {/* Original dev page as fallback */}
       <Route path="/dev">
         <DashboardDev />
       </Route>

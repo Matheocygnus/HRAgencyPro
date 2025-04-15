@@ -1,11 +1,11 @@
 import { ReactNode, useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { useAuth } from "@/hooks/use-auth";
+import { useMockAuth } from "@/hooks/use-mock-auth";
 
 export default function Dashboard({ children }: { children: ReactNode }) {
   const [isMobileOpen, setMobileOpen] = useState(false);
-  const { user } = useAuth();
+  const { user } = useMockAuth();
   
   return (
     <div className="flex h-screen overflow-hidden">

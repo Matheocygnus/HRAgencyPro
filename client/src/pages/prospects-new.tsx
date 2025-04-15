@@ -6,14 +6,6 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +35,7 @@ const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outli
   "rejected": { label: "Rejected", variant: "destructive" }
 };
 
-export default function ProspectsPage() {
+export default function Prospects() {
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -123,7 +115,7 @@ export default function ProspectsPage() {
   return (
     <Dashboard>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Prospects</h1>
+        <h1 className="text-2xl font-bold">Prospects Pipeline</h1>
         <Button onClick={() => setIsAddDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Prospect
@@ -132,7 +124,7 @@ export default function ProspectsPage() {
       
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Manage Prospects</CardTitle>
+          <CardTitle>Recruiting Pipeline</CardTitle>
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -163,6 +155,7 @@ export default function ProspectsPage() {
             </Select>
           </div>
         </CardHeader>
+        
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
@@ -513,7 +506,7 @@ export default function ProspectsPage() {
                 </div>
               </div>
             </div>
-          )
+          )}
         </CardContent>
       </Card>
 

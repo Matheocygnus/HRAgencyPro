@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, useRoute } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useMockAuth } from "@/hooks/use-mock-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,7 @@ export default function Header({
   setMobileOpen: (open: boolean) => void;
 }) {
   const [location] = useLocation();
-  const { user, logoutMutation } = useAuth();
+  const { user, logoutMutation } = useMockAuth();
   const pageTitle = routeTitles[location] || "Not Found";
   
   const handleLogout = () => {

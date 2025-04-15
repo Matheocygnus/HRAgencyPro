@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useMockAuth } from "@/hooks/use-mock-auth";
 import { cn } from "@/lib/utils";
 
 const navigation = {
@@ -22,7 +22,7 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: {
   setMobileOpen: (open: boolean) => void;
 }) {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user } = useMockAuth();
   
   const isAdmin = user && (user.role === "admin" || user.role === "super_admin");
   const isSuperAdmin = user && user.role === "super_admin";
