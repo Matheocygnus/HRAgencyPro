@@ -1,19 +1,30 @@
 import { Link, useLocation } from "wouter";
 import { useMockAuth } from "@/hooks/use-mock-auth";
 import { cn } from "@/lib/utils";
+import { 
+  LayoutDashboard, 
+  Building2, 
+  UserRound, 
+  Medal, 
+  FileCheck, 
+  FileText, 
+  Users, 
+  Settings, 
+  LogOut
+} from "lucide-react";
 
 const navigation = {
   main: [
-    { name: "Dashboard", path: "/", icon: "fa-home" },
-    { name: "Clients & Companies", path: "/clients", icon: "fa-building" },
-    { name: "Prospects", path: "/prospects", icon: "fa-user-tie" },
-    { name: "Heroes", path: "/heroes", icon: "fa-medal" },
-    { name: "Contracts", path: "/contracts", icon: "fa-file-contract" },
-    { name: "Invoices", path: "/invoices", icon: "fa-file-invoice-dollar" },
+    { name: "Dashboard", path: "/", icon: LayoutDashboard },
+    { name: "Prospects", path: "/prospects", icon: UserRound },
+    { name: "Interviews", path: "/interviews", icon: FileCheck },
+    { name: "Heroes", path: "/heroes", icon: Medal },
+    { name: "Companies", path: "/clients", icon: Building2 },
+    { name: "Invoices", path: "/invoices", icon: FileText },
   ],
   admin: [
-    { name: "User Management", path: "/users", icon: "fa-users-cog" },
-    { name: "System Settings", path: "/settings", icon: "fa-cog" },
+    { name: "User Management", path: "/users", icon: Users },
+    { name: "System Settings", path: "/settings", icon: Settings },
   ],
 };
 
@@ -45,66 +56,78 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: {
         />
       )}
       <aside className={sidebarClasses}>
-        <div className="p-4 border-b border-primary-dark flex items-center">
-          <div className="bg-white rounded-lg p-2 mr-2">
-            <div className="flex items-center justify-center">
-              <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 6H20M4 12H20M4 18H11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="16" cy="18" r="3" stroke="currentColor" strokeWidth="2"/>
-                <path d="M16 16.5L16 19.5M14.5 18L17.5 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </div>
+        <div className="p-4 border-b border-blue-800 flex items-center">
+          <div className="bg-white rounded-lg p-1.5 mr-3 flex items-center justify-center">
+            <img 
+              src="/client/src/assets/logo.jpg" 
+              alt="Remote Hero Logo"
+              className="w-8 h-8 object-contain"
+            />
           </div>
-          <div className="text-white font-semibold text-lg">REMOTE <span className="font-bold">HERO</span></div>
+          <div className="text-white font-semibold text-lg">Remote <span className="font-bold">Hero</span></div>
         </div>
         
-        <nav className="p-4">
-          <div className="mb-8">
-            <div className="text-neutral-light text-xs font-semibold uppercase tracking-wider mb-2">Main</div>
-            <ul>
-              {navigation.main.map((item) => (
-                <li key={item.path} className="mb-1">
+        <nav className="py-4">
+          <ul>
+            {navigation.main.map((item) => {
+              const Icon = item.icon;
+              return (
+                <li key={item.path} className="px-3 mb-1">
                   <Link href={item.path} onClick={handleNavClick}>
                     <a className={cn(
-                      "flex items-center px-3 py-2 rounded-md",
+                      "flex items-center px-3 py-2.5 rounded-md text-sm font-medium",
                       location === item.path
-                        ? "text-white bg-primary-dark"
-                        : "text-neutral-light hover:text-white hover:bg-primary-dark"
+                        ? "bg-blue-700 text-white"
+                        : "text-blue-100 hover:text-white hover:bg-blue-700"
                     )}>
-                      <i className={`fas ${item.icon} w-5 h-5 mr-3`}></i>
+                      <Icon className="w-5 h-5 mr-3" />
                       <span>{item.name}</span>
                     </a>
                   </Link>
                 </li>
-              ))}
-            </ul>
-          </div>
+              );
+            })}
+          </ul>
           
           {/* Admin Navigation Section - visible only to admins and super admins */}
           {isAdmin && (
-            <div className="mb-8">
-              <div className="text-neutral-light text-xs font-semibold uppercase tracking-wider mb-2">Administration</div>
+            <>
+              <div className="border-t border-blue-800 my-4 mx-4"></div>
               <ul>
-                {navigation.admin.map((item) => (
-                  <li key={item.path} className="mb-1">
-                    {(item.path !== '/users' || isSuperAdmin) && (
-                      <Link href={item.path} onClick={handleNavClick}>
-                        <a className={cn(
-                          "flex items-center px-3 py-2 rounded-md",
-                          location === item.path
-                            ? "text-white bg-primary-dark"
-                            : "text-neutral-light hover:text-white hover:bg-primary-dark"
-                        )}>
-                          <i className={`fas ${item.icon} w-5 h-5 mr-3`}></i>
-                          <span>{item.name}</span>
-                        </a>
-                      </Link>
-                    )}
-                  </li>
-                ))}
+                {navigation.admin.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.path} className="px-3 mb-1">
+                      {(item.path !== '/users' || isSuperAdmin) && (
+                        <Link href={item.path} onClick={handleNavClick}>
+                          <a className={cn(
+                            "flex items-center px-3 py-2.5 rounded-md text-sm font-medium",
+                            location === item.path
+                              ? "bg-blue-700 text-white"
+                              : "text-blue-100 hover:text-white hover:bg-blue-700"
+                          )}>
+                            <Icon className="w-5 h-5 mr-3" />
+                            <span>{item.name}</span>
+                          </a>
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
-            </div>
+            </>
           )}
+          
+          <div className="border-t border-blue-800 my-4 mx-4"></div>
+          <div className="px-3">
+            <button 
+              onClick={handleNavClick}
+              className="flex items-center px-3 py-2.5 rounded-md text-sm font-medium text-blue-100 hover:text-white hover:bg-blue-700 w-full"
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </nav>
       </aside>
     </>

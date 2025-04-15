@@ -3,7 +3,9 @@ import { useLocation, useRoute } from "wouter";
 import { useMockAuth } from "@/hooks/use-mock-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { Bell, Search, User, Settings, LogOut, Menu } from "lucide-react";
 
 // Map of route to header title
 const routeTitles: Record<string, string> = {
@@ -39,52 +41,62 @@ export default function Header({
     "User";
 
   return (
-    <header className="bg-white border-b border-neutral-light">
-      <div className="flex items-center justify-between px-6 py-3">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center">
           <button 
-            className="md:hidden text-neutral-darkest mr-4"
+            className="md:hidden text-slate-700 mr-3"
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
           >
-            <i className="fas fa-bars text-xl"></i>
+            <Menu className="h-6 w-6" />
           </button>
-          <h1 className="text-xl font-semibold">{pageTitle}</h1>
+          <h1 className="text-xl font-semibold md:hidden">{pageTitle}</h1>
+        </div>
+        
+        <div className="hidden md:flex md:w-96 lg:w-[500px] items-center relative">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Search..."
+              className="w-full rounded-full bg-slate-100 border-transparent px-10 py-2 focus-visible:ring-1"
+            />
+          </div>
         </div>
         
         <div className="flex items-center">
-          <button className="mr-4 relative text-neutral-dark hover:text-neutral-darkest">
-            <i className="far fa-bell text-xl"></i>
-            <span className="absolute top-0 right-0 bg-status-error w-2 h-2 rounded-full"></span>
-          </button>
+          <div className="relative mr-5">
+            <button className="text-slate-600 hover:text-slate-900 p-1">
+              <Bell className="h-5 w-5" />
+            </button>
+            <span className="absolute top-0 right-0 bg-red-500 w-2 h-2 rounded-full"></span>
+          </div>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center">
-                <Avatar className="w-8 h-8 mr-2">
+                <Avatar className="w-8 h-8 ring-2 ring-slate-100">
                   <AvatarImage src={user?.avatar} />
-                  <AvatarFallback className="bg-primary text-white">{userInitials}</AvatarFallback>
+                  <AvatarFallback className="bg-primary text-white font-medium">{userInitials}</AvatarFallback>
                 </Avatar>
-                <span className="hidden md:block font-medium">{userFullName}</span>
-                <i className="fas fa-chevron-down ml-2 text-xs text-neutral-medium"></i>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <div className="px-2 py-1.5 text-sm font-medium">
+              <div className="px-3 py-2 text-sm font-medium">
                 {user && (
                   <div className="flex flex-col">
-                    <span>{userFullName}</span>
-                    <span className="text-xs text-neutral-medium">{user.email}</span>
+                    <span className="font-semibold">{userFullName}</span>
+                    <span className="text-xs text-slate-500 mt-0.5">{user.email}</span>
                   </div>
                 )}
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer">
-                <i className="fas fa-user-circle mr-2"></i>
+                <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer">
-                <i className="fas fa-cog mr-2"></i>
+                <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -93,12 +105,8 @@ export default function Header({
                 onClick={handleLogout}
                 disabled={logoutMutation.isPending}
               >
-                {logoutMutation.isPending ? (
-                  <i className="fas fa-spinner fa-spin mr-2"></i>
-                ) : (
-                  <i className="fas fa-sign-out-alt mr-2"></i>
-                )}
-                <span>Log out</span>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sign out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
