@@ -475,21 +475,21 @@ export default function JobManagementPage() {
           
           <Form {...jobForm}>
             <form onSubmit={jobForm.handleSubmit(handleJobFormSubmit)} className="space-y-4">
-              <FormField
-                control={jobForm.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Job Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Senior React Developer" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={jobForm.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Job Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Senior React Developer" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <FormField
                   control={jobForm.control}
                   name="location"
@@ -504,6 +504,22 @@ export default function JobManagementPage() {
                   )}
                 />
                 
+                <FormField
+                  control={jobForm.control}
+                  name="salary"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Salary Range (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. $80,000 - $100,000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
                 <FormField
                   control={jobForm.control}
                   name="jobType"
@@ -530,80 +546,70 @@ export default function JobManagementPage() {
                     </FormItem>
                   )}
                 />
+                
+                <FormField
+                  control={jobForm.control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Job Status</FormLabel>
+                        <FormDescription className="text-xs">
+                          {field.value ? "Visible on careers page" : "Not visible to applicants"}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <div>
+                  {/* Empty space for alignment */}
+                </div>
               </div>
               
-              <FormField
-                control={jobForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Job Description</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Describe the role, responsibilities, and qualifications..."
-                        className="min-h-[100px]"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={jobForm.control}
-                name="requirements"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Requirements</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="List the required skills, experience, and qualifications..."
-                        className="min-h-[100px]"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={jobForm.control}
-                name="salary"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Salary Range (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. $80,000 - $100,000" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={jobForm.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Job Status</FormLabel>
-                      <FormDescription>
-                        {field.value ? 
-                          "This job is active and will be visible on the careers page" : 
-                          "This job is inactive and will not be visible to applicants"}
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={jobForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Job Description</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Describe the role, responsibilities, and qualifications..."
+                          className="min-h-[80px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={jobForm.control}
+                  name="requirements"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Requirements</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="List the required skills, experience, and qualifications..."
+                          className="min-h-[80px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               
               <DialogFooter className="mt-6">
                 <Button 
@@ -638,7 +644,7 @@ export default function JobManagementPage() {
 
       {/* Application Details Sheet */}
       <Sheet open={isApplicationSheetOpen} onOpenChange={setIsApplicationSheetOpen}>
-        <SheetContent className="sm:max-w-[500px]">
+        <SheetContent className="max-w-2xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Application Details</SheetTitle>
             <SheetDescription>
@@ -709,64 +715,93 @@ export default function JobManagementPage() {
                 <h3 className="font-medium mb-4">Update Status</h3>
                 <Form {...statusForm}>
                   <form onSubmit={statusForm.handleSubmit(handleStatusFormSubmit)} className="space-y-4">
-                    <FormField
-                      control={statusForm.control}
-                      name="status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Application Status</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={statusForm.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Application Status</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="new">
+                                  <div className="flex items-center">
+                                    <Clock className="mr-2 h-4 w-4" />
+                                    New
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="in_review">
+                                  <div className="flex items-center">
+                                    <Search className="mr-2 h-4 w-4" />
+                                    In Review
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="interview">
+                                  <div className="flex items-center">
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Interview
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="offered">
+                                  <div className="flex items-center">
+                                    <Briefcase className="mr-2 h-4 w-4" />
+                                    Offered
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="hired">
+                                  <div className="flex items-center">
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Hired
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="rejected">
+                                  <div className="flex items-center">
+                                    <XCircle className="mr-2 h-4 w-4" />
+                                    Rejected
+                                  </div>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="pt-7">
+                        <div className="flex items-center space-x-2">
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => setIsApplicationSheetOpen(false)}
                           >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="new">
-                                <div className="flex items-center">
-                                  <Clock className="mr-2 h-4 w-4" />
-                                  New
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="in_review">
-                                <div className="flex items-center">
-                                  <Search className="mr-2 h-4 w-4" />
-                                  In Review
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="interview">
-                                <div className="flex items-center">
-                                  <UserPlus className="mr-2 h-4 w-4" />
-                                  Interview
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="offered">
-                                <div className="flex items-center">
-                                  <Briefcase className="mr-2 h-4 w-4" />
-                                  Offered
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="hired">
-                                <div className="flex items-center">
-                                  <CheckCircle className="mr-2 h-4 w-4" />
-                                  Hired
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="rejected">
-                                <div className="flex items-center">
-                                  <XCircle className="mr-2 h-4 w-4" />
-                                  Rejected
-                                </div>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                            Cancel
+                          </Button>
+                          <Button 
+                            type="submit"
+                            size="sm"
+                            disabled={updateApplicationStatusMutation.isPending}
+                          >
+                            {updateApplicationStatusMutation.isPending ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Updating...
+                              </>
+                            ) : (
+                              'Update Status'
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                     
                     <FormField
                       control={statusForm.control}
@@ -777,7 +812,7 @@ export default function JobManagementPage() {
                           <FormControl>
                             <Textarea 
                               placeholder="Add notes about this candidate (internal only)..."
-                              className="min-h-[100px]"
+                              className="min-h-[80px]"
                               {...field} 
                             />
                           </FormControl>
@@ -785,29 +820,7 @@ export default function JobManagementPage() {
                         </FormItem>
                       )}
                     />
-                    
-                    <div className="flex justify-end space-x-2 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsApplicationSheetOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit"
-                        disabled={updateApplicationStatusMutation.isPending}
-                      >
-                        {updateApplicationStatusMutation.isPending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Updating...
-                          </>
-                        ) : (
-                          'Update Status'
-                        )}
-                      </Button>
-                    </div>
+
                   </form>
                 </Form>
               </div>
