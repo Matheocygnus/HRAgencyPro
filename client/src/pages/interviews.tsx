@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { CalendarIcon, Plus, Search, MoreHorizontal, Video, UserCheck, ClipboardCheck, Clock } from 'lucide-react';
+import { CalendarIcon, Calendar as CalendarIcon2, Plus, Search, MoreHorizontal, Video, UserCheck, ClipboardCheck, Clock } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -131,7 +131,9 @@ function InterviewForm({ interview, onSuccess }: InterviewFormProps) {
         scheduledDate: new Date(interview.scheduledDate),
         duration: interview.duration,
         meetingLink: interview.meetingLink || undefined,
-        interviewerIds: interview.interviewerIds as number[] || [],
+        interviewerIds: Array.isArray(interview.interviewerIds) 
+          ? interview.interviewerIds.map(id => typeof id === 'string' ? parseInt(id) : id)
+          : [],
         notes: interview.notes || undefined,
         status: interview.status as "scheduled" | "completed" | "cancelled",
       }
@@ -582,7 +584,7 @@ export default function InterviewsPage() {
               </div>
             ) : filteredInterviews.length === 0 ? (
               <div className="text-center py-8">
-                <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
+                <CalendarIcon2 className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-semibold">No interviews found</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {searchQuery 
@@ -656,7 +658,7 @@ export default function InterviewsPage() {
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start mt-4">
                           <div className="flex items-start space-x-2">
-                            <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                            <CalendarIcon2 className="h-5 w-5 text-muted-foreground mt-0.5" />
                             <div>
                               <p className="text-sm font-medium">Date & Time</p>
                               <p className="text-sm text-muted-foreground">

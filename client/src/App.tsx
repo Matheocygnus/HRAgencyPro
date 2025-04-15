@@ -11,6 +11,7 @@ import Clients from "@/pages/clients";
 import Heroes from "@/pages/heroes";
 import Contracts from "@/pages/contracts";
 import Invoices from "@/pages/invoices";
+import Interviews from "@/pages/interviews";
 import UserManagement from "@/pages/user-management";
 import Settings from "@/pages/settings";
 
@@ -40,6 +41,9 @@ function Router() {
       </Route>
       <Route path="/invoices">
         <Invoices />
+      </Route>
+      <Route path="/interviews">
+        <Interviews />
       </Route>
       <Route path="/users">
         <UserManagement />
