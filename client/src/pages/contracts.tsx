@@ -17,7 +17,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -28,24 +27,24 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Contract, Hero, Client, Company } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import ContractForm from "@/components/forms/ContractForm";
-import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
+import { Loader2, MoreHorizontal, Plus, Search, FileText } from "lucide-react";
 import { useMockAuth } from "@/hooks/use-mock-auth";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ContractFormDialog from "@/components/dialogs/ContractFormDialog";
 
 // Contract status badge configuration
-const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | "primary" | null }> = {
+const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | null }> = {
   "draft": { label: "Draft", variant: "secondary" },
-  "signed": { label: "Signed", variant: "primary" },
+  "signed": { label: "Signed", variant: "outline" },
   "active": { label: "Active", variant: "default" },
-  "completed": { label: "Completed", variant: "outline" },
+  "completed": { label: "Completed", variant: null },
   "terminated": { label: "Terminated", variant: "destructive" }
 };
 
 export default function ContractsPage() {
   const { toast } = useToast();
   const { user } = useMockAuth();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddContractDialogOpen, setIsAddContractDialogOpen] = useState(false);
+  const [editContractId, setEditContractId] = useState<number | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -70,28 +69,6 @@ export default function ContractsPage() {
   // Fetch companies
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
-  });
-
-  // Update contract status mutation
-  const updateContractMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const res = await apiRequest("PUT", `/api/contracts/${id}`, { status });
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Contract status updated successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
 
   // Filter contracts based on search query and status
@@ -121,7 +98,8 @@ export default function ContractsPage() {
   // Get hero name by ID
   const getHeroName = (heroId: number) => {
     const hero = heroes.find(h => h.id === heroId);
-    return hero ? `Hero #${hero.id}` : `Hero #${heroId}`;
+    const heroProspectId = hero?.prospectId;
+    return hero ? `Hero #${heroId} (Prospect ID: ${heroProspectId})` : `Hero #${heroId}`;
   };
 
   // Format currency
@@ -132,14 +110,36 @@ export default function ContractsPage() {
     }).format(amount);
   };
 
+  // Format date
+  const formatDate = (date: string | null) => {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString();
+  };
+
+  // Handle edit contract
+  const handleEditContract = (id: number) => {
+    setEditContractId(id);
+    setIsAddContractDialogOpen(true);
+  };
+
+  // Download contract document
+  const handleDownloadDocument = (contractId: number) => {
+    if (isAdmin) {
+      window.open(`/api/contracts/${contractId}/document`, '_blank');
+    }
+  };
+
   return (
     <Dashboard>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Contracts</h1>
         {isAdmin && (
-          <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Button onClick={() => {
+            setEditContractId(undefined);
+            setIsAddContractDialogOpen(true);
+          }}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Contract
+            Create Contract
           </Button>
         )}
       </div>
@@ -157,22 +157,18 @@ export default function ContractsPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Select 
+            <select 
+              className="h-10 w-[180px] rounded-md border border-input bg-background px-3 py-2"
               value={statusFilter} 
-              onValueChange={setStatusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="signed">Signed</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="terminated">Terminated</SelectItem>
-              </SelectContent>
-            </Select>
+              <option value="all">All Statuses</option>
+              <option value="draft">Draft</option>
+              <option value="signed">Signed</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="terminated">Terminated</option>
+            </select>
           </div>
         </CardHeader>
         <CardContent>
@@ -189,7 +185,8 @@ export default function ContractsPage() {
                     <TableHead>Hero</TableHead>
                     <TableHead>Client</TableHead>
                     <TableHead>Company</TableHead>
-                    <TableHead>Dates</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>End Date</TableHead>
                     <TableHead>Compensation</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -198,8 +195,8 @@ export default function ContractsPage() {
                 <TableBody>
                   {filteredContracts.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
-                        No contracts found. {isAdmin ? "Add a new contract to get started." : ""}
+                      <TableCell colSpan={9} className="text-center py-8">
+                        No contracts found. {isAdmin ? "Create a new contract to get started." : ""}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -212,49 +209,56 @@ export default function ContractsPage() {
                           <TableCell>{getHeroName(contract.heroId)}</TableCell>
                           <TableCell>{getClientName(contract.clientId)}</TableCell>
                           <TableCell>{getCompanyName(contract.companyId)}</TableCell>
-                          <TableCell>
-                            {new Date(contract.startDate).toLocaleDateString()}
-                            {contract.endDate && (
-                              <> - {new Date(contract.endDate).toLocaleDateString()}</>
-                            )}
-                          </TableCell>
+                          <TableCell>{formatDate(contract.startDate)}</TableCell>
+                          <TableCell>{formatDate(contract.endDate)}</TableCell>
                           <TableCell>{formatCurrency(contract.compensation)}</TableCell>
                           <TableCell>
                             <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            {isAdmin && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>View Details</DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => updateContractMutation.mutate({ 
-                                      id: contract.id, 
-                                      status: "signed" 
-                                    })}
-                                    disabled={contract.status !== "draft"}
-                                  >
-                                    Mark as Signed
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => updateContractMutation.mutate({ 
-                                      id: contract.id, 
-                                      status: "active" 
-                                    })}
-                                    disabled={contract.status !== "signed"}
-                                  >
-                                    Mark as Active
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem>Generate Invoice</DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
+                            <div className="flex justify-end space-x-2">
+                              {contract.document && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  title="View Document"
+                                  onClick={() => handleDownloadDocument(contract.id)}
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {isAdmin && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                      <span className="sr-only">Open menu</span>
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleEditContract(contract.id)}>
+                                      Edit Contract
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        // This would update the contract status
+                                        // based on the current status
+                                        const newStatus = contract.status === 'draft' ? 'signed' :
+                                                         contract.status === 'signed' ? 'active' :
+                                                         contract.status === 'active' ? 'completed' : 'draft';
+                                        
+                                        toast({
+                                          title: "Status update",
+                                          description: `Contract status would be updated to ${newStatus}.`,
+                                        });
+                                      }}
+                                    >
+                                      Update Status
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -267,15 +271,20 @@ export default function ContractsPage() {
         </CardContent>
       </Card>
 
-      {/* Add Contract Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Create New Contract</DialogTitle>
-          </DialogHeader>
-          <ContractForm onSuccess={() => setIsAddDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
+      {/* Contract Dialog */}
+      <ContractFormDialog 
+        isOpen={isAddContractDialogOpen}
+        onOpenChange={setIsAddContractDialogOpen}
+        contractId={editContractId}
+        onSuccess={() => {
+          toast({
+            title: "Success",
+            description: editContractId ? "Contract updated successfully" : "Contract created successfully",
+          });
+          setEditContractId(undefined);
+        }}
+        title={editContractId ? "Edit Contract" : "Create New Contract"}
+      />
     </Dashboard>
   );
 }

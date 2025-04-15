@@ -11,7 +11,8 @@ import {
   Users, 
   Settings, 
   LogOut,
-  Briefcase
+  Briefcase,
+  FileSignature
 } from "lucide-react";
 
 const navigation = {
@@ -21,6 +22,7 @@ const navigation = {
     { name: "Interviews", path: "/interviews", icon: FileCheck },
     { name: "Heroes", path: "/heroes", icon: Medal },
     { name: "Companies", path: "/clients", icon: Building2 },
+    { name: "Contracts", path: "/contracts", icon: FileSignature },
     { name: "Invoices", path: "/invoices", icon: FileText },
   ],
   admin: [
