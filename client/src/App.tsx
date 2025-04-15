@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ProtectedRoute } from "./lib/protected-route";
 import NotFound from "@/pages/not-found";
 import AuthPageSimple from "@/pages/auth-page-simple";
+import LoginPage from "@/pages/login-page";
 import Dashboard from "@/pages/dashboard";
 import DashboardDev from "@/pages/dashboard-dev";
 import Prospects from "@/pages/prospects";
@@ -17,36 +18,26 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth">
-        <AuthPageSimple />
+        <LoginPage />
       </Route>
-      {/* Redirect from root to dashboard in development mode */}
-      <Route path="/">
+      <Route path="/login">
+        <LoginPage />
+      </Route>
+      
+      {/* Protected routes (requires authentication) */}
+      <ProtectedRoute path="/" component={Dashboard} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/prospects" component={Prospects} />
+      <ProtectedRoute path="/clients" component={Clients} />
+      <ProtectedRoute path="/heroes" component={Heroes} />
+      <ProtectedRoute path="/contracts" component={Contracts} />
+      <ProtectedRoute path="/invoices" component={Invoices} />
+      <ProtectedRoute path="/users" component={UserManagement} />
+      <ProtectedRoute path="/settings" component={Settings} />
+      
+      {/* Development routes (for testing without auth) */}
+      <Route path="/dev">
         <DashboardDev />
-      </Route>
-      {/* Direct access routes for development and preview */}
-      <Route path="/dashboard">
-        <DashboardDev />
-      </Route>
-      <Route path="/prospects">
-        <Prospects />
-      </Route>
-      <Route path="/clients">
-        <Clients />
-      </Route>
-      <Route path="/heroes">
-        <Heroes />
-      </Route>
-      <Route path="/contracts">
-        <Contracts />
-      </Route>
-      <Route path="/invoices">
-        <Invoices />
-      </Route>
-      <Route path="/users">
-        <UserManagement />
-      </Route>
-      <Route path="/settings">
-        <Settings />
       </Route>
       
       {/* 404 page for non-existing routes */}
