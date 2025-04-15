@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dashboard from "@/components/layout/Dashboard";
 import { 
   Card, 
@@ -37,7 +37,8 @@ import {
   BookOpen,
   MapPin,
   Building,
-  DollarSign
+  DollarSign,
+  FileText
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -146,6 +147,15 @@ export default function Prospects() {
   };
 
   const handleStatusChange = (prospectId: number, newStatus: string) => {
+    // Optimistic UI update - update local state immediately
+    const updatedProspects = prospects.map(prospect => 
+      prospect.id === prospectId 
+        ? { ...prospect, status: newStatus }
+        : prospect
+    );
+    setProspects(updatedProspects);
+    
+    // Then update on the server
     updateProspectMutation.mutate({ id: prospectId, status: newStatus });
   };
 
