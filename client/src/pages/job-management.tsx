@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { FormDescription } from '@/components/ui/form';
 import {
   Sheet,
   SheetContent,
@@ -278,7 +279,7 @@ export default function JobManagementPage() {
       case 'offered':
         return <Badge className="bg-purple-100 text-purple-800 border-purple-300">Offered</Badge>;
       case 'hired':
-        return <Badge variant="success" className="bg-green-100 text-green-800 border-green-300">Hired</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Hired</Badge>;
       case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>;
       default:
@@ -355,7 +356,7 @@ export default function JobManagementPage() {
                       <TableCell>{job.jobType}</TableCell>
                       <TableCell>
                         {job.isActive ? (
-                          <Badge variant="success" className="bg-green-100 text-green-800 border-green-300">
+                          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
                             Active
                           </Badge>
                         ) : (

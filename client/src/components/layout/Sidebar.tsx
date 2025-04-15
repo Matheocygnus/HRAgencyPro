@@ -10,7 +10,8 @@ import {
   FileText, 
   Users, 
   Settings, 
-  LogOut
+  LogOut,
+  Briefcase
 } from "lucide-react";
 
 const navigation = {
@@ -24,6 +25,7 @@ const navigation = {
   ],
   admin: [
     { name: "User Management", path: "/users", icon: Users },
+    { name: "Job Management", path: "/jobs", icon: Briefcase },
     { name: "System Settings", path: "/settings", icon: Settings },
   ],
 };

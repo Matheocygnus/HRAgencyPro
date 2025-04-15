@@ -122,7 +122,15 @@ export default function CareersPage() {
   }
 
   // Group jobs by job type for tabs
-  const jobTypes = jobOpenings ? [...new Set(jobOpenings.map(job => job.jobType))] : [];
+  const jobTypesSet = new Set<string>();
+  if (jobOpenings) {
+    jobOpenings.forEach(job => {
+      if (job.jobType) {
+        jobTypesSet.add(job.jobType);
+      }
+    });
+  }
+  const jobTypes = Array.from(jobTypesSet);
 
   return (
     <div className="container mx-auto px-4 py-8">

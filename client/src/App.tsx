@@ -54,6 +54,16 @@ function Router() {
         <Settings />
       </Route>
       
+      {/* Job management */}
+      <Route path="/jobs">
+        <JobManagement />
+      </Route>
+      
+      {/* Public careers page */}
+      <Route path="/careers">
+        <Careers />
+      </Route>
+      
       {/* Login and auth pages redirect to dashboard in dev mode */}
       <Route path="/login">
         <Dashboard />
