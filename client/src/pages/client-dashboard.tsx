@@ -101,6 +101,7 @@ const jobRequestSchema = z.object({
 export default function ClientDashboardPage() {
   const { user } = useMockAuth();
   const [isRequestFormOpen, setIsRequestFormOpen] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<number | null>(null);
   const { toast } = useToast();
   
   // Client information fetch
@@ -347,7 +348,7 @@ export default function ClientDashboardPage() {
                     {jobRequests.map((request) => (
                       <TableRow key={request.id}>
                         <TableCell className="font-medium">{request.title}</TableCell>
-                        <TableCell>{request.companyName || 'Not specified'}</TableCell>
+                        <TableCell>{companies?.find(c => c.id === request.companyId)?.name || request.companyName || 'Not specified'}</TableCell>
                         <TableCell className="capitalize">{request.jobType?.replace('_', ' ') || 'Not specified'}</TableCell>
                         <TableCell>{formatDate(request.createdAt)}</TableCell>
                         <TableCell>{getRequestStatusBadge(request.status)}</TableCell>
@@ -426,7 +427,11 @@ export default function ClientDashboardPage() {
                       </CardContent>
                       <CardFooter className="border-t bg-muted/50 px-6 py-3">
                         <div className="flex justify-between items-center w-full">
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => heroContract && setSelectedContract(heroContract.id)}
+                          >
                             <Eye className="h-4 w-4 mr-1" /> View Contract
                           </Button>
                           <Button variant="ghost" size="icon">
@@ -526,6 +531,84 @@ export default function ClientDashboardPage() {
           </TabsContent>
         </Tabs>
 
+        {/* New Job Request Dialog */}
+        {/* Contract Details Dialog */}
+        <Dialog open={!!selectedContract} onOpenChange={(open) => !open && setSelectedContract(null)}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Contract Details</DialogTitle>
+              <DialogDescription>
+                View the details of this contract
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedContract && contracts && (() => {
+              const contract = contracts.find(c => c.id === selectedContract);
+              const hero = heroes?.find(h => h.id === contract?.heroId);
+              const company = companies?.find(c => c.id === contract?.companyId);
+              
+              if (!contract) return <div>Contract not found</div>;
+              
+              return (
+                <div className="space-y-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Hero</h3>
+                      <p className="font-medium">{hero?.firstName} {hero?.lastName}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Position</h3>
+                      <p className="font-medium">{contract.title}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Company</h3>
+                      <p className="font-medium">{company?.name}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Status</h3>
+                      <Badge variant={contract.status === 'active' ? 'default' : 'secondary'}>
+                        {contract.status.charAt(0).toUpperCase() + contract.status.slice(1)}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Start Date</h3>
+                      <p className="font-medium">{formatDate(contract.startDate)}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-1">End Date</h3>
+                      <p className="font-medium">{contract.endDate ? formatDate(contract.endDate) : 'Not specified'}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Monthly Compensation</h3>
+                    <p className="text-lg font-bold">${contract.compensation.toLocaleString()}</p>
+                  </div>
+                  
+                  {contract.document && (
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Contract Document</h3>
+                      <Button variant="outline">
+                        <FileText className="mr-2 h-4 w-4" /> View Document
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSelectedContract(null)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
         {/* New Job Request Dialog */}
         <Dialog open={isRequestFormOpen} onOpenChange={setIsRequestFormOpen}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
