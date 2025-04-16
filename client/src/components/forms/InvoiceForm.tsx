@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Contract, Hero, Client, Company, Invoice, InsertInvoice, insertInvoiceSchema } from '@shared/schema';
+import { Contract, Hero, Client, Company, Invoice, InsertInvoice, insertInvoiceSchema, Prospect } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import {
@@ -81,6 +81,10 @@ export default function InvoiceForm({ invoiceId, onSuccess, onCancel }: InvoiceF
 
   const { data: heroes } = useQuery<Hero[]>({
     queryKey: ['/api/heroes'],
+  });
+
+  const { data: prospects } = useQuery<Prospect[]>({
+    queryKey: ['/api/prospects'],
   });
 
   const { data: clients } = useQuery<Client[]>({
@@ -337,11 +341,18 @@ export default function InvoiceForm({ invoiceId, onSuccess, onCancel }: InvoiceF
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {heroes?.map((hero) => (
-                      <SelectItem key={hero.id} value={hero.id.toString()}>
-                        Hero ID: {hero.id} (Prospect ID: {hero.prospectId})
-                      </SelectItem>
-                    ))}
+                    {heroes?.map((hero) => {
+                      // Find prospect and company details
+                      const prospect = prospects?.find(p => p.id === hero.prospectId);
+                      const company = companies?.find(c => c.id === hero.companyId);
+                      
+                      return (
+                        <SelectItem key={hero.id} value={hero.id.toString()}>
+                          {prospect ? `${prospect.firstName} ${prospect.lastName}` : `Hero #${hero.id}`}
+                          {company && ` - ${company.name}`}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -361,7 +372,7 @@ export default function InvoiceForm({ invoiceId, onSuccess, onCancel }: InvoiceF
                   onValueChange={(value) => {
                     field.onChange(parseInt(value));
                     // Reset company when client changes
-                    form.setValue('companyId', undefined);
+                    form.setValue('companyId', null as any);
                   }}
                   defaultValue={field.value?.toString()}
                   value={field.value?.toString()}
