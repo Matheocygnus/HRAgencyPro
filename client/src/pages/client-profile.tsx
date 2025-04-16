@@ -335,47 +335,64 @@ export default function ClientProfile() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {jobRequests.map((request: any) => (
-                    <Card key={request.id} className="hover:bg-accent/50 transition-colors">
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle>{request.title}</CardTitle>
-                            <CardDescription>Positions: {request.numberOfPositions}</CardDescription>
+                  {jobRequests.map((request: any) => {
+                    // Try to parse the requirements field to extract additional data
+                    let reqData = { numberOfPositions: 1, startDate: new Date().toISOString() };
+                    try {
+                      if (request.requirements) {
+                        reqData = JSON.parse(request.requirements);
+                      }
+                    } catch (e) {
+                      console.error("Error parsing requirements:", e);
+                    }
+                    
+                    return (
+                      <Card key={request.id} className="hover:bg-accent/50 transition-colors">
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle>{request.title}</CardTitle>
+                              <CardDescription>
+                                Type: {request.jobType?.replace('_', ' ')}
+                              </CardDescription>
+                            </div>
+                            <Badge 
+                              variant={
+                                request.status === "approved" ? "default" :
+                                request.status === "pending" ? "secondary" :
+                                request.status === "rejected" ? "destructive" :
+                                "outline"
+                              }
+                            >
+                              {request.status}
+                            </Badge>
                           </div>
-                          <Badge 
-                            variant={
-                              request.status === "approved" ? "default" :
-                              request.status === "pending" ? "secondary" :
-                              request.status === "rejected" ? "destructive" :
-                              "outline"
-                            }
-                          >
-                            {request.status}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {request.description.substring(0, 150)}
-                          {request.description.length > 150 ? "..." : ""}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          <Badge variant="outline">
-                            Salary: ${request.salaryRangeMin} - ${request.salaryRangeMax}
-                          </Badge>
-                          <Badge variant="outline">
-                            Start: {new Date(request.startDate).toLocaleDateString()}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                      <CardFooter>
-                        <Button variant="ghost" size="sm">
-                          View Details
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {request.description.substring(0, 150)}
+                            {request.description.length > 150 ? "..." : ""}
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <Badge variant="outline">
+                              Salary: {request.salary || "Not specified"}
+                            </Badge>
+                            <Badge variant="outline">
+                              Positions: {reqData.numberOfPositions || 1}
+                            </Badge>
+                            <Badge variant="outline">
+                              Start: {reqData.startDate ? new Date(reqData.startDate).toLocaleDateString() : "Not specified"}
+                            </Badge>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          <Button variant="ghost" size="sm">
+                            View Details
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
