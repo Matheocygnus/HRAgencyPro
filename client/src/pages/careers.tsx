@@ -29,7 +29,7 @@ import { JobOpening, InsertJobApplication } from '@shared/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Loader2 } from 'lucide-react';
 
 // Form schema for job application with validation
@@ -39,6 +39,7 @@ const applicationSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
   phone: z.string().min(10, { message: 'Please enter a valid phone number' }),
   resumeUrl: z.string().url({ message: 'Please enter a valid URL to your resume' }),
+  voiceMessageUrl: z.string().url({ message: 'Please enter a valid URL to your voice message' }).optional(),
   coverLetter: z.string().optional()
 });
 
@@ -66,6 +67,7 @@ export default function CareersPage() {
       email: '',
       phone: '',
       resumeUrl: '',
+      voiceMessageUrl: '',
       coverLetter: ''
     }
   });
@@ -274,6 +276,26 @@ export default function CareersPage() {
                         {...field} 
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="voiceMessageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Voice Message (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Link to your voice message recording" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Provide a link to your recorded voice message to stand out from other candidates
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
