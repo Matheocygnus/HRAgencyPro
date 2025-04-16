@@ -166,7 +166,11 @@ export default function ClientsPage() {
                       ) : (
                         filteredClients.map((client) => (
                           <TableRow key={client.id}>
-                            <TableCell className="font-medium">{client.name}</TableCell>
+                            <TableCell className="font-medium">
+                              <Link href={`/client/${client.id}`} className="hover:underline text-primary">
+                                {client.name}
+                              </Link>
+                            </TableCell>
                             <TableCell>{client.contactPerson}</TableCell>
                             <TableCell>{client.email}</TableCell>
                             <TableCell>{client.phone || "N/A"}</TableCell>
