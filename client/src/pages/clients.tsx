@@ -30,21 +30,22 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
 import ClientForm from "@/components/forms/ClientForm";
-import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
+import { Loader2, MoreHorizontal, Plus, Search, UserPlus } from "lucide-react";
 import CompanyFormDialog from "@/components/dialogs/CompanyFormDialog";
+import ClientAccountDialog from "@/components/dialogs/ClientAccountDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useMockAuth } from "@/hooks/use-mock-auth";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function ClientsPage() {
   const { toast } = useToast();
-  const { user } = useMockAuth();
+  const { user, isAdmin } = useAuth();
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
   const [isAddCompanyDialogOpen, setIsAddCompanyDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentTab, setCurrentTab] = useState("clients");
+  const [createAccountClient, setCreateAccountClient] = useState<Client | null>(null);
 
-  // Check if user has admin access
-  const isAdmin = user && (user.role === "admin" || user.role === "super_admin");
+  // isAdmin is already provided by useAuth()
 
   // Fetch clients and companies
   const { data: clients = [], isLoading: isClientsLoading } = useQuery<Client[]>({

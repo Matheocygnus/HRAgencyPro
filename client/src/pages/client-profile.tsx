@@ -363,12 +363,15 @@ ${data.notes ? `Additional Notes: ${data.notes}` : ''}
                           {request.jobType === "full_time" ? " Full-time" : " Part-time"}
                         </CardDescription>
                       </div>
-                      <Badge variant={
-                        request.status === "approved" ? "success" : 
-                        request.status === "rejected" ? "destructive" : 
-                        request.status === "published" ? "default" : 
-                        "secondary"
-                      }>
+                      <Badge 
+                        variant={
+                          request.status === "approved" ? "default" : 
+                          request.status === "rejected" ? "destructive" : 
+                          request.status === "published" ? "default" : 
+                          "secondary"
+                        } 
+                        className={request.status === "approved" ? "bg-green-500 hover:bg-green-600" : ""}
+                      >
                         {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                       </Badge>
                     </div>
