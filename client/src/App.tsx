@@ -62,6 +62,9 @@ function Router() {
       <Route path="/jobs">
         <JobManagement />
       </Route>
+      <Route path="/job-management">
+        <JobManagement />
+      </Route>
       
       {/* Job requests */}
       <Route path="/job-requests">

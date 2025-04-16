@@ -261,6 +261,7 @@ function ensureJobApplicationFields(jobApplicationData: any): JobApplication {
     email: jobApplicationData.email,
     phone: jobApplicationData.phone,
     resumeUrl: jobApplicationData.resumeUrl || null,
+    voiceMessageUrl: jobApplicationData.voiceMessageUrl || null,
     coverLetter: jobApplicationData.coverLetter || null,
     status: jobApplicationData.status || "new",
     notes: jobApplicationData.notes || null,
