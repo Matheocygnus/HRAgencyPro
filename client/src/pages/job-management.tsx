@@ -667,6 +667,7 @@ export default function JobManagementPage() {
 
   // Handle view application details
   const handleViewApplication = (application: JobApplication) => {
+    console.log('Viewing application details:', application); // Debug log
     setSelectedApplication(application);
     statusForm.reset({
       // Set default status to rejected if existing status is not one of our allowed values
