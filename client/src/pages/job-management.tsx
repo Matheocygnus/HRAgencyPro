@@ -87,9 +87,18 @@ const applicationStatusSchema = z.object({
 
 // Component to display job requests from clients
 function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const { toast } = useToast();
+  
   // Fetch all job requests
   const { data: jobRequests, isLoading } = useQuery<JobRequest[]>({
     queryKey: ['/api/job-requests'],
+    enabled: true
+  });
+
+  // Fetch all clients for detailed information
+  const { data: clients } = useQuery<Client[]>({
+    queryKey: ['/api/clients'],
     enabled: true
   });
 
@@ -98,8 +107,24 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
     request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     request.requirements.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    request.status.toLowerCase().includes(searchTerm.toLowerCase())
+    request.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (request.clientName && request.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (request.companyName && request.companyName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Find client details by clientId
+  const getClientDetails = (clientId: number) => {
+    return clients?.find(client => client.id === clientId);
+  };
+
+  // Toggle row expansion
+  const toggleRowExpansion = (requestId: number) => {
+    if (expandedRow === requestId) {
+      setExpandedRow(null);
+    } else {
+      setExpandedRow(requestId);
+    }
+  };
 
   // Mutation to approve a job request
   const approveRequestMutation = useMutation({
@@ -109,6 +134,10 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
+      toast({
+        title: "Job Request Approved",
+        description: "The job request has been approved successfully.",
+      });
     }
   });
 
@@ -120,6 +149,10 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
+      toast({
+        title: "Job Request Rejected",
+        description: "The job request has been rejected.",
+      });
     }
   });
 
@@ -132,6 +165,10 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
       queryClient.invalidateQueries({ queryKey: ['/api/job-openings'] });
+      toast({
+        title: "Job Published",
+        description: "The job has been published and is now visible to applicants.",
+      });
     }
   });
 
@@ -182,55 +219,123 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
                 <TableHead>Company</TableHead>
                 <TableHead>Date Requested</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-[180px]">Actions</TableHead>
+                <TableHead className="w-[220px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRequests.map((request) => (
-                <TableRow key={request.id}>
-                  <TableCell className="font-medium">{request.title}</TableCell>
-                  <TableCell>{request.clientName || 'Unknown Client'}</TableCell>
-                  <TableCell>{request.companyName || 'Unknown Company'}</TableCell>
-                  <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>{getRequestStatusBadge(request.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      {request.status === 'pending' && (
-                        <>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleApprove(request.id)}
-                            disabled={approveRequestMutation.isPending}
-                            className="text-green-600"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" /> Approve
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleReject(request.id)}
-                            disabled={rejectRequestMutation.isPending}
-                            className="text-red-600"
-                          >
-                            <XCircle className="h-4 w-4 mr-1" /> Reject
-                          </Button>
-                        </>
-                      )}
-                      {request.status === 'approved' && (
+                <React.Fragment key={request.id}>
+                  <TableRow className={expandedRow === request.id ? "border-b-0" : ""}>
+                    <TableCell className="font-medium">{request.title}</TableCell>
+                    <TableCell>
+                      {request.clientName || (request.clientId ? getClientDetails(request.clientId)?.name : 'Unknown Client')}
+                    </TableCell>
+                    <TableCell>{request.companyName || 'Unknown Company'}</TableCell>
+                    <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{getRequestStatusBadge(request.status)}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
                         <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handlePublish(request.id)}
-                          disabled={publishRequestMutation.isPending}
-                          className="text-primary"
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => toggleRowExpansion(request.id)}
+                          className="text-muted-foreground"
+                          title="View Details"
                         >
-                          <Briefcase className="h-4 w-4 mr-1" /> Publish
+                          {expandedRow === request.id ? 
+                            <ChevronUp className="h-4 w-4" /> : 
+                            <ChevronDown className="h-4 w-4" />
+                          }
                         </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
+                        {request.status === 'pending' && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleApprove(request.id)}
+                              disabled={approveRequestMutation.isPending}
+                              className="text-green-600"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" /> Approve
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleReject(request.id)}
+                              disabled={rejectRequestMutation.isPending}
+                              className="text-red-600"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" /> Reject
+                            </Button>
+                          </>
+                        )}
+                        {request.status === 'approved' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handlePublish(request.id)}
+                            disabled={publishRequestMutation.isPending}
+                            className="text-primary"
+                          >
+                            <Briefcase className="h-4 w-4 mr-1" /> Publish
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  
+                  {/* Expanded Row with Details */}
+                  {expandedRow === request.id && (
+                    <TableRow className="bg-muted/50">
+                      <TableCell colSpan={6} className="px-4 py-3">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="text-sm font-semibold mb-2">Job Description</h4>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                              {request.description || "No description provided."}
+                            </p>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold mb-2">Requirements</h4>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                              {request.requirements || "No requirements specified."}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 grid grid-cols-3 gap-4">
+                          <div>
+                            <h4 className="text-sm font-semibold mb-2">Location</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {request.location || "Not specified"}
+                            </p>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold mb-2">Job Type</h4>
+                            <p className="text-sm text-muted-foreground capitalize">
+                              {request.jobType?.replace('_', ' ') || "Not specified"}
+                            </p>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold mb-2">Salary Range</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {request.salary || "Not specified"}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {request.notes && (
+                          <div className="mt-4">
+                            <h4 className="text-sm font-semibold mb-2">Additional Notes</h4>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                              {request.notes}
+                            </p>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>
