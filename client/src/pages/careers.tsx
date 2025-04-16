@@ -39,7 +39,7 @@ const applicationSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
   phone: z.string().min(10, { message: 'Please enter a valid phone number' }),
   resumeUrl: z.string().url({ message: 'Please enter a valid URL to your resume' }),
-  voiceMessageUrl: z.string().url({ message: 'Please enter a valid URL to your voice message' }).optional(),
+  voiceMessageUrl: z.string().url({ message: 'Please enter a valid URL to your voice message' }),
   coverLetter: z.string().optional()
 });
 
@@ -286,7 +286,7 @@ export default function CareersPage() {
                 name="voiceMessageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Voice Message (Optional)</FormLabel>
+                    <FormLabel>Voice Message</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="Link to your voice message recording" 
