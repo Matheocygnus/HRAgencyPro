@@ -42,10 +42,7 @@ function Router() {
       
       {/* Client profile - accessible by admins or the specific client */}
       <Route path="/client/:id">
-        {(params) => {
-          const clientId = parseInt(params.id, 10);
-          return <ClientProfile clientId={clientId} />;
-        }}
+        <ClientProfile />
       </Route>
       
       <ProtectedRoute path="/heroes" component={Heroes} />

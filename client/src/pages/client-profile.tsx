@@ -77,16 +77,31 @@ const jobRequestSchema = z.object({
 
 type JobRequestFormValues = z.infer<typeof jobRequestSchema>;
 
-export default function ClientProfilePage() {
-  const { id } = useParams<{ id: string }>();
-  const clientId = parseInt(id);
+interface ClientProfilePageProps {
+  clientId?: number;
+}
+
+export default function ClientProfilePage({ clientId: propClientId }: ClientProfilePageProps) {
+  const params = useParams<{ id: string }>();
+  const [location, setLocation] = useLocation();
+  
+  // Use provided clientId from props or from URL params
+  const clientId = propClientId || (params.id ? parseInt(params.id) : 0);
+  
   const { toast } = useToast();
-  const { user, isClient } = useAuth();
+  const { user, isClient, isAdmin } = useAuth();
   const [isJobRequestDialogOpen, setIsJobRequestDialogOpen] = useState(false);
   const [expandedRequestId, setExpandedRequestId] = useState<number | null>(null);
   
   // Check if the current user is authorized to view this client
-  const isAuthorized = isClient ? user?.clientId === clientId : true;
+  const isAuthorized = isAdmin || (isClient && user?.clientId === clientId);
+  
+  // Redirect if not authorized
+  useEffect(() => {
+    if (user && !isAuthorized && clientId > 0) {
+      setLocation("/");
+    }
+  }, [user, isAuthorized, clientId, setLocation]);
   
   // Fetch client data
   const { data: client, isLoading: isClientLoading } = useQuery<Client>({
