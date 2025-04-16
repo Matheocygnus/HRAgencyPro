@@ -233,7 +233,7 @@ export default function ClientDashboardPage() {
   };
   
   // Format date helper
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | Date) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -303,7 +303,7 @@ export default function ClientDashboardPage() {
               <div className="text-xs text-muted-foreground mt-1">
                 Total monthly value: {
                   contracts
-                    ? `$${contracts.reduce((sum, contract) => sum + (parseFloat(contract.value) || 0), 0).toLocaleString()}`
+                    ? `$${contracts.reduce((sum, contract) => sum + (contract.compensation || 0), 0).toLocaleString()}`
                     : '$0'
                 }
               </div>
@@ -420,7 +420,7 @@ export default function ClientDashboardPage() {
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Contract Value:</span>
-                            <span>${heroContract?.value || '0'}/month</span>
+                            <span>${heroContract?.compensation || '0'}/month</span>
                           </div>
                         </div>
                       </CardContent>

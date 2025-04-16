@@ -238,7 +238,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients/:clientId/heroes", isAuthenticated, async (req, res) => {
     try {
       const heroes = await storage.getHeroesByClient(parseInt(req.params.clientId));
-      res.json(heroes);
+      
+      // Enhance heroes with prospect data
+      const enhancedHeroes = await Promise.all(
+        heroes.map(async (hero) => {
+          const prospect = await storage.getProspect(hero.prospectId);
+          return {
+            ...hero,
+            firstName: prospect?.firstName,
+            lastName: prospect?.lastName,
+            email: prospect?.email,
+            phone: prospect?.phone,
+            skills: prospect?.skills,
+            position: prospect?.position
+          };
+        })
+      );
+      
+      res.json(enhancedHeroes);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve heroes for client" });
     }

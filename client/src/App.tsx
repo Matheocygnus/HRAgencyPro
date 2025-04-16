@@ -19,6 +19,7 @@ import JobManagement from "@/pages/job-management";
 import JobRequests from "@/pages/job-requests";
 import JobRequestManagement from "@/pages/job-request-management";
 import JobApplications from "@/pages/job-applications";
+import ClientDashboard from "@/pages/client-dashboard";
 
 function Router() {
   return (
@@ -80,6 +81,11 @@ function Router() {
       {/* Public careers page */}
       <Route path="/careers">
         <Careers />
+      </Route>
+      
+      {/* Client dashboard page */}
+      <Route path="/client-dashboard">
+        <ClientDashboard />
       </Route>
       
       {/* Login and auth pages redirect to dashboard in dev mode */}
