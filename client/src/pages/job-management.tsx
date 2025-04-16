@@ -440,6 +440,12 @@ export default function JobManagementPage() {
   });
 
   // Mutation to update application status
+  // Function to get job title for an application
+  const getJobTitle = (jobOpeningId: number): string => {
+    const job = jobOpenings?.find(j => j.id === jobOpeningId);
+    return job ? job.title : 'Unknown Position';
+  };
+
   // Create prospect mutation
   const createProspectMutation = useMutation({
     mutationFn: async (application: JobApplication) => {
@@ -556,7 +562,10 @@ export default function JobManagementPage() {
   const handleViewApplication = (application: JobApplication) => {
     setSelectedApplication(application);
     statusForm.reset({
-      status: application.status,
+      // Set default status to rejected if existing status is not one of our allowed values
+      status: application.status === "rejected" || application.status === "converted" 
+        ? application.status 
+        : "rejected",
       notes: application.notes || ''
     });
     setIsApplicationSheetOpen(true);
@@ -585,6 +594,8 @@ export default function JobManagementPage() {
         return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Hired</Badge>;
       case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>;
+      case 'converted':
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Converted to Prospect</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
