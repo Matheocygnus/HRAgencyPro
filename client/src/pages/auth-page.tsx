@@ -24,7 +24,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Icons } from "@/components/ui/icons";
 import { Loader2 } from "lucide-react";
 
 // Login form schema
@@ -37,6 +36,7 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
   firstName: z.string().min(1, { message: "First name is required" }),
   lastName: z.string().min(1, { message: "Last name is required" }),
 });
@@ -71,6 +71,7 @@ export default function AuthPage() {
     defaultValues: {
       username: "",
       password: "",
+      email: "",
       firstName: "",
       lastName: "",
     },
@@ -232,6 +233,19 @@ export default function AuthPage() {
                             <FormLabel>Username</FormLabel>
                             <FormControl>
                               <Input placeholder="johndoe" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={registerForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="john.doe@example.com" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

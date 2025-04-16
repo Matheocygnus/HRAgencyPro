@@ -14,7 +14,7 @@ import {
   insertJobApplicationSchema,
   insertJobRequestSchema
 } from "@shared/schema";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 
 // Temporary development middleware - allows all requests without authentication
@@ -109,6 +109,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return handleZodError(error, res);
       }
       res.status(500).json({ message: "Failed to update client" });
+    }
+  });
+  
+  // Create a user account for a client
+  app.post("/api/clients/:id/create-account", hasRole(["super_admin", "admin"]), async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.id);
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      // Validate request body
+      const accountSchema = z.object({
+        username: z.string().min(3),
+        password: z.string().min(6),
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
+      });
+      
+      const accountData = accountSchema.parse(req.body);
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(accountData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      // Create user with client role and link to client
+      const userData = {
+        username: accountData.username,
+        password: accountData.password, // Note: This will be hashed in the auth setup
+        firstName: accountData.firstName,
+        lastName: accountData.lastName,
+        role: "client",
+        clientId: clientId,
+      };
+      
+      const newUser = await storage.createUser(userData);
+      
+      // Return the new user without password
+      const { password, ...userWithoutPassword } = newUser;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      console.error("Error creating client account:", error);
+      res.status(500).json({ message: "Failed to create client account" });
     }
   });
   
