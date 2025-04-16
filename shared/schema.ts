@@ -214,7 +214,7 @@ export const jobApplications = pgTable("job_applications", {
   phone: text("phone").notNull(),
   resumeUrl: text("resume_url"),
   coverLetter: text("cover_letter"),
-  status: text("status", { enum: ["new", "reviewing", "interview", "offered", "hired", "rejected"] }).default("new").notNull(),
+  status: text("status", { enum: ["new", "reviewing", "interview", "offered", "hired", "rejected", "converted"] }).default("new").notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

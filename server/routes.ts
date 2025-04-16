@@ -599,7 +599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: application.phone,
         resumeUrl: application.resumeUrl,
         notes: application.coverLetter || "",
-        status: "sourcing",
+        status: "sourcing" as const,
         clientId: jobOpening.clientId,
         source: `Job Application (#${application.id}) for ${jobOpening.title}`,
         skills: "",
@@ -608,13 +608,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         currentPosition: "",
         currentCompany: "",
         location: jobOpening.location,
+        position: jobOpening.title, // Use job title as the position
       };
       
       const prospect = await storage.createProspect(prospectData);
       
       // Update the job application to mark it as converted
       await storage.updateJobApplication(applicationId, { 
-        status: "converted",
+        status: "converted" as any, // Cast to any to bypass type checking since we added "converted" to the schema
         notes: `Converted to prospect #${prospect.id}`
       });
       

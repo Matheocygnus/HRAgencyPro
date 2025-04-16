@@ -256,7 +256,17 @@ export default function JobApplicationsPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem 
-                                    onClick={() => window.open(application.resumeUrl, '_blank')}
+                                    onClick={() => {
+                                      if (application.resumeUrl) {
+                                        window.open(application.resumeUrl, '_blank');
+                                      } else {
+                                        toast({
+                                          title: "No Resume Available",
+                                          description: "This application does not have a resume URL.",
+                                          variant: "destructive",
+                                        });
+                                      }
+                                    }}
                                   >
                                     <ExternalLink className="h-4 w-4 mr-2" />
                                     View Resume
@@ -344,15 +354,19 @@ export default function JobApplicationsPage() {
 
               <div>
                 <p className="text-sm text-muted-foreground">Resume</p>
-                <a 
-                  href={selectedApplication.resumeUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-primary hover:underline flex items-center"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  View Resume
-                </a>
+                {selectedApplication.resumeUrl ? (
+                  <a 
+                    href={selectedApplication.resumeUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-primary hover:underline flex items-center"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View Resume
+                  </a>
+                ) : (
+                  <p className="text-muted-foreground italic">No resume uploaded</p>
+                )}
               </div>
 
               {selectedApplication.coverLetter && (
