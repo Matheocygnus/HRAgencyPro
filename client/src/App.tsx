@@ -41,7 +41,12 @@ function Router() {
       <AdminRoute path="/clients" component={Clients} />
       
       {/* Client profile - accessible by admins or the specific client */}
-      <ProtectedRoute path="/client/:id" component={ClientProfile} />
+      <Route path="/client/:id">
+        {(params) => {
+          const clientId = parseInt(params.id, 10);
+          return <ClientProfile clientId={clientId} />;
+        }}
+      </Route>
       
       <ProtectedRoute path="/heroes" component={Heroes} />
       <ProtectedRoute path="/contracts" component={Contracts} />

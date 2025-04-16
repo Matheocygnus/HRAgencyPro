@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { useParams } from "wouter";
+import { useState, useEffect } from "react";
+import { useParams, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Client, Company, JobRequest, InsertJobRequest } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import Dashboard from "@/components/layout/Dashboard";
+import { Redirect } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Card,

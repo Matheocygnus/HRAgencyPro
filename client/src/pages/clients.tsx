@@ -45,8 +45,6 @@ export default function ClientsPage() {
   const [currentTab, setCurrentTab] = useState("clients");
   const [createAccountClient, setCreateAccountClient] = useState<Client | null>(null);
 
-  // isAdmin is already provided by useAuth()
-
   // Fetch clients and companies
   const { data: clients = [], isLoading: isClientsLoading } = useQuery<Client[]>({
     queryKey: ["/api/clients"],
@@ -198,6 +196,12 @@ export default function ClientsPage() {
                                     >
                                       {client.status === "active" ? "Mark as Inactive" : "Mark as Active"}
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => setCreateAccountClient(client)}
+                                    >
+                                      <UserPlus className="h-4 w-4 mr-2" />
+                                      Create Account
+                                    </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               )}
@@ -276,6 +280,25 @@ export default function ClientsPage() {
           });
         }}
       />
+
+      {/* Create Client Account Dialog */}
+      {createAccountClient && (
+        <ClientAccountDialog
+          clientId={createAccountClient.id}
+          clientName={createAccountClient.name}
+          isOpen={!!createAccountClient}
+          onOpenChange={(open) => {
+            if (!open) setCreateAccountClient(null);
+          }}
+          onSuccess={() => {
+            toast({
+              title: "Account created",
+              description: `Client account created successfully for ${createAccountClient.name}`,
+            });
+            queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+          }}
+        />
+      )}
     </Dashboard>
   );
 }
