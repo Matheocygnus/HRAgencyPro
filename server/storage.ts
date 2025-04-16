@@ -583,6 +583,90 @@ export class MemStorage implements IStorage {
       await this.createProspect(prospect as InsertProspect);
     }
 
+    // Define the contract templates for later creation
+    const contractTemplates = [
+      {
+        title: "Development Contract",
+        clientId: 5,
+        companyId: 7,
+        startDate: new Date("2023-11-01"),
+        endDate: new Date("2024-11-01"),
+        compensation: 120000,
+        status: "active",
+        document: "contract_1.pdf",
+      },
+      {
+        title: "Senior Backend Developer",
+        clientId: 4,
+        companyId: 6,
+        startDate: new Date("2023-08-15"),
+        endDate: new Date("2024-08-15"),
+        compensation: 140000,
+        status: "active",
+        document: "contract_2.pdf",
+      },
+      {
+        title: "Frontend Engineer Contract",
+        clientId: 1,
+        companyId: 1,
+        startDate: new Date("2023-12-01"),
+        endDate: new Date("2024-12-01"),
+        compensation: 110000,
+        status: "active",
+        document: "contract_3.pdf",
+      },
+      {
+        title: "Data Scientist Agreement",
+        clientId: 2,
+        companyId: 3,
+        startDate: new Date("2023-10-01"),
+        endDate: new Date("2024-10-01"),
+        compensation: 130000,
+        status: "active",
+        document: "contract_4.pdf",
+      },
+      {
+        title: "DevOps Specialist",
+        clientId: 3,
+        companyId: 4,
+        startDate: new Date("2023-09-15"),
+        endDate: new Date("2024-09-15"),
+        compensation: 135000,
+        status: "active",
+        document: "contract_5.pdf",
+      },
+      {
+        title: "Mobile Developer Contract",
+        clientId: 5,
+        companyId: 7,
+        startDate: new Date("2023-11-01"),
+        endDate: new Date("2024-11-01"),
+        compensation: 125000,
+        status: "active",
+        document: "contract_6.pdf",
+      },
+      {
+        title: "UX/UI Designer",
+        clientId: 3,
+        companyId: 5,
+        startDate: new Date("2024-01-15"),
+        endDate: new Date("2025-01-15"),
+        compensation: 105000,
+        status: "active",
+        document: "contract_7.pdf",
+      },
+      {
+        title: "Product Manager Contract",
+        clientId: 2,
+        companyId: 3,
+        startDate: new Date("2024-02-01"),
+        endDate: new Date("2025-02-01"),
+        compensation: 145000,
+        status: "active",
+        document: "contract_8.pdf",
+      }
+    ];
+
     // Add mock heroes for hired prospects
     const heroes = [
       {
@@ -635,83 +719,94 @@ export class MemStorage implements IStorage {
       }
     ];
 
+    // Create heroes first
+    const createdHeroes = [];
     for (const hero of heroes) {
-      await this.createHero(hero as InsertHero);
+      const createdHero = await this.createHero(hero as InsertHero);
+      createdHeroes.push(createdHero);
     }
 
-    // Add mock interviews
+    // Add mock interviews with correct structure based on schema
     const interviews = [
       {
         prospectId: 1,
-        userId: 1,
-        scheduledFor: new Date("2023-06-15T10:00:00"),
-        type: "technical",
+        title: "Technical Interview - React Skills",
+        scheduledDate: new Date("2023-06-15T10:00:00"),
+        duration: 60,
         status: "completed",
         notes: "Excellent technical skills. Strong understanding of React and Node.js.",
-        meetingLink: "https://meet.google.com/abc-defg-hij"
+        meetingLink: "https://meet.google.com/abc-defg-hij",
+        interviewerIds: ["1"]
       },
       {
         prospectId: 2,
-        userId: 1,
-        scheduledFor: new Date("2023-07-20T14:00:00"),
-        type: "behavioral",
+        title: "Behavioral Interview",
+        scheduledDate: new Date("2023-07-20T14:00:00"),
+        duration: 45,
         status: "completed",
         notes: "Good communication skills. Showed leadership qualities.",
-        meetingLink: "https://meet.google.com/klm-nopq-rst"
+        meetingLink: "https://meet.google.com/klm-nopq-rst",
+        interviewerIds: ["1"]
       },
       {
         prospectId: 3,
-        userId: 1,
-        scheduledFor: new Date("2023-11-10T11:00:00"),
-        type: "technical",
+        title: "Technical Interview - Database Skills",
+        scheduledDate: new Date("2023-11-10T11:00:00"),
+        duration: 60,
         status: "completed",
         notes: "Solid understanding of database concepts and SQL.",
-        meetingLink: "https://meet.google.com/uvw-xyz-123"
+        meetingLink: "https://meet.google.com/uvw-xyz-123",
+        interviewerIds: ["1"]
       },
       {
         prospectId: 4,
-        userId: 1,
-        scheduledFor: new Date("2023-09-05T15:30:00"),
-        type: "technical",
+        title: "Technical Interview - Frontend Skills",
+        scheduledDate: new Date("2023-09-05T15:30:00"),
+        duration: 60,
         status: "completed",
         notes: "Strong in frontend development. Good understanding of CSS and responsive design.",
-        meetingLink: "https://meet.google.com/456-789-abc"
+        meetingLink: "https://meet.google.com/456-789-abc",
+        interviewerIds: ["1"]
       },
       {
         prospectId: 5,
-        userId: 1,
-        scheduledFor: new Date("2023-08-22T09:00:00"),
-        type: "behavioral",
+        title: "Behavioral Assessment",
+        scheduledDate: new Date("2023-08-22T09:00:00"),
+        duration: 45,
         status: "completed",
         notes: "Excellent problem-solving skills. Adapts well to challenging situations.",
-        meetingLink: "https://meet.google.com/def-ghi-jkl"
+        meetingLink: "https://meet.google.com/def-ghi-jkl",
+        interviewerIds: ["1"]
       },
       {
         prospectId: 6,
-        userId: 1,
-        scheduledFor: new Date("2023-10-18T13:30:00"),
-        type: "final",
+        title: "Final Interview",
+        scheduledDate: new Date("2023-10-18T13:30:00"),
+        duration: 90,
         status: "completed",
         notes: "Great fit for the role. Ready to move forward with an offer.",
-        meetingLink: "https://meet.google.com/mno-pqr-stu"
+        meetingLink: "https://meet.google.com/mno-pqr-stu",
+        interviewerIds: ["1"]
       },
       {
         prospectId: 7,
-        userId: 1,
-        scheduledFor: new Date("2024-01-05T10:00:00"),
-        type: "technical",
+        title: "Technical Skills Assessment",
+        scheduledDate: new Date("2024-01-05T10:00:00"),
+        duration: 60,
         status: "completed",
         notes: "Strong in Python and data analysis. Could improve on web development skills.",
-        meetingLink: "https://meet.google.com/vwx-yz1-234"
+        meetingLink: "https://meet.google.com/vwx-yz1-234",
+        interviewerIds: ["1"]
       },
       {
         prospectId: 8,
-        userId: 1,
-        scheduledFor: new Date("2024-02-28T16:00:00"),
-        type: "technical",
+        title: "Technical Interview - Project Discussion",
+        scheduledDate: new Date("2024-02-28T16:00:00"),
+        duration: 60,
         status: "scheduled",
         notes: "",
-        meetingLink: "https://meet.google.com/567-89a-bcd"
+        meetingLink: "https://meet.google.com/567-89a-bcd",
+        interviewerIds: ["1"]
       }
     ];
 
@@ -719,100 +814,18 @@ export class MemStorage implements IStorage {
       await this.createInterview(interview as InsertInterview);
     }
 
-    // Add mock contracts
-    const contracts = [
-      {
-        title: "Development Contract",
-        heroId: 1,
-        clientId: 5,
-        companyId: 7,
-        startDate: new Date("2023-11-01"),
-        endDate: new Date("2024-11-01"),
-        compensation: 120000,
-        status: "active",
-        document: "contract_1.pdf",
-      },
-      {
-        title: "Senior Backend Developer",
-        heroId: 2,
-        clientId: 4,
-        companyId: 6,
-        startDate: new Date("2023-08-15"),
-        endDate: new Date("2024-08-15"),
-        compensation: 140000,
-        status: "active",
-        document: "contract_2.pdf",
-      },
-      {
-        title: "Frontend Engineer Contract",
-        heroId: 3,
-        clientId: 1,
-        companyId: 1,
-        startDate: new Date("2023-12-01"),
-        endDate: new Date("2024-12-01"),
-        compensation: 110000,
-        status: "active",
-        document: "contract_3.pdf",
-      },
-      {
-        title: "Data Scientist Agreement",
-        heroId: 4,
-        clientId: 2,
-        companyId: 3,
-        startDate: new Date("2023-10-01"),
-        endDate: new Date("2024-10-01"),
-        compensation: 130000,
-        status: "active",
-        document: "contract_4.pdf",
-      },
-      {
-        title: "DevOps Specialist",
-        heroId: 5,
-        clientId: 3,
-        companyId: 4,
-        startDate: new Date("2023-09-15"),
-        endDate: new Date("2024-09-15"),
-        compensation: 135000,
-        status: "active",
-        document: "contract_5.pdf",
-      },
-      {
-        title: "Mobile Developer Contract",
-        heroId: 6,
-        clientId: 5,
-        companyId: 7,
-        startDate: new Date("2023-11-01"),
-        endDate: new Date("2024-11-01"),
-        compensation: 125000,
-        status: "active",
-        document: "contract_6.pdf",
-      },
-      {
-        title: "UX/UI Designer",
-        heroId: 7,
-        clientId: 3,
-        companyId: 5,
-        startDate: new Date("2024-01-15"),
-        endDate: new Date("2025-01-15"),
-        compensation: 105000,
-        status: "active",
-        document: "contract_7.pdf",
-      },
-      {
-        title: "Product Manager Contract",
-        heroId: 8,
-        clientId: 2,
-        companyId: 3,
-        startDate: new Date("2024-02-01"),
-        endDate: new Date("2025-02-01"),
-        compensation: 145000,
-        status: "active",
-        document: "contract_8.pdf",
-      }
-    ];
-
-    for (const contract of contracts) {
-      await this.createContract(contract as InsertContract);
+    // Create contracts and assign to heroes
+    for (let i = 0; i < contractTemplates.length; i++) {
+      const contract = {
+        ...contractTemplates[i],
+        heroId: createdHeroes[i].id
+      };
+      const createdContract = await this.createContract(contract as InsertContract);
+      
+      // Update hero with contractId
+      await this.updateHero(createdHeroes[i].id, {
+        contractId: createdContract.id
+      });
     }
 
     // Add mock invoices
