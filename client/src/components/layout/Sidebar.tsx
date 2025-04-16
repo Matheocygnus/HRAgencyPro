@@ -12,7 +12,8 @@ import {
   Settings, 
   LogOut,
   Briefcase,
-  FileSignature
+  FileSignature,
+  ClipboardCheck
 } from "lucide-react";
 
 const navigation = {
@@ -24,6 +25,7 @@ const navigation = {
     { name: "Companies", path: "/clients", icon: Building2 },
     { name: "Contracts", path: "/contracts", icon: FileSignature },
     { name: "Invoices", path: "/invoices", icon: FileText },
+    { name: "Job Applications", path: "/job-applications", icon: ClipboardCheck },
   ],
   admin: [
     { name: "User Management", path: "/users", icon: Users },
