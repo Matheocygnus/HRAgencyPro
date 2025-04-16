@@ -815,14 +815,15 @@ export class MemStorage implements IStorage {
     }
 
     // Create contracts and assign to heroes
-    for (let i = 0; i < contractTemplates.length; i++) {
+    for (let i = 0; i < contractTemplates.length && i < createdHeroes.length; i++) {
+      // Create contract with hero ID
       const contract = {
         ...contractTemplates[i],
         heroId: createdHeroes[i].id
       };
       const createdContract = await this.createContract(contract as InsertContract);
       
-      // Update hero with contractId
+      // Update hero with contract ID to establish the relationship
       await this.updateHero(createdHeroes[i].id, {
         contractId: createdContract.id
       });

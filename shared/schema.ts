@@ -232,6 +232,8 @@ export const jobRequests = pgTable("job_requests", {
   id: serial("id").primaryKey(),
   clientId: integer("client_id").notNull(),
   companyId: integer("company_id").notNull(),
+  clientName: text("client_name"),
+  companyName: text("company_name"),
   title: text("title").notNull(),
   description: text("description").notNull(),
   requirements: text("requirements").notNull(),
