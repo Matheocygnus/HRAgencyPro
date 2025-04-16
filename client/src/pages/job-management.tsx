@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { JobOpening, InsertJobOpening, JobApplication } from '@shared/schema';
+import { JobOpening, InsertJobOpening, JobApplication, JobRequest } from '@shared/schema';
 import { useMockAuth } from '@/hooks/use-mock-auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -57,7 +57,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  ClipboardCheck
+  ClipboardCheck,
+  FileText
 } from 'lucide-react';
 import Dashboard from '@/components/layout/Dashboard';
 
@@ -83,6 +84,169 @@ const applicationStatusSchema = z.object({
 });
 
 
+
+// Component to display job requests from clients
+function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
+  // Fetch all job requests
+  const { data: jobRequests, isLoading } = useQuery<JobRequest[]>({
+    queryKey: ['/api/job-requests'],
+    enabled: true
+  });
+
+  // Filter job requests based on search term
+  const filteredRequests = jobRequests?.filter(request => 
+    request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    request.requirements.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    request.status.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Mutation to approve a job request
+  const approveRequestMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest('PUT', `/api/job-requests/${id}/approve`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
+    }
+  });
+
+  // Mutation to reject a job request
+  const rejectRequestMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest('PUT', `/api/job-requests/${id}/reject`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
+    }
+  });
+
+  // Mutation to publish a job request as a job opening
+  const publishRequestMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest('PUT', `/api/job-requests/${id}/publish`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/job-openings'] });
+    }
+  });
+
+  // Get badge color based on request status
+  const getRequestStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Pending</Badge>;
+      case 'approved':
+        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejected</Badge>;
+      case 'published':
+        return <Badge variant="default">Published</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  // Handle approve button click
+  const handleApprove = (id: number) => {
+    approveRequestMutation.mutate(id);
+  };
+
+  // Handle reject button click
+  const handleReject = (id: number) => {
+    rejectRequestMutation.mutate(id);
+  };
+
+  // Handle publish button click
+  const handlePublish = (id: number) => {
+    publishRequestMutation.mutate(id);
+  };
+
+  return (
+    <>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : filteredRequests && filteredRequests.length > 0 ? (
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Company</TableHead>
+                <TableHead>Date Requested</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-[180px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRequests.map((request) => (
+                <TableRow key={request.id}>
+                  <TableCell className="font-medium">{request.title}</TableCell>
+                  <TableCell>{request.clientName || 'Unknown Client'}</TableCell>
+                  <TableCell>{request.companyName || 'Unknown Company'}</TableCell>
+                  <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>{getRequestStatusBadge(request.status)}</TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      {request.status === 'pending' && (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleApprove(request.id)}
+                            disabled={approveRequestMutation.isPending}
+                            className="text-green-600"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" /> Approve
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleReject(request.id)}
+                            disabled={rejectRequestMutation.isPending}
+                            className="text-red-600"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" /> Reject
+                          </Button>
+                        </>
+                      )}
+                      {request.status === 'approved' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handlePublish(request.id)}
+                          disabled={publishRequestMutation.isPending}
+                          className="text-primary"
+                        >
+                          <Briefcase className="h-4 w-4 mr-1" /> Publish
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">No job requests found</h3>
+          <p className="text-muted-foreground">
+            {searchTerm ? "Try adjusting your search." : "When clients submit job requests, they'll appear here."}
+          </p>
+        </div>
+      )}
+    </>
+  );
+}
 
 // Component to display all applications across all job openings
 function AllApplicationsContent({ 
@@ -427,6 +591,9 @@ export default function JobManagementPage() {
           <TabsTrigger value="applications">
             <ClipboardCheck className="mr-2 h-4 w-4" /> Applications
           </TabsTrigger>
+          <TabsTrigger value="requests">
+            <FileText className="mr-2 h-4 w-4" /> Job Requests
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="jobs">
@@ -602,6 +769,11 @@ export default function JobManagementPage() {
               searchTerm={searchTerm}
             />
           )}
+        </TabsContent>
+
+        <TabsContent value="requests">
+          {/* Job Requests Tab */}
+          <JobRequestsContent searchTerm={searchTerm} />
         </TabsContent>
       </Tabs>
 
