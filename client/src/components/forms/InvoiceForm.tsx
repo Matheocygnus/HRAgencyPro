@@ -22,17 +22,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
+import { 
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+} from "@/components/ui/popover";
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Check, ChevronsUpDown, CalendarIcon, X } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+
+// Define a type for the hero selection with extended information
+type HeroOption = {
+  id: number;
+  name: string;
+  companyName?: string;
+};
 
 // Extend the insert schema for frontend validation
 const invoiceFormSchema = insertInvoiceSchema.extend({
@@ -327,37 +341,74 @@ export default function InvoiceForm({ invoiceId, onSuccess, onCancel }: InvoiceF
           <FormField
             control={form.control}
             name="heroId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Hero</FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(parseInt(value))}
-                  defaultValue={field.value?.toString()}
-                  value={field.value?.toString()}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a hero" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {heroes?.map((hero) => {
-                      // Find prospect and company details
-                      const prospect = prospects?.find(p => p.id === hero.prospectId);
-                      const company = companies?.find(c => c.id === hero.companyId);
-                      
-                      return (
-                        <SelectItem key={hero.id} value={hero.id.toString()}>
-                          {prospect ? `${prospect.firstName} ${prospect.lastName}` : `Hero #${hero.id}`}
-                          {company && ` - ${company.name}`}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              // Prepare hero options with name/company info
+              const heroOptions: HeroOption[] = heroes?.map(hero => {
+                const prospect = prospects?.find(p => p.id === hero.prospectId);
+                const company = companies?.find(c => c.id === hero.companyId);
+                
+                return {
+                  id: hero.id,
+                  name: prospect ? `${prospect.firstName} ${prospect.lastName}` : `Hero #${hero.id}`,
+                  companyName: company?.name
+                };
+              }) || [];
+              
+              // Get currently selected hero option
+              const selectedHero = heroOptions.find(h => h.id === field.value);
+              
+              return (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Hero</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {selectedHero ? selectedHero.name : "Select hero"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Search heroes..." />
+                        <CommandEmpty>No hero found.</CommandEmpty>
+                        <CommandGroup>
+                          {heroOptions.map((hero) => (
+                            <CommandItem
+                              key={hero.id}
+                              value={hero.name}
+                              onSelect={() => {
+                                field.onChange(hero.id);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  field.value === hero.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {hero.name}
+                              {hero.companyName && (
+                                <span className="ml-1 text-muted-foreground"> - {hero.companyName}</span>
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
 
