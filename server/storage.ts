@@ -590,11 +590,133 @@ export class MemStorage implements IStorage {
         startDate: new Date("2023-11-01"),
         clientId: 5,
         companyId: 7,
+      },
+      {
+        prospectId: 5,
+        startDate: new Date("2023-09-15"),
+        clientId: 3,
+        companyId: 4,
+      },
+      {
+        prospectId: 4,
+        startDate: new Date("2023-10-01"),
+        clientId: 2,
+        companyId: 3,
+      },
+      {
+        prospectId: 3,
+        startDate: new Date("2023-12-01"),
+        clientId: 1,
+        companyId: 1,
+      },
+      {
+        prospectId: 2,
+        startDate: new Date("2023-08-15"),
+        clientId: 4,
+        companyId: 6,
+      },
+      {
+        prospectId: 1,
+        startDate: new Date("2023-07-01"),
+        clientId: 5,
+        companyId: 7,
+      },
+      {
+        prospectId: 7,
+        startDate: new Date("2024-01-15"),
+        clientId: 3,
+        companyId: 5,
+      },
+      {
+        prospectId: 8,
+        startDate: new Date("2024-02-01"),
+        clientId: 2,
+        companyId: 3,
       }
     ];
 
     for (const hero of heroes) {
       await this.createHero(hero as InsertHero);
+    }
+
+    // Add mock interviews
+    const interviews = [
+      {
+        prospectId: 1,
+        userId: 1,
+        scheduledFor: new Date("2023-06-15T10:00:00"),
+        type: "technical",
+        status: "completed",
+        notes: "Excellent technical skills. Strong understanding of React and Node.js.",
+        meetingLink: "https://meet.google.com/abc-defg-hij"
+      },
+      {
+        prospectId: 2,
+        userId: 1,
+        scheduledFor: new Date("2023-07-20T14:00:00"),
+        type: "behavioral",
+        status: "completed",
+        notes: "Good communication skills. Showed leadership qualities.",
+        meetingLink: "https://meet.google.com/klm-nopq-rst"
+      },
+      {
+        prospectId: 3,
+        userId: 1,
+        scheduledFor: new Date("2023-11-10T11:00:00"),
+        type: "technical",
+        status: "completed",
+        notes: "Solid understanding of database concepts and SQL.",
+        meetingLink: "https://meet.google.com/uvw-xyz-123"
+      },
+      {
+        prospectId: 4,
+        userId: 1,
+        scheduledFor: new Date("2023-09-05T15:30:00"),
+        type: "technical",
+        status: "completed",
+        notes: "Strong in frontend development. Good understanding of CSS and responsive design.",
+        meetingLink: "https://meet.google.com/456-789-abc"
+      },
+      {
+        prospectId: 5,
+        userId: 1,
+        scheduledFor: new Date("2023-08-22T09:00:00"),
+        type: "behavioral",
+        status: "completed",
+        notes: "Excellent problem-solving skills. Adapts well to challenging situations.",
+        meetingLink: "https://meet.google.com/def-ghi-jkl"
+      },
+      {
+        prospectId: 6,
+        userId: 1,
+        scheduledFor: new Date("2023-10-18T13:30:00"),
+        type: "final",
+        status: "completed",
+        notes: "Great fit for the role. Ready to move forward with an offer.",
+        meetingLink: "https://meet.google.com/mno-pqr-stu"
+      },
+      {
+        prospectId: 7,
+        userId: 1,
+        scheduledFor: new Date("2024-01-05T10:00:00"),
+        type: "technical",
+        status: "completed",
+        notes: "Strong in Python and data analysis. Could improve on web development skills.",
+        meetingLink: "https://meet.google.com/vwx-yz1-234"
+      },
+      {
+        prospectId: 8,
+        userId: 1,
+        scheduledFor: new Date("2024-02-28T16:00:00"),
+        type: "technical",
+        status: "scheduled",
+        notes: "",
+        meetingLink: "https://meet.google.com/567-89a-bcd"
+      }
+    ];
+
+    for (const interview of interviews) {
+      await this.createInterview(interview as InsertInterview);
     }
 
     // Add mock contracts
@@ -609,6 +731,83 @@ export class MemStorage implements IStorage {
         compensation: 120000,
         status: "active",
         document: "contract_1.pdf",
+      },
+      {
+        title: "Senior Backend Developer",
+        heroId: 2,
+        clientId: 4,
+        companyId: 6,
+        startDate: new Date("2023-08-15"),
+        endDate: new Date("2024-08-15"),
+        compensation: 140000,
+        status: "active",
+        document: "contract_2.pdf",
+      },
+      {
+        title: "Frontend Engineer Contract",
+        heroId: 3,
+        clientId: 1,
+        companyId: 1,
+        startDate: new Date("2023-12-01"),
+        endDate: new Date("2024-12-01"),
+        compensation: 110000,
+        status: "active",
+        document: "contract_3.pdf",
+      },
+      {
+        title: "Data Scientist Agreement",
+        heroId: 4,
+        clientId: 2,
+        companyId: 3,
+        startDate: new Date("2023-10-01"),
+        endDate: new Date("2024-10-01"),
+        compensation: 130000,
+        status: "active",
+        document: "contract_4.pdf",
+      },
+      {
+        title: "DevOps Specialist",
+        heroId: 5,
+        clientId: 3,
+        companyId: 4,
+        startDate: new Date("2023-09-15"),
+        endDate: new Date("2024-09-15"),
+        compensation: 135000,
+        status: "active",
+        document: "contract_5.pdf",
+      },
+      {
+        title: "Mobile Developer Contract",
+        heroId: 6,
+        clientId: 5,
+        companyId: 7,
+        startDate: new Date("2023-11-01"),
+        endDate: new Date("2024-11-01"),
+        compensation: 125000,
+        status: "active",
+        document: "contract_6.pdf",
+      },
+      {
+        title: "UX/UI Designer",
+        heroId: 7,
+        clientId: 3,
+        companyId: 5,
+        startDate: new Date("2024-01-15"),
+        endDate: new Date("2025-01-15"),
+        compensation: 105000,
+        status: "active",
+        document: "contract_7.pdf",
+      },
+      {
+        title: "Product Manager Contract",
+        heroId: 8,
+        clientId: 2,
+        companyId: 3,
+        startDate: new Date("2024-02-01"),
+        endDate: new Date("2025-02-01"),
+        compensation: 145000,
+        status: "active",
+        document: "contract_8.pdf",
       }
     ];
 
@@ -641,23 +840,66 @@ export class MemStorage implements IStorage {
       },
       {
         invoiceNumber: "INV-1003",
-        contractId: 1,
-        heroId: 1,
-        clientId: 5,
-        companyId: 7,
-        amount: 10000,
-        status: "pending",
-        dueDate: new Date("2024-02-01"),
+        contractId: 2,
+        heroId: 2,
+        clientId: 4,
+        companyId: 6,
+        amount: 11667,
+        status: "paid",
+        dueDate: new Date("2023-09-15"),
+        paidDate: new Date("2023-09-10"),
       },
       {
         invoiceNumber: "INV-1004",
-        contractId: 1,
-        heroId: 1,
+        contractId: 2,
+        heroId: 2,
+        clientId: 4,
+        companyId: 6,
+        amount: 11667,
+        status: "paid",
+        dueDate: new Date("2023-10-15"),
+        paidDate: new Date("2023-10-12"),
+      },
+      {
+        invoiceNumber: "INV-1005",
+        contractId: 3,
+        heroId: 3,
+        clientId: 1,
+        companyId: 1,
+        amount: 9167,
+        status: "pending",
+        dueDate: new Date("2024-01-01"),
+      },
+      {
+        invoiceNumber: "INV-1006",
+        contractId: 4,
+        heroId: 4,
+        clientId: 2,
+        companyId: 3,
+        amount: 10833,
+        status: "paid",
+        dueDate: new Date("2023-11-01"),
+        paidDate: new Date("2023-10-29"),
+      },
+      {
+        invoiceNumber: "INV-1007",
+        contractId: 5,
+        heroId: 5,
+        clientId: 3,
+        companyId: 4,
+        amount: 11250,
+        status: "overdue",
+        dueDate: new Date("2023-12-15"),
+      },
+      {
+        invoiceNumber: "INV-1008",
+        contractId: 6,
+        heroId: 6,
         clientId: 5,
         companyId: 7,
-        amount: 10000,
-        status: "overdue",
-        dueDate: new Date("2023-10-01"),
+        amount: 10417,
+        status: "pending",
+        dueDate: new Date("2024-02-01"),
       }
     ];
 
@@ -672,7 +914,7 @@ export class MemStorage implements IStorage {
         description: "We're looking for a senior React developer with 5+ years of experience to join our team. You'll be working on cutting-edge projects for our clients.",
         requirements: "- 5+ years of experience with React\n- Strong TypeScript skills\n- Experience with state management libraries\n- Good understanding of web performance optimization",
         location: "Remote - US",
-        jobType: "Full-time",
+        jobType: "full_time",
         salary: "$120,000 - $150,000",
         isActive: true,
         clientId: 1,
@@ -683,7 +925,7 @@ export class MemStorage implements IStorage {
         description: "Join our team as a DevOps Engineer and help us build and maintain our cloud infrastructure. You'll be responsible for automation, CI/CD pipelines, and more.",
         requirements: "- Experience with AWS or Azure\n- Knowledge of Docker and Kubernetes\n- Experience with CI/CD tools\n- Understanding of infrastructure as code",
         location: "New York, NY",
-        jobType: "Full-time",
+        jobType: "full_time",
         salary: "$130,000 - $160,000",
         isActive: true,
         clientId: 3,
@@ -694,7 +936,7 @@ export class MemStorage implements IStorage {
         description: "We're seeking a talented UI/UX Designer to create beautiful and functional user interfaces for our web and mobile applications.",
         requirements: "- Portfolio demonstrating UI/UX work\n- Experience with Figma or Adobe XD\n- Understanding of user-centered design principles\n- Ability to create wireframes, prototypes, and high-fidelity designs",
         location: "Remote",
-        jobType: "Contract",
+        jobType: "contract",
         salary: "$90,000 - $110,000",
         isActive: true,
         clientId: 2,
@@ -705,16 +947,276 @@ export class MemStorage implements IStorage {
         description: "Join our fast-growing tech team as a Frontend Developer. You'll be building responsive, accessible, and performant web applications.",
         requirements: "- 3+ years of experience with HTML, CSS, and JavaScript\n- Experience with a modern JavaScript framework (React, Vue, Angular)\n- Understanding of web accessibility standards\n- Experience with responsive design",
         location: "Chicago, IL",
-        jobType: "Full-time",
+        jobType: "full_time",
         salary: "$90,000 - $120,000",
         isActive: false,
         clientId: 5,
         companyId: 7
+      },
+      {
+        title: "Data Scientist",
+        description: "We are looking for a Data Scientist to analyze complex data sets and build predictive models to help our clients make data-driven decisions.",
+        requirements: "- Experience with Python, R, or similar\n- Knowledge of machine learning algorithms\n- Experience with data visualization tools\n- Strong statistical background",
+        location: "Boston, MA",
+        jobType: "full_time",
+        salary: "$110,000 - $140,000",
+        isActive: true,
+        clientId: 4,
+        companyId: 6
+      },
+      {
+        title: "Mobile App Developer",
+        description: "Join our mobile development team to build innovative iOS and Android applications for our clients in various industries.",
+        requirements: "- Experience with Swift or Kotlin\n- Knowledge of mobile app architecture\n- Understanding of UI/UX design principles for mobile\n- Experience with RESTful APIs",
+        location: "San Francisco, CA",
+        jobType: "full_time",
+        salary: "$100,000 - $130,000",
+        isActive: true,
+        clientId: 1,
+        companyId: 2
+      },
+      {
+        title: "Backend Developer",
+        description: "We're looking for a Backend Developer to design and implement server-side logic and maintain database systems.",
+        requirements: "- Experience with Node.js, Python, or Java\n- Knowledge of database systems (SQL and NoSQL)\n- Understanding of RESTful API design\n- Experience with cloud services (AWS, GCP, or Azure)",
+        location: "Remote",
+        jobType: "contract",
+        salary: "$95,000 - $125,000",
+        isActive: true,
+        clientId: 3,
+        companyId: 5
+      },
+      {
+        title: "Product Manager",
+        description: "We're seeking an experienced Product Manager to lead the development of innovative digital products for our clients.",
+        requirements: "- Experience in product management for digital products\n- Strong understanding of user-centered design\n- Excellent communication skills\n- Ability to translate business requirements into product features",
+        location: "Austin, TX",
+        jobType: "full_time",
+        salary: "$110,000 - $150,000",
+        isActive: true,
+        clientId: 2,
+        companyId: 3
       }
     ];
     
     for (const jobOpening of jobOpenings) {
       await this.createJobOpening(jobOpening as InsertJobOpening);
+    }
+    
+    // Add mock job applications
+    const jobApplications = [
+      {
+        jobOpeningId: 1,
+        firstName: "John",
+        lastName: "Doe",
+        email: "john.doe@example.com",
+        phone: "555-123-4567",
+        resumeUrl: "https://example.com/resume/johndoe.pdf",
+        coverLetter: "I am excited to apply for the Senior React Developer position. With over 6 years of experience in React development...",
+        status: "in_review",
+        notes: "Strong React experience. Scheduling technical interview.",
+      },
+      {
+        jobOpeningId: 1,
+        firstName: "Jane",
+        lastName: "Smith",
+        email: "jane.smith@example.com",
+        phone: "555-987-6543",
+        resumeUrl: "https://example.com/resume/janesmith.pdf",
+        coverLetter: "As a senior developer with expertise in React and TypeScript, I am thrilled to apply for this role...",
+        status: "interview",
+        notes: "Passed initial screening. Technical interview scheduled for next week.",
+      },
+      {
+        jobOpeningId: 2,
+        firstName: "Michael",
+        lastName: "Johnson",
+        email: "michael.j@example.com",
+        phone: "555-456-7890",
+        resumeUrl: "https://example.com/resume/michaelj.pdf",
+        coverLetter: "With my extensive experience in AWS and CI/CD pipelines, I believe I am a perfect fit for the DevOps Engineer position...",
+        status: "new",
+        notes: "",
+      },
+      {
+        jobOpeningId: 3,
+        firstName: "Emily",
+        lastName: "Williams",
+        email: "emily.w@example.com",
+        phone: "555-234-5678",
+        resumeUrl: "https://example.com/resume/emilyw.pdf",
+        coverLetter: "I am applying for the UI/UX Designer position with great enthusiasm. My portfolio demonstrates my ability to create user-centered designs...",
+        status: "hired",
+        notes: "Excellent portfolio. Hired as contractor starting next month.",
+      },
+      {
+        jobOpeningId: 4,
+        firstName: "Daniel",
+        lastName: "Brown",
+        email: "daniel.b@example.com",
+        phone: "555-876-5432",
+        resumeUrl: "https://example.com/resume/danielb.pdf",
+        coverLetter: "I am excited to apply for the Frontend Developer position. I have 4 years of experience with React and responsive design...",
+        status: "rejected",
+        notes: "Not enough experience with accessibility standards.",
+      },
+      {
+        jobOpeningId: 5,
+        firstName: "Sophia",
+        lastName: "Miller",
+        email: "sophia.m@example.com",
+        phone: "555-345-6789",
+        resumeUrl: "https://example.com/resume/sophiam.pdf",
+        coverLetter: "As a Data Scientist with a strong background in machine learning and statistics, I am excited to apply for this role...",
+        status: "offered",
+        notes: "Strong technical skills. Offer being prepared.",
+      },
+      {
+        jobOpeningId: 6,
+        firstName: "Matthew",
+        lastName: "Taylor",
+        email: "matthew.t@example.com",
+        phone: "555-654-3210",
+        resumeUrl: "https://example.com/resume/matthewt.pdf",
+        coverLetter: "I am applying for the Mobile App Developer position with 5 years of experience developing iOS applications...",
+        status: "interview",
+        notes: "Good initial interview. Moving to technical assessment.",
+      },
+      {
+        jobOpeningId: 7,
+        firstName: "Olivia",
+        lastName: "Anderson",
+        email: "olivia.a@example.com",
+        phone: "555-789-0123",
+        resumeUrl: "https://example.com/resume/oliviaa.pdf",
+        coverLetter: "I am excited to apply for the Backend Developer position. With my experience in Node.js and database management...",
+        status: "new",
+        notes: "Recently applied. Need to review resume.",
+      }
+    ];
+    
+    for (const jobApplication of jobApplications) {
+      await this.createJobApplication(jobApplication as InsertJobApplication);
+    }
+    
+    // Add mock job requests
+    const jobRequests = [
+      {
+        clientId: 1,
+        companyId: 1,
+        clientName: "Acme Corporation",
+        companyName: "Acme Software",
+        title: "Full Stack Developer",
+        description: "We're looking for a full stack developer to join our team to work on our customer-facing web applications.",
+        requirements: "- Experience with React and Node.js\n- Familiarity with SQL databases\n- Understanding of RESTful API design\n- Experience with Git version control",
+        location: "Remote",
+        jobType: "full_time",
+        salary: "$100,000 - $130,000",
+        status: "pending",
+        notes: ""
+      },
+      {
+        clientId: 2,
+        companyId: 3,
+        clientName: "TechCorp Inc.",
+        companyName: "TechCorp Software",
+        title: "Machine Learning Engineer",
+        description: "Join our AI team to develop machine learning models for our prediction engine.",
+        requirements: "- Experience with Python and machine learning libraries\n- Understanding of neural networks\n- Experience with data preprocessing\n- Knowledge of model deployment",
+        location: "San Francisco, CA",
+        jobType: "full_time",
+        salary: "$120,000 - $150,000",
+        status: "approved",
+        notes: "Strong requirement. Approved for publishing."
+      },
+      {
+        clientId: 3,
+        companyId: 4,
+        clientName: "Global Solutions",
+        companyName: "Global Tech",
+        title: "Security Engineer",
+        description: "We need a security engineer to help maintain and enhance our cybersecurity infrastructure.",
+        requirements: "- Experience with network security\n- Knowledge of security protocols\n- Experience with security auditing\n- Familiarity with compliance requirements",
+        location: "New York, NY",
+        jobType: "full_time",
+        salary: "$110,000 - $140,000",
+        status: "published",
+        notes: "Position published on careers page."
+      },
+      {
+        clientId: 4,
+        companyId: 6,
+        clientName: "Innovative Systems",
+        companyName: "Innovative Tech",
+        title: "Cloud Architect",
+        description: "Looking for a cloud architect to design and implement our cloud infrastructure strategy.",
+        requirements: "- Experience with AWS or Azure\n- Knowledge of infrastructure as code\n- Experience with containerization\n- Understanding of cloud security best practices",
+        location: "Chicago, IL",
+        jobType: "full_time",
+        salary: "$130,000 - $160,000",
+        status: "rejected",
+        notes: "Requirements need to be more specific."
+      },
+      {
+        clientId: 5,
+        companyId: 7,
+        clientName: "Digital Solutions",
+        companyName: "Digital Innovations",
+        title: "Quality Assurance Engineer",
+        description: "Join our QA team to ensure the quality of our software products.",
+        requirements: "- Experience with test automation\n- Knowledge of testing methodologies\n- Experience with bug tracking systems\n- Understanding of CI/CD pipelines",
+        location: "Remote",
+        jobType: "full_time",
+        salary: "$90,000 - $110,000",
+        status: "pending",
+        notes: ""
+      },
+      {
+        clientId: 1,
+        companyId: 2,
+        clientName: "Acme Corporation",
+        companyName: "Acme Mobile",
+        title: "iOS Developer",
+        description: "We're seeking an iOS developer to create and maintain our mobile applications.",
+        requirements: "- Experience with Swift and iOS SDK\n- Knowledge of iOS design guidelines\n- Experience with third-party libraries\n- Understanding of app submission process",
+        location: "Boston, MA",
+        jobType: "full_time",
+        salary: "$100,000 - $130,000",
+        status: "approved",
+        notes: "Ready to be published."
+      },
+      {
+        clientId: 3,
+        companyId: 5,
+        clientName: "Global Solutions",
+        companyName: "Global AI",
+        title: "Data Engineer",
+        description: "Join our data team to build and maintain our data pipelines.",
+        requirements: "- Experience with ETL processes\n- Knowledge of data warehousing\n- Experience with big data technologies\n- Understanding of data modeling",
+        location: "Austin, TX",
+        jobType: "contract",
+        salary: "$95,000 - $125,000",
+        status: "pending",
+        notes: ""
+      },
+      {
+        clientId: 2,
+        companyId: 3,
+        clientName: "TechCorp Inc.",
+        companyName: "TechCorp Software",
+        title: "Product Owner",
+        description: "We're looking for a product owner to guide the development of our software products.",
+        requirements: "- Experience with agile methodologies\n- Strong communication skills\n- Experience with product roadmapping\n- Understanding of user-centered design",
+        location: "Remote",
+        jobType: "full_time",
+        salary: "$100,000 - $140,000",
+        status: "published",
+        notes: "Position published on careers page."
+      }
+    ];
+    
+    for (const jobRequest of jobRequests) {
+      await this.createJobRequest(jobRequest as InsertJobRequest);
     }
   }
   
