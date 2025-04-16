@@ -11,8 +11,7 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   avatar: text("avatar"),
-  role: text("role", { enum: ["super_admin", "admin", "recruiter", "client"] }).notNull().default("recruiter"),
-  clientId: integer("client_id"),
+  role: text("role", { enum: ["super_admin", "admin", "recruiter"] }).notNull().default("recruiter"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

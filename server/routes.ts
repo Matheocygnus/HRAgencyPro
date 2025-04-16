@@ -14,7 +14,7 @@ import {
   insertJobApplicationSchema,
   insertJobRequestSchema
 } from "@shared/schema";
-import { ZodError, z } from "zod";
+import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
 // Temporary development middleware - allows all requests without authentication
@@ -63,26 +63,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get companies for a specific client
-  app.get("/api/clients/:id/companies", isAuthenticated, async (req, res) => {
-    try {
-      const companies = await storage.getCompaniesByClient(parseInt(req.params.id));
-      res.json(companies);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to retrieve companies" });
-    }
-  });
-  
-  // Get job requests for a specific client
-  app.get("/api/clients/:id/job-requests", isAuthenticated, async (req, res) => {
-    try {
-      const jobRequests = await storage.getJobRequestsByClient(parseInt(req.params.id));
-      res.json(jobRequests);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to retrieve job requests" });
-    }
-  });
-  
   app.post("/api/clients", hasRole(["super_admin", "admin"]), async (req, res) => {
     try {
       const clientData = insertClientSchema.parse(req.body);
@@ -112,57 +92,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Create a user account for a client
-  app.post("/api/clients/:id/create-account", hasRole(["super_admin", "admin"]), async (req, res) => {
-    try {
-      const clientId = parseInt(req.params.id);
-      const client = await storage.getClient(clientId);
-      if (!client) {
-        return res.status(404).json({ message: "Client not found" });
-      }
-      
-      // Validate request body
-      const accountSchema = z.object({
-        username: z.string().min(3),
-        password: z.string().min(6),
-        email: z.string().email(),
-        firstName: z.string().min(1),
-        lastName: z.string().min(1),
-      });
-      
-      const accountData = accountSchema.parse(req.body);
-      
-      // Check if username already exists
-      const existingUser = await storage.getUserByUsername(accountData.username);
-      if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
-      }
-      
-      // Create user with client role and link to client
-      const userData = {
-        username: accountData.username,
-        password: accountData.password, // Note: This will be hashed in the auth setup
-        email: accountData.email,
-        firstName: accountData.firstName,
-        lastName: accountData.lastName,
-        role: "client" as const,
-        clientId: clientId,
-      };
-      
-      const newUser = await storage.createUser(userData);
-      
-      // Return the new user without password
-      const { password, ...userWithoutPassword } = newUser;
-      res.status(201).json(userWithoutPassword);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return handleZodError(error, res);
-      }
-      console.error("Error creating client account:", error);
-      res.status(500).json({ message: "Failed to create client account" });
-    }
-  });
-  
   // Company routes
   app.get("/api/companies", isAuthenticated, async (req, res) => {
     try {
@@ -185,7 +114,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-
+  app.get("/api/clients/:clientId/companies", isAuthenticated, async (req, res) => {
+    try {
+      const companies = await storage.getCompaniesByClient(parseInt(req.params.clientId));
+      res.json(companies);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve companies for client" });
+    }
+  });
   
   app.post("/api/companies", hasRole(["super_admin", "admin"]), async (req, res) => {
     try {

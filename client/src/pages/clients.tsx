@@ -28,22 +28,22 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Client, Company } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Link } from "wouter";
 import ClientForm from "@/components/forms/ClientForm";
-import { Loader2, MoreHorizontal, Plus, Search, UserPlus } from "lucide-react";
+import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
 import CompanyFormDialog from "@/components/dialogs/CompanyFormDialog";
-import ClientAccountDialog from "@/components/dialogs/ClientAccountDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/hooks/use-auth";
+import { useMockAuth } from "@/hooks/use-mock-auth";
 
 export default function ClientsPage() {
   const { toast } = useToast();
-  const { user, isAdmin } = useAuth();
+  const { user } = useMockAuth();
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
   const [isAddCompanyDialogOpen, setIsAddCompanyDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentTab, setCurrentTab] = useState("clients");
-  const [createAccountClient, setCreateAccountClient] = useState<Client | null>(null);
+
+  // Check if user has admin access
+  const isAdmin = user && (user.role === "admin" || user.role === "super_admin");
 
   // Fetch clients and companies
   const { data: clients = [], isLoading: isClientsLoading } = useQuery<Client[]>({
@@ -165,11 +165,7 @@ export default function ClientsPage() {
                       ) : (
                         filteredClients.map((client) => (
                           <TableRow key={client.id}>
-                            <TableCell className="font-medium">
-                              <Link href={`/client/${client.id}`} className="hover:underline text-primary">
-                                {client.name}
-                              </Link>
-                            </TableCell>
+                            <TableCell className="font-medium">{client.name}</TableCell>
                             <TableCell>{client.contactPerson}</TableCell>
                             <TableCell>{client.email}</TableCell>
                             <TableCell>{client.phone || "N/A"}</TableCell>
@@ -195,12 +191,6 @@ export default function ClientsPage() {
                                       })}
                                     >
                                       {client.status === "active" ? "Mark as Inactive" : "Mark as Active"}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => setCreateAccountClient(client)}
-                                    >
-                                      <UserPlus className="h-4 w-4 mr-2" />
-                                      Create Account
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
@@ -280,25 +270,6 @@ export default function ClientsPage() {
           });
         }}
       />
-
-      {/* Create Client Account Dialog */}
-      {createAccountClient && (
-        <ClientAccountDialog
-          clientId={createAccountClient.id}
-          clientName={createAccountClient.name}
-          isOpen={!!createAccountClient}
-          onOpenChange={(open) => {
-            if (!open) setCreateAccountClient(null);
-          }}
-          onSuccess={() => {
-            toast({
-              title: "Account created",
-              description: `Client account created successfully for ${createAccountClient.name}`,
-            });
-            queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
-          }}
-        />
-      )}
     </Dashboard>
   );
 }
