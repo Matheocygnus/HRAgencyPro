@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import DashboardDev from "@/pages/dashboard-dev";
 import Prospects from "@/pages/prospects";
 import Clients from "@/pages/clients";
+import ClientProfile from "@/pages/client-profile";
 import Heroes from "@/pages/heroes";
 import Contracts from "@/pages/contracts";
 import Invoices from "@/pages/invoices";
@@ -37,6 +38,9 @@ function Router() {
       </Route>
       <Route path="/clients">
         <Clients />
+      </Route>
+      <Route path="/client-profile">
+        <ClientProfile />
       </Route>
       <Route path="/heroes">
         <Heroes />

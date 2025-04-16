@@ -63,6 +63,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get companies for a specific client
+  app.get("/api/clients/:id/companies", isAuthenticated, async (req, res) => {
+    try {
+      const companies = await storage.getCompaniesByClient(parseInt(req.params.id));
+      res.json(companies);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve companies" });
+    }
+  });
+  
+  // Get job requests for a specific client
+  app.get("/api/clients/:id/job-requests", isAuthenticated, async (req, res) => {
+    try {
+      const jobRequests = await storage.getJobRequestsByClient(parseInt(req.params.id));
+      res.json(jobRequests);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve job requests" });
+    }
+  });
+  
   app.post("/api/clients", hasRole(["super_admin", "admin"]), async (req, res) => {
     try {
       const clientData = insertClientSchema.parse(req.body);
@@ -114,14 +134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/clients/:clientId/companies", isAuthenticated, async (req, res) => {
-    try {
-      const companies = await storage.getCompaniesByClient(parseInt(req.params.clientId));
-      res.json(companies);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to retrieve companies for client" });
-    }
-  });
+
   
   app.post("/api/companies", hasRole(["super_admin", "admin"]), async (req, res) => {
     try {
