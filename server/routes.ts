@@ -574,6 +574,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Convert a job application to a prospect
+  app.post("/api/job-applications/:id/convert-to-prospect", hasRole(["super_admin", "admin", "recruiter"]), async (req, res) => {
+    try {
+      const applicationId = parseInt(req.params.id);
+      const application = await storage.getJobApplication(applicationId);
+      
+      if (!application) {
+        return res.status(404).json({ message: "Job application not found" });
+      }
+      
+      // Get the job opening details to include in the prospect
+      const jobOpening = await storage.getJobOpening(application.jobOpeningId);
+      
+      if (!jobOpening) {
+        return res.status(404).json({ message: "Job opening not found" });
+      }
+      
+      // Create a prospect from the application
+      const prospectData = {
+        firstName: application.firstName,
+        lastName: application.lastName,
+        email: application.email,
+        phone: application.phone,
+        resumeUrl: application.resumeUrl,
+        notes: application.coverLetter || "",
+        status: "sourcing",
+        clientId: jobOpening.clientId,
+        source: `Job Application (#${application.id}) for ${jobOpening.title}`,
+        skills: "",
+        experience: "",
+        expectedSalary: "",
+        currentPosition: "",
+        currentCompany: "",
+        location: jobOpening.location,
+      };
+      
+      const prospect = await storage.createProspect(prospectData);
+      
+      // Update the job application to mark it as converted
+      await storage.updateJobApplication(applicationId, { 
+        status: "converted",
+        notes: `Converted to prospect #${prospect.id}`
+      });
+      
+      res.status(201).json({
+        application,
+        prospect
+      });
+    } catch (error) {
+      console.error("Error converting application to prospect:", error);
+      res.status(500).json({ message: "Failed to convert job application to prospect" });
+    }
+  });
+  
   app.put("/api/job-applications/:id", hasRole(["super_admin", "admin", "recruiter"]), async (req, res) => {
     try {
       const jobApplicationData = insertJobApplicationSchema.partial().parse(req.body);
