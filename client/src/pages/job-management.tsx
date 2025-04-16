@@ -55,7 +55,8 @@ import {
   UserPlus,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  ClipboardCheck
 } from 'lucide-react';
 import Dashboard from '@/components/layout/Dashboard';
 
@@ -79,6 +80,98 @@ const applicationStatusSchema = z.object({
   status: z.string(),
   notes: z.string().optional()
 });
+
+
+
+// Component to display all applications across all job openings
+function AllApplicationsContent({ 
+  handleViewApplication, 
+  getStatusBadge,
+  searchTerm
+}: { 
+  handleViewApplication: (application: JobApplication) => void;
+  getStatusBadge: (status: string) => JSX.Element;
+  searchTerm: string;
+}) {
+  // Fetch all job applications
+  const { data: allApplications, isLoading } = useQuery<JobApplication[]>({
+    queryKey: ['/api/job-applications'],
+    enabled: true
+  });
+  
+  // Fetch job openings to display job titles
+  const { data: jobOpenings } = useQuery<JobOpening[]>({
+    queryKey: ['/api/job-openings'],
+    enabled: true
+  });
+  
+  // Filter applications based on search
+  const filteredApplications = allApplications?.filter(app => 
+    app.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.status.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  // Get job title for an application
+  const getJobTitle = (jobOpeningId: number) => {
+    const job = jobOpenings?.find(j => j.id === jobOpeningId);
+    return job ? job.title : 'Unknown Job';
+  };
+  
+  return (
+    <>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : filteredApplications && filteredApplications.length > 0 ? (
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Job Position</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date Applied</TableHead>
+                <TableHead className="w-[80px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredApplications.map((app) => (
+                <TableRow key={app.id}>
+                  <TableCell className="font-medium">{app.firstName} {app.lastName}</TableCell>
+                  <TableCell>{getJobTitle(app.jobOpeningId)}</TableCell>
+                  <TableCell>{app.email}</TableCell>
+                  <TableCell>{getStatusBadge(app.status)}</TableCell>
+                  <TableCell>{new Date(app.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleViewApplication(app)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <ClipboardCheck className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">No applications found</h3>
+          <p className="text-muted-foreground">
+            {searchTerm ? "Try adjusting your search." : "When candidates apply to any job, they will appear here."}
+          </p>
+        </div>
+      )}
+    </>
+  );
+}
 
 export default function JobManagementPage() {
   const [isJobFormOpen, setIsJobFormOpen] = useState(false);
@@ -330,8 +423,11 @@ export default function JobManagementPage() {
           <TabsTrigger value="jobs">
             <Briefcase className="mr-2 h-4 w-4" /> Job Openings
           </TabsTrigger>
+          <TabsTrigger value="job-applications">
+            <ClipboardCheck className="mr-2 h-4 w-4" /> All Applications
+          </TabsTrigger>
           <TabsTrigger value="applications" disabled={!selectedJobId}>
-            <UserPlus className="mr-2 h-4 w-4" /> Applications
+            <UserPlus className="mr-2 h-4 w-4" /> Job Applications
           </TabsTrigger>
         </TabsList>
 
@@ -399,6 +495,31 @@ export default function JobManagementPage() {
               </p>
             </div>
           )}
+        </TabsContent>
+        
+        <TabsContent value="job-applications">
+          {/* All Applications Tab */}
+          <>
+            <div className="mb-4 flex justify-between items-center">
+              <h2 className="text-xl font-semibold">All Job Applications</h2>
+              <div className="relative w-[250px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search applications..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            {/* Fetch all job applications */}
+            <AllApplicationsContent 
+              handleViewApplication={handleViewApplication}
+              getStatusBadge={getStatusBadge}
+              searchTerm={searchTerm}
+            />
+          </>
         </TabsContent>
 
         <TabsContent value="applications">
