@@ -28,6 +28,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Client, Company } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 import ClientForm from "@/components/forms/ClientForm";
 import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
 import CompanyFormDialog from "@/components/dialogs/CompanyFormDialog";

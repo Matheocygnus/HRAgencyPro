@@ -75,6 +75,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import Dashboard from '@/components/layout/Dashboard';
+import { useRoute } from 'wouter';
 
 // Form schema for job request with validation
 const jobRequestSchema = z.object({
@@ -119,9 +120,9 @@ export default function ClientProfilePage() {
   const { toast } = useToast();
   const { user } = useMockAuth();
 
-  // In a real implementation, we would get the client ID from the authenticated user
-  // For this demo, we'll use a mock client ID
-  const clientId = 1;
+  // Get the client ID from the URL parameter
+  const [, params] = useRoute('/client/:id');
+  const clientId = params?.id ? parseInt(params.id) : 1;
 
   // Fetch client data
   const { data: client, isLoading: isLoadingClient } = useQuery<Client>({

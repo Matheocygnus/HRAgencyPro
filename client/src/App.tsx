@@ -39,7 +39,7 @@ function Router() {
       <Route path="/clients">
         <Clients />
       </Route>
-      <Route path="/client-profile">
+      <Route path="/client/:id">
         <ClientProfile />
       </Route>
       <Route path="/heroes">
