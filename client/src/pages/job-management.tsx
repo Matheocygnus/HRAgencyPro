@@ -79,7 +79,7 @@ const jobOpeningSchema = z.object({
 
 // Form schema for application status update
 const applicationStatusSchema = z.object({
-  status: z.string(),
+  status: z.enum(["rejected", "converted"]),
   notes: z.string().optional()
 });
 
@@ -368,7 +368,7 @@ export default function JobManagementPage() {
   const statusForm = useForm<z.infer<typeof applicationStatusSchema>>({
     resolver: zodResolver(applicationStatusSchema),
     defaultValues: {
-      status: 'new',
+      status: 'rejected',
       notes: ''
     }
   });
@@ -440,19 +440,61 @@ export default function JobManagementPage() {
   });
 
   // Mutation to update application status
+  // Create prospect mutation
+  const createProspectMutation = useMutation({
+    mutationFn: async (application: JobApplication) => {
+      // Create new prospect from job application
+      const prospectData = {
+        firstName: application.firstName,
+        lastName: application.lastName,
+        email: application.email,
+        phone: application.phone,
+        position: getJobTitle(application.jobOpeningId),
+        skills: "",
+        status: "sourcing", // Start in sourcing column in the Kanban board
+        notes: `Converted from job application. Original application notes: ${application.notes || ''}`,
+        resume: application.resumeUrl
+      };
+      
+      const res = await apiRequest('POST', '/api/prospects', prospectData);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/prospects'] });
+      toast({
+        title: 'Application Converted',
+        description: 'The application has been successfully converted to a prospect.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Conversion Failed',
+        description: error.message || 'There was an error converting the application to a prospect. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  });
+
   const updateApplicationStatusMutation = useMutation({
     mutationFn: async (data: { id: number; statusData: z.infer<typeof applicationStatusSchema> }) => {
       const res = await apiRequest('PUT', `/api/job-applications/${data.id}`, data.statusData);
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (updatedApplication, variables) => {
       if (selectedJobId) {
         queryClient.invalidateQueries({ queryKey: ['/api/job-openings', selectedJobId, 'applications'] });
       }
-      toast({
-        title: 'Status Updated',
-        description: 'The application status has been successfully updated.',
-      });
+      
+      // If status is "converted", create a prospect
+      if (variables.statusData.status === "converted" && selectedApplication) {
+        createProspectMutation.mutate(selectedApplication);
+      } else {
+        toast({
+          title: 'Status Updated',
+          description: 'The application status has been successfully updated.',
+        });
+      }
+      
       setSelectedApplication(null);
       statusForm.reset();
     },
@@ -1048,40 +1090,16 @@ export default function JobManagementPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="new">
-                                  <div className="flex items-center">
-                                    <Clock className="mr-2 h-4 w-4" />
-                                    New
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="in_review">
-                                  <div className="flex items-center">
-                                    <Search className="mr-2 h-4 w-4" />
-                                    In Review
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="interview">
-                                  <div className="flex items-center">
-                                    <UserPlus className="mr-2 h-4 w-4" />
-                                    Interview
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="offered">
-                                  <div className="flex items-center">
-                                    <Briefcase className="mr-2 h-4 w-4" />
-                                    Offered
-                                  </div>
-                                </SelectItem>
-                                <SelectItem value="hired">
-                                  <div className="flex items-center">
-                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                    Hired
-                                  </div>
-                                </SelectItem>
                                 <SelectItem value="rejected">
                                   <div className="flex items-center">
                                     <XCircle className="mr-2 h-4 w-4" />
-                                    Rejected
+                                    Reject
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="converted">
+                                  <div className="flex items-center">
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Convert to Prospect
                                   </div>
                                 </SelectItem>
                               </SelectContent>
