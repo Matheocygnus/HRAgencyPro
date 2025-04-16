@@ -125,6 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const accountSchema = z.object({
         username: z.string().min(3),
         password: z.string().min(6),
+        email: z.string().email(),
         firstName: z.string().min(1),
         lastName: z.string().min(1),
       });
@@ -141,9 +142,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = {
         username: accountData.username,
         password: accountData.password, // Note: This will be hashed in the auth setup
+        email: accountData.email,
         firstName: accountData.firstName,
         lastName: accountData.lastName,
-        role: "client",
+        role: "client" as const,
         clientId: clientId,
       };
       

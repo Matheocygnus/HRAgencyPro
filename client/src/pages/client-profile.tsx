@@ -1,20 +1,33 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Client, Company, JobRequest, InsertJobRequest } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { InsertJobRequest } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import Dashboard from "@/components/layout/Dashboard";
-import { Redirect } from "wouter";
+
+// UI Components
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, Loader2, Plus } from "lucide-react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -27,214 +40,168 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Plus, ChevronDown, ChevronUp } from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
+// Remove SkillLevel import since it's not being used
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 
-// Job Request Form Schema
+// Define job request form schema
 const jobRequestSchema = z.object({
-  companyId: z.string().min(1, { message: "Company is required" }),
-  title: z.string().min(3, { message: "Role title is required" }),
-  numberOfPositions: z.string().min(1, { message: "Number of positions is required" }),
+  title: z.string().min(1, { message: "Title is required" }),
+  description: z.string().min(1, { message: "Description is required" }),
+  numberOfPositions: z.coerce.number().min(1, { message: "At least one position is required" }),
   startDate: z.string().min(1, { message: "Start date is required" }),
-  description: z.string().min(10, { message: "Overall responsibilities is required" }),
-  mustHaveSkills: z.array(z.object({
-    skill: z.string().min(1, { message: "Skill is required" }),
-    proficiency: z.string().min(1, { message: "Proficiency is required" }),
-  })).min(1, { message: "At least one must-have skill is required" }),
-  goodToHaveSkills: z.array(z.object({
-    skill: z.string(),
-    proficiency: z.string(),
-  })),
-  jobType: z.string().min(1, { message: "Work shift is required" }),
-  reportsTo: z.string().min(1, { message: "Reports to information is required" }),
-  languages: z.array(z.string()).min(1, { message: "At least one language is required" }),
-  requiresTesting: z.boolean(),
-  salary: z.string().min(1, { message: "Salary range is required" }),
+  responsibilities: z.string().min(1, { message: "Responsibilities are required" }),
+  mustHaveSkills: z.string().min(1, { message: "Must-have skills are required" }),
+  goodToHaveSkills: z.string(),
+  workSchedule: z.string().min(1, { message: "Work schedule is required" }),
+  reportingStructure: z.string().min(1, { message: "Reporting structure is required" }),
+  requiredLanguages: z.string().min(1, { message: "Required languages are required" }),
+  testingProcess: z.string(),
+  salaryRangeMin: z.coerce.number().min(1, { message: "Minimum salary is required" }),
+  salaryRangeMax: z.coerce.number().min(1, { message: "Maximum salary is required" }),
   notes: z.string(),
-  location: z.string().default("Remote"),
-  requirements: z.string().default(""),
 });
 
 type JobRequestFormValues = z.infer<typeof jobRequestSchema>;
 
-interface ClientProfilePageProps {
-  clientId?: number;
-}
-
-export default function ClientProfilePage({ clientId: propClientId }: ClientProfilePageProps) {
-  const params = useParams<{ id: string }>();
-  const [location, setLocation] = useLocation();
-  
-  // Use provided clientId from props or from URL params
-  const clientId = propClientId || (params.id ? parseInt(params.id) : 0);
-  
+export default function ClientProfile() {
+  const { id } = useParams();
+  const clientId = id ? parseInt(id, 10) : undefined;
+  const { user } = useAuth();
   const { toast } = useToast();
-  const { user, isClient, isAdmin } = useAuth();
-  const [isJobRequestDialogOpen, setIsJobRequestDialogOpen] = useState(false);
-  const [expandedRequestId, setExpandedRequestId] = useState<number | null>(null);
-  
-  // Check if the current user is authorized to view this client
-  const isAuthorized = isAdmin || (isClient && user?.clientId === clientId);
-  
-  // Redirect if not authorized
+  const [, setLocation] = useLocation();
+  const [jobRequestDialogOpen, setJobRequestDialogOpen] = useState(false);
+
+  // Verify access rights - user must be admin or the client themselves
+  const hasAccess = () => {
+    if (!user) return false;
+    if (user.role === 'super_admin' || user.role === 'admin') return true;
+    return user.role === 'client' && user.clientId === clientId;
+  };
+
+  // Redirect if no access
   useEffect(() => {
-    if (user && !isAuthorized && clientId > 0) {
+    if (user && !hasAccess()) {
+      toast({
+        title: "Access denied",
+        description: "You don't have permission to view this client profile",
+        variant: "destructive",
+      });
       setLocation("/");
     }
-  }, [user, isAuthorized, clientId, setLocation]);
-  
+  }, [user, clientId, setLocation]);
+
   // Fetch client data
-  const { data: client, isLoading: isClientLoading } = useQuery<Client>({
-    queryKey: [`/api/clients/${clientId}`],
-    enabled: !!clientId && isAuthorized,
+  const { 
+    data: client, 
+    isLoading: isLoadingClient,
+    error: clientError
+  } = useQuery({
+    queryKey: ['/api/clients', clientId],
+    queryFn: () => {
+      if (!clientId) return Promise.reject("No client ID provided");
+      return apiRequest('GET', `/api/clients/${clientId}`)
+        .then(res => res.json());
+    },
+    enabled: !!clientId && !!user
   });
 
-  // Fetch client companies
-  const { data: companies = [], isLoading: isCompaniesLoading } = useQuery<Company[]>({
-    queryKey: [`/api/clients/${clientId}/companies`],
-    enabled: !!clientId && isAuthorized,
+  // Fetch client's job requests
+  const { 
+    data: jobRequests, 
+    isLoading: isLoadingJobRequests 
+  } = useQuery({
+    queryKey: ['/api/clients', clientId, 'job-requests'],
+    queryFn: () => {
+      if (!clientId) return Promise.reject("No client ID provided");
+      return apiRequest('GET', `/api/clients/${clientId}/job-requests`)
+        .then(res => res.json());
+    },
+    enabled: !!clientId && !!user
   });
 
-  // Fetch client job requests
-  const { data: jobRequests = [], isLoading: isJobRequestsLoading } = useQuery<JobRequest[]>({
-    queryKey: [`/api/clients/${clientId}/job-requests`],
-    enabled: !!clientId && isAuthorized,
-  });
-
-  // Job request form with the required fields
-  const form = useForm<JobRequestFormValues>({
+  // Create job request form
+  const jobRequestForm = useForm<JobRequestFormValues>({
     resolver: zodResolver(jobRequestSchema),
     defaultValues: {
-      companyId: "",
       title: "",
-      numberOfPositions: "1",
-      startDate: "",
       description: "",
-      mustHaveSkills: [{ skill: "", proficiency: "intermediate" }],
-      goodToHaveSkills: [{ skill: "", proficiency: "basic" }],
-      jobType: "full_time",
-      reportsTo: "",
-      languages: ["English"],
-      requiresTesting: false,
-      salary: "",
+      numberOfPositions: 1,
+      startDate: "",
+      responsibilities: "",
+      mustHaveSkills: "",
+      goodToHaveSkills: "",
+      workSchedule: "",
+      reportingStructure: "",
+      requiredLanguages: "",
+      testingProcess: "",
+      salaryRangeMin: 0,
+      salaryRangeMax: 0,
       notes: "",
-      location: "Remote",
-      requirements: "",
-    },
+    }
   });
-
-  // Add/remove skill fields
-  const addMustHaveSkill = () => {
-    const currentSkills = form.getValues("mustHaveSkills");
-    form.setValue("mustHaveSkills", [
-      ...currentSkills,
-      { skill: "", proficiency: "intermediate" },
-    ]);
-  };
-
-  const removeMustHaveSkill = (index: number) => {
-    const currentSkills = form.getValues("mustHaveSkills");
-    if (currentSkills.length > 1) {
-      form.setValue(
-        "mustHaveSkills",
-        currentSkills.filter((_, i) => i !== index)
-      );
-    }
-  };
-
-  const addGoodToHaveSkill = () => {
-    const currentSkills = form.getValues("goodToHaveSkills");
-    form.setValue("goodToHaveSkills", [
-      ...currentSkills,
-      { skill: "", proficiency: "basic" },
-    ]);
-  };
-
-  const removeGoodToHaveSkill = (index: number) => {
-    const currentSkills = form.getValues("goodToHaveSkills");
-    if (currentSkills.length > 1) {
-      form.setValue(
-        "goodToHaveSkills",
-        currentSkills.filter((_, i) => i !== index)
-      );
-    }
-  };
 
   // Create job request mutation
   const createJobRequestMutation = useMutation({
     mutationFn: async (data: JobRequestFormValues) => {
-      // Format the request data for API
-      const formattedSkills = {
-        mustHave: data.mustHaveSkills.map(s => `${s.skill} (${s.proficiency})`).join(", "),
-        goodToHave: data.goodToHaveSkills.filter(s => s.skill).map(s => `${s.skill} (${s.proficiency})`).join(", ")
-      };
+      if (!clientId) throw new Error("No client ID provided");
       
-      const languagesStr = data.languages.join(", ");
-      
-      // Create a detailed requirements string from the form data
-      const detailedRequirements = `
-Number of Positions: ${data.numberOfPositions}
-Starting Date: ${data.startDate}
-Must-Have Skills: ${formattedSkills.mustHave}
-Good-to-Have Skills: ${formattedSkills.goodToHave}
-Reports To: ${data.reportsTo}
-Languages: ${languagesStr}
-Testing Required: ${data.requiresTesting ? 'Yes' : 'No'}
-Salary Range: ${data.salary}
-${data.notes ? `Additional Notes: ${data.notes}` : ''}
-      `.trim();
-      
+      // Convert our form data to match the schema
       const jobRequestData: InsertJobRequest = {
-        clientId,
-        companyId: parseInt(data.companyId),
         title: data.title,
         description: data.description,
-        requirements: detailedRequirements,
-        location: data.location,
-        jobType: data.jobType as any,
-        salary: data.salary,
-        notes: data.notes,
+        clientId: clientId,
+        // Company ID is required, use 1 as a temporary value (will be set by admin)
+        companyId: 1,
+        // Combine the form fields into a structured requirements field
+        requirements: JSON.stringify({
+          numberOfPositions: data.numberOfPositions,
+          startDate: data.startDate,
+          responsibilities: data.responsibilities,
+          mustHaveSkills: data.mustHaveSkills,
+          goodToHaveSkills: data.goodToHaveSkills,
+          reportingStructure: data.reportingStructure,
+          requiredLanguages: data.requiredLanguages,
+          testingProcess: data.testingProcess || null,
+          salaryRange: {
+            min: data.salaryRangeMin,
+            max: data.salaryRangeMax
+          }
+        }),
+        // Use work schedule as location temporarily
+        location: data.workSchedule,
+        // Default to full_time but can be adjusted
+        jobType: "full_time" as const,
+        // Store any additional notes
+        notes: data.notes || null,
+        // Salary range as string
+        salary: `$${data.salaryRangeMin} - $${data.salaryRangeMax}`,
       };
       
-      const res = await apiRequest("POST", `/api/clients/${clientId}/job-requests`, jobRequestData);
-      return await res.json();
+      const response = await apiRequest('POST', '/api/job-requests', jobRequestData);
+      return response.json();
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Job request submitted successfully",
+        description: "Job request created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}/job-requests`] });
-      setIsJobRequestDialogOpen(false);
-      form.reset();
+      queryClient.invalidateQueries({ queryKey: ['/api/clients', clientId, 'job-requests'] });
+      setJobRequestDialogOpen(false);
+      jobRequestForm.reset();
     },
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message,
+        description: `Failed to create job request: ${error.message}`,
         variant: "destructive",
       });
-    },
+    }
   });
 
   // Handle form submission
@@ -242,653 +209,469 @@ ${data.notes ? `Additional Notes: ${data.notes}` : ''}
     createJobRequestMutation.mutate(data);
   };
 
-  // Toggle request details expansion
-  const toggleRequestDetails = (requestId: number) => {
-    setExpandedRequestId(expandedRequestId === requestId ? null : requestId);
-  };
-
-  // Handle loading states
-  if (isClientLoading) {
+  if (!user) {
     return (
-      <Dashboard>
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </Dashboard>
+      <div className="container mx-auto py-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Authentication required</AlertTitle>
+          <AlertDescription>
+            Please log in to view this client profile.
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
-  // Handle not found
-  if (!client) {
+  if (isLoadingClient) {
     return (
-      <Dashboard>
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-2">Client Not Found</h2>
-          <p className="text-muted-foreground">
-            The client you're looking for doesn't exist or you don't have permission to view it.
-          </p>
-        </div>
-      </Dashboard>
+      <div className="container mx-auto py-6 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (clientError || !client) {
+    return (
+      <div className="container mx-auto py-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Failed to load client data. Please try again later.
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   return (
-    <Dashboard>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Client Profile: {client.name}</h1>
-        <Button onClick={() => setIsJobRequestDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Request
+    <div className="container mx-auto py-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{client.name}</h1>
+          <p className="text-muted-foreground">Client Profile</p>
+        </div>
+        <Button 
+          onClick={() => setJobRequestDialogOpen(true)}
+          className="gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          New Job Request
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Client Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Contact Person</p>
-                <p>{client.contactPerson}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Email</p>
-                <p>{client.email}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                <p>{client.phone || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Status</p>
-                <Badge variant={client.status === "active" ? "default" : "secondary"}>
-                  {client.status === "active" ? "Active" : "Inactive"}
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="profile" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="job-requests">Job Requests</TabsTrigger>
+          <TabsTrigger value="contracts">Contracts</TabsTrigger>
+        </TabsList>
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Companies</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isCompaniesLoading ? (
-              <div className="flex justify-center items-center h-32">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : companies.length === 0 ? (
-              <p className="text-center py-4 text-muted-foreground">No companies found for this client.</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {companies.map((company) => (
-                  <Card key={company.id} className="border border-border">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">{company.name}</CardTitle>
-                      <CardDescription>{company.industry || "N/A"}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm">
-                        <span className="font-medium">Size:</span> {company.size || "N/A"}
-                      </p>
-                      <p className="text-sm">
-                        <span className="font-medium">Location:</span> {company.location || "N/A"}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Job Requests</CardTitle>
-          <CardDescription>
-            Create and manage your job position requests
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isJobRequestsLoading ? (
-            <div className="flex justify-center items-center h-32">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : jobRequests.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">No job requests found.</p>
-              <Button variant="outline" onClick={() => setIsJobRequestDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Your First Job Request
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {jobRequests.map((request) => (
-                <Card key={request.id} className="border border-border">
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">{request.title}</CardTitle>
-                        <CardDescription>
-                          {request.companyName || "Unknown Company"} • 
-                          {request.jobType === "full_time" ? " Full-time" : " Part-time"}
-                        </CardDescription>
-                      </div>
-                      <Badge 
-                        variant={
-                          request.status === "approved" ? "default" : 
-                          request.status === "rejected" ? "destructive" : 
-                          request.status === "published" ? "default" : 
-                          "secondary"
-                        } 
-                        className={request.status === "approved" ? "bg-green-500 hover:bg-green-600" : ""}
-                      >
-                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pb-2">
-                    <p className="text-sm mb-2">{request.description.substring(0, 120)}...</p>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="flex items-center mt-1 px-0"
-                      onClick={() => toggleRequestDetails(request.id)}
+        <TabsContent value="profile" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Client Information</CardTitle>
+              <CardDescription>
+                View and manage client details
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label>Client Name</Label>
+                  <div className="text-lg">{client.name}</div>
+                </div>
+                <div>
+                  <Label>Contact Person</Label>
+                  <div className="text-lg">{client.contactPerson}</div>
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <div className="text-lg">{client.email}</div>
+                </div>
+                <div>
+                  <Label>Phone</Label>
+                  <div className="text-lg">{client.phone || "Not provided"}</div>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <div className="text-lg">
+                    <Badge 
+                      variant={client.status === "active" ? "default" : "secondary"}
                     >
-                      {expandedRequestId === request.id ? (
-                        <>
-                          <ChevronUp className="h-4 w-4 mr-1" /> 
-                          Hide Details
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="h-4 w-4 mr-1" /> 
-                          View Details
-                        </>
-                      )}
-                    </Button>
-                    
-                    {expandedRequestId === request.id && (
-                      <div className="mt-4 pl-4 border-l-2 border-border">
-                        <h4 className="font-medium mb-2">Requirements</h4>
-                        <div className="whitespace-pre-line text-sm mb-4">
-                          {request.requirements}
-                        </div>
-                        
-                        {request.notes && (
-                          <>
-                            <h4 className="font-medium mb-2">Additional Notes</h4>
-                            <p className="text-sm mb-4">{request.notes}</p>
-                          </>
-                        )}
-                        
-                        <div className="text-sm text-muted-foreground">
-                          <p>Created on {new Date(request.createdAt).toLocaleDateString()}</p>
-                          <p>Last updated on {new Date(request.updatedAt).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                      {client.status}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Job Request Form Dialog */}
-      <Dialog open={isJobRequestDialogOpen} onOpenChange={setIsJobRequestDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <TabsContent value="job-requests" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Job Requests</CardTitle>
+              <CardDescription>
+                View and manage job requests for this client
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingJobRequests ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : !jobRequests || jobRequests.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">No job requests found</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => setJobRequestDialogOpen(true)}
+                  >
+                    Create a job request
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {jobRequests.map((request: any) => (
+                    <Card key={request.id} className="hover:bg-accent/50 transition-colors">
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle>{request.title}</CardTitle>
+                            <CardDescription>Positions: {request.numberOfPositions}</CardDescription>
+                          </div>
+                          <Badge 
+                            variant={
+                              request.status === "approved" ? "default" :
+                              request.status === "pending" ? "secondary" :
+                              request.status === "rejected" ? "destructive" :
+                              "outline"
+                            }
+                          >
+                            {request.status}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {request.description.substring(0, 150)}
+                          {request.description.length > 150 ? "..." : ""}
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <Badge variant="outline">
+                            Salary: ${request.salaryRangeMin} - ${request.salaryRangeMax}
+                          </Badge>
+                          <Badge variant="outline">
+                            Start: {new Date(request.startDate).toLocaleDateString()}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <Button variant="ghost" size="sm">
+                          View Details
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="contracts" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Contracts</CardTitle>
+              <CardDescription>
+                View and manage contracts for this client
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-6">
+                <p className="text-muted-foreground">Coming soon</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <Dialog open={jobRequestDialogOpen} onOpenChange={setJobRequestDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create New Job Request</DialogTitle>
+            <DialogTitle>Create Job Request</DialogTitle>
             <DialogDescription>
-              Fill in the details to submit a new job position request.
+              Fill in the form to create a new job request
             </DialogDescription>
           </DialogHeader>
           
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Company Selection */}
-                <FormField
-                  control={form.control}
-                  name="companyId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
+          <Form {...jobRequestForm}>
+            <form onSubmit={jobRequestForm.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={jobRequestForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Position Title</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a company" />
-                          </SelectTrigger>
+                          <Input placeholder="Senior Software Engineer" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          {companies.map((company) => (
-                            <SelectItem key={company.id} value={company.id.toString()}>
-                              {company.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Role Title */}
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Role Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Senior Frontend Developer" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Number of Positions */}
-                <FormField
-                  control={form.control}
-                  name="numberOfPositions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>How many roles do you need for this position?</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Start Date */}
-                <FormField
-                  control={form.control}
-                  name="startDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estimated Start Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Overall Responsibilities */}
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Overall Responsibilities</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Describe the main responsibilities for this role"
-                        className="min-h-[120px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Must-Have Skills */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <FormLabel>Must-Have Skills and Proficiency</FormLabel>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addMustHaveSkill}
-                  >
-                    <Plus className="h-4 w-4 mr-1" /> Add Skill
-                  </Button>
-                </div>
-                {form.getValues("mustHaveSkills").map((_, index) => (
-                  <div key={`must-have-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
-                    <FormField
-                      control={form.control}
-                      name={`mustHaveSkills.${index}.skill`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input placeholder="Skill name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`mustHaveSkills.${index}.proficiency`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Proficiency level" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="basic">Basic</SelectItem>
-                              <SelectItem value="intermediate">Intermediate</SelectItem>
-                              <SelectItem value="advanced">Advanced</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex items-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeMustHaveSkill(index)}
-                        disabled={form.getValues("mustHaveSkills").length <= 1}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Good-to-Have Skills */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <FormLabel>Good-to-Have Skills and Proficiency</FormLabel>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addGoodToHaveSkill}
-                  >
-                    <Plus className="h-4 w-4 mr-1" /> Add Skill
-                  </Button>
-                </div>
-                {form.getValues("goodToHaveSkills").map((_, index) => (
-                  <div key={`good-to-have-${index}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
-                    <FormField
-                      control={form.control}
-                      name={`goodToHaveSkills.${index}.skill`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input placeholder="Skill name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`goodToHaveSkills.${index}.proficiency`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Proficiency level" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="basic">Basic</SelectItem>
-                              <SelectItem value="intermediate">Intermediate</SelectItem>
-                              <SelectItem value="advanced">Advanced</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex items-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeGoodToHaveSkill(index)}
-                        disabled={form.getValues("goodToHaveSkills").length <= 1}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Work Shift */}
-                <FormField
-                  control={form.control}
-                  name="jobType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Work Shift</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={jobRequestForm.control}
+                    name="numberOfPositions"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Number of Positions</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select work shift" />
-                          </SelectTrigger>
+                          <Input type="number" min="1" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="full_time">Full Time</SelectItem>
-                          <SelectItem value="part_time">Part Time</SelectItem>
-                          <SelectItem value="contract">Contract</SelectItem>
-                          <SelectItem value="remote">Remote</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Role Reports To */}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
                 <FormField
-                  control={form.control}
-                  name="reportsTo"
+                  control={jobRequestForm.control}
+                  name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Role reports to (Name and position)</FormLabel>
+                      <FormLabel>Position Description</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Jane Smith, CTO" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Languages */}
-              <FormField
-                control={form.control}
-                name="languages"
-                render={() => (
-                  <FormItem>
-                    <div className="mb-4">
-                      <FormLabel className="text-base">Languages needed</FormLabel>
-                      <FormDescription>
-                        Select all languages required for this role
-                      </FormDescription>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="languages"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes("English")}
-                                onCheckedChange={(checked) => {
-                                  const currentVal = field.value || [];
-                                  return checked
-                                    ? field.onChange([...currentVal, "English"])
-                                    : field.onChange(
-                                        currentVal.filter((v) => v !== "English")
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">English</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="languages"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes("Spanish")}
-                                onCheckedChange={(checked) => {
-                                  const currentVal = field.value || [];
-                                  return checked
-                                    ? field.onChange([...currentVal, "Spanish"])
-                                    : field.onChange(
-                                        currentVal.filter((v) => v !== "Spanish")
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">Spanish</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="languages"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes("French")}
-                                onCheckedChange={(checked) => {
-                                  const currentVal = field.value || [];
-                                  return checked
-                                    ? field.onChange([...currentVal, "French"])
-                                    : field.onChange(
-                                        currentVal.filter((v) => v !== "French")
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">French</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Testing Preference */}
-                <FormField
-                  control={form.control}
-                  name="requiresTesting"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+                        <Textarea 
+                          placeholder="Brief overview of the position..."
+                          className="h-20"
+                          {...field}
                         />
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Would you do a test to the candidates?</FormLabel>
-                        <FormDescription>
-                          Check this if you want candidates to complete a technical test
-                        </FormDescription>
-                      </div>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {/* Salary Range */}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={jobRequestForm.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expected Start Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={jobRequestForm.control}
+                    name="workSchedule"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Work Schedule/Shift</FormLabel>
+                        <FormControl>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select schedule" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="full-time">Full-time</SelectItem>
+                              <SelectItem value="part-time">Part-time</SelectItem>
+                              <SelectItem value="contract">Contract</SelectItem>
+                              <SelectItem value="flexible">Flexible hours</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
                 <FormField
-                  control={form.control}
-                  name="salary"
+                  control={jobRequestForm.control}
+                  name="responsibilities"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Salary Range</FormLabel>
+                      <FormLabel>Key Responsibilities</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. $80,000 - $100,000" {...field} />
+                        <Textarea 
+                          placeholder="List the main duties and responsibilities..."
+                          className="h-20"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={jobRequestForm.control}
+                    name="mustHaveSkills"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Must-have Skills</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="List required skills, separated by commas..."
+                            className="h-20"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={jobRequestForm.control}
+                    name="goodToHaveSkills"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Good-to-have Skills</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="List preferred skills, separated by commas..."
+                            className="h-20"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={jobRequestForm.control}
+                  name="reportingStructure"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reporting Structure</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Reports to..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={jobRequestForm.control}
+                  name="requiredLanguages"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Required Languages</FormLabel>
+                      <FormControl>
+                        <Input placeholder="English, Spanish..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={jobRequestForm.control}
+                  name="testingProcess"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Testing Process Preferences</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Describe your preferred testing/interview process..."
+                          className="h-20"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={jobRequestForm.control}
+                    name="salaryRangeMin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Salary Range (Minimum)</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="0" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={jobRequestForm.control}
+                    name="salaryRangeMax"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Salary Range (Maximum)</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="0" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={jobRequestForm.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Additional Notes</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Any other requirements or notes..."
+                          className="h-20"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-
-              {/* Additional Notes */}
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Additional Notes</FormLabel>
-                    <FormDescription>
-                      Any additional information to take into consideration during the search
-                    </FormDescription>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Enter any additional requirements or preferences"
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsJobRequestDialogOpen(false)}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setJobRequestDialogOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createJobRequestMutation.isPending}>
+                <Button 
+                  type="submit"
+                  disabled={createJobRequestMutation.isPending}
+                >
                   {createJobRequestMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Submitting...
                     </>
                   ) : (
-                    "Submit Request"
+                    "Submit Job Request"
                   )}
                 </Button>
               </DialogFooter>
@@ -896,6 +679,6 @@ ${data.notes ? `Additional Notes: ${data.notes}` : ''}
           </Form>
         </DialogContent>
       </Dialog>
-    </Dashboard>
+    </div>
   );
 }
