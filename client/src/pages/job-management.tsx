@@ -46,6 +46,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { 
+  ArrowLeft,
   Eye, 
   PenSquare, 
   Loader2, 
@@ -423,11 +424,8 @@ export default function JobManagementPage() {
           <TabsTrigger value="jobs">
             <Briefcase className="mr-2 h-4 w-4" /> Job Openings
           </TabsTrigger>
-          <TabsTrigger value="job-applications">
-            <ClipboardCheck className="mr-2 h-4 w-4" /> All Applications
-          </TabsTrigger>
-          <TabsTrigger value="applications" disabled={!selectedJobId}>
-            <UserPlus className="mr-2 h-4 w-4" /> Job Applications
+          <TabsTrigger value="applications">
+            <ClipboardCheck className="mr-2 h-4 w-4" /> Applications
           </TabsTrigger>
         </TabsList>
 
@@ -497,11 +495,41 @@ export default function JobManagementPage() {
           )}
         </TabsContent>
         
-        <TabsContent value="job-applications">
-          {/* All Applications Tab */}
-          <>
-            <div className="mb-4 flex justify-between items-center">
-              <h2 className="text-xl font-semibold">All Job Applications</h2>
+        <TabsContent value="applications">
+          {/* Unified Applications Tab */}
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <h2 className="text-xl font-semibold">
+                {selectedJobId 
+                  ? `Applications for: ${jobOpenings?.find(j => j.id === selectedJobId)?.title}` 
+                  : 'All Applications'}
+              </h2>
+              {selectedJobId && (
+                <Button 
+                  variant="ghost"
+                  className="ml-4" 
+                  onClick={() => setSelectedJobId(null)}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" /> View All
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {!selectedJobId && (
+                <Select 
+                  onValueChange={(value) => value !== "all" ? setSelectedJobId(parseInt(value)) : setSelectedJobId(null)}
+                >
+                  <SelectTrigger className="w-[230px]">
+                    <SelectValue placeholder="Filter by Job" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Jobs</SelectItem>
+                    {jobOpenings?.map(job => (
+                      <SelectItem key={job.id} value={job.id.toString()}>{job.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <div className="relative w-[250px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
@@ -512,25 +540,11 @@ export default function JobManagementPage() {
                 />
               </div>
             </div>
-            
-            {/* Fetch all job applications */}
-            <AllApplicationsContent 
-              handleViewApplication={handleViewApplication}
-              getStatusBadge={getStatusBadge}
-              searchTerm={searchTerm}
-            />
-          </>
-        </TabsContent>
-
-        <TabsContent value="applications">
-          {selectedJobId && (
+          </div>
+          
+          {selectedJobId ? (
+            // Specific job applications view
             <>
-              <div className="mb-4">
-                <h2 className="text-xl font-semibold mb-2">
-                  Applications for: {jobOpenings?.find(j => j.id === selectedJobId)?.title}
-                </h2>
-              </div>
-
               {isLoadingApplications ? (
                 <div className="flex justify-center items-center h-64">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -580,6 +594,13 @@ export default function JobManagementPage() {
                 </div>
               )}
             </>
+          ) : (
+            // All applications view
+            <AllApplicationsContent 
+              handleViewApplication={handleViewApplication}
+              getStatusBadge={getStatusBadge}
+              searchTerm={searchTerm}
+            />
           )}
         </TabsContent>
       </Tabs>
