@@ -234,6 +234,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get all heroes for a specific client
+  app.get("/api/clients/:clientId/heroes", isAuthenticated, async (req, res) => {
+    try {
+      const heroes = await storage.getHeroesByClient(parseInt(req.params.clientId));
+      res.json(heroes);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve heroes for client" });
+    }
+  });
+  
   app.post("/api/heroes", hasRole(["super_admin", "admin"]), async (req, res) => {
     try {
       const heroData = insertHeroSchema.parse(req.body);
@@ -273,6 +283,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(contract);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve contract" });
+    }
+  });
+  
+  // Get all contracts for a specific client
+  app.get("/api/clients/:clientId/contracts", isAuthenticated, async (req, res) => {
+    try {
+      const contracts = await storage.getContractsByClient(parseInt(req.params.clientId));
+      res.json(contracts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve contracts for client" });
     }
   });
   
