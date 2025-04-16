@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { JobOpening, InsertJobOpening, JobApplication, JobRequest } from '@shared/schema';
+import { JobOpening, InsertJobOpening, JobApplication, JobRequest, Client } from '@shared/schema';
 import { useMockAuth } from '@/hooks/use-mock-auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -58,7 +58,9 @@ import {
   XCircle,
   Clock,
   ClipboardCheck,
-  FileText
+  FileText,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import Dashboard from '@/components/layout/Dashboard';
 
