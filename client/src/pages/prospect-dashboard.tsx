@@ -432,6 +432,24 @@ export default function ProspectDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Video Conference Modal */}
+      {showVideoConference && activeInterviewId && user && (
+        <VideoConference
+          currentUser={{
+            id: user.id,
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            username: user.username
+          }}
+          interviewId={activeInterviewId}
+          prospectId={currentProspect.id}
+          onClose={() => {
+            setShowVideoConference(false);
+            setActiveInterviewId(undefined);
+          }}
+        />
+      )}
     </Dashboard>
   );
 }

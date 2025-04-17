@@ -31,7 +31,6 @@ declare global {
   }
 }
 
-// Create Video Conference component
 const VideoConference: React.FC<VideoConferenceProps> = ({ 
   currentUser, 
   interviewId, 
@@ -305,138 +304,140 @@ const VideoConference: React.FC<VideoConferenceProps> = ({
   }, [participants, room]);
 
   return (
-    <div className="video-conference-container">
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button 
-            variant="default" 
-            onClick={() => setIsDialogOpen(true)}
-            disabled={!!room}
-          >
-            <Video className="mr-2 h-4 w-4" />
-            Start Video Conference
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Join Video Conference</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Your Name
-              </Label>
-              <Input
-                id="name"
-                value={identity}
-                onChange={(e) => setIdentity(e.target.value)}
-                className="col-span-3"
-                placeholder="Enter your name"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="room" className="text-right">
-                Room Name
-              </Label>
-              <Input
-                id="room"
-                value={roomName}
-                onChange={(e) => setRoomName(e.target.value)}
-                className="col-span-3"
-                placeholder="Enter room name"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleJoinRoom} disabled={isJoiningRoom || isCreatingRoom}>
-              {isJoiningRoom ? 'Joining...' : 'Join Room'}
+    <div className="fixed inset-0 bg-black/85 flex items-center justify-center z-50">
+      <div className="w-[90%] max-w-4xl max-h-[90vh] bg-background rounded-lg overflow-auto p-6">
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button 
+              variant="default" 
+              onClick={() => setIsDialogOpen(true)}
+              disabled={!!room}
+            >
+              <Video className="mr-2 h-4 w-4" />
+              Start Video Conference
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {room && (
-        <Card className="w-full max-w-4xl mx-auto mt-4">
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              <div>Video Conference: {roomName}</div>
-              <Button variant="destructive" size="icon" onClick={handleLeaveRoom}>
-                <X className="h-4 w-4" />
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Join Video Conference</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Your Name
+                </Label>
+                <Input
+                  id="name"
+                  value={identity}
+                  onChange={(e) => setIdentity(e.target.value)}
+                  className="col-span-3"
+                  placeholder="Enter your name"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="room" className="text-right">
+                  Room Name
+                </Label>
+                <Input
+                  id="room"
+                  value={roomName}
+                  onChange={(e) => setRoomName(e.target.value)}
+                  className="col-span-3"
+                  placeholder="Enter room name"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleJoinRoom} disabled={isJoiningRoom || isCreatingRoom}>
+                {isJoiningRoom ? 'Joining...' : 'Join Room'}
               </Button>
-            </CardTitle>
-            <CardDescription>
-              Connected as {identity} with {participants.length} other participants
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="video">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="video">Video Call</TabsTrigger>
-                <TabsTrigger value="chat">Chat</TabsTrigger>
-              </TabsList>
-              <TabsContent value="video" className="space-y-4">
-                <div className="video-grid">
-                  <div className="local-video-container">
-                    <div ref={localVideoRef} className="local-video"></div>
-                    <div className="participant-name">{identity} (You)</div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {room && (
+          <Card className="w-full max-w-4xl mx-auto mt-4">
+            <CardHeader>
+              <CardTitle className="flex justify-between items-center">
+                <div>Video Conference: {roomName}</div>
+                <Button variant="destructive" size="icon" onClick={handleLeaveRoom}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardTitle>
+              <CardDescription>
+                Connected as {identity} with {participants.length} other participants
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="video">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="video">Video Call</TabsTrigger>
+                  <TabsTrigger value="chat">Chat</TabsTrigger>
+                </TabsList>
+                <TabsContent value="video" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <div className="relative w-full aspect-video bg-gray-900 rounded-md overflow-hidden">
+                      <div ref={localVideoRef} className="w-full h-full object-cover"></div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white px-2 py-1 text-xs">{identity} (You)</div>
+                    </div>
+                    <div ref={remoteContainerRef} className="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                   </div>
-                  <div ref={remoteContainerRef} className="remote-participants"></div>
-                </div>
-                <div className="video-controls flex justify-center gap-2">
-                  <Button 
-                    variant={isMuted ? "destructive" : "default"} 
-                    size="icon" 
-                    onClick={toggleMute}
-                  >
-                    {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                  </Button>
-                  <Button 
-                    variant={isVideoOff ? "destructive" : "default"} 
-                    size="icon" 
-                    onClick={toggleVideo}
-                  >
-                    {isVideoOff ? <CameraOff className="h-4 w-4" /> : <Camera className="h-4 w-4" />}
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    size="icon" 
-                    onClick={handleLeaveRoom}
-                  >
-                    <Phone className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                  >
-                    <Users className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TabsContent>
-              <TabsContent value="chat">
-                <div className="chat-container">
-                  <ScrollArea className="h-[300px] mb-4">
-                    {messages.length === 0 ? (
-                      <p className="text-center text-muted-foreground py-8">No messages yet</p>
-                    ) : (
-                      <div className="space-y-2 p-2">
-                        {messages.map((msg, idx) => (
-                          <div 
-                            key={idx} 
-                            className={`flex flex-col ${msg.sender === identity ? 'items-end' : 'items-start'}`}
-                          >
-                            <div className={`px-3 py-2 rounded-lg ${
-                              msg.sender === identity ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                            }`}>
-                              {msg.content}
+                  <div className="flex justify-center gap-2 mt-4">
+                    <Button 
+                      variant={isMuted ? "destructive" : "default"} 
+                      size="icon" 
+                      onClick={toggleMute}
+                    >
+                      {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    </Button>
+                    <Button 
+                      variant={isVideoOff ? "destructive" : "default"} 
+                      size="icon" 
+                      onClick={toggleVideo}
+                    >
+                      {isVideoOff ? <CameraOff className="h-4 w-4" /> : <Camera className="h-4 w-4" />}
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="icon" 
+                      onClick={handleLeaveRoom}
+                    >
+                      <Phone className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                    >
+                      <Users className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TabsContent>
+                <TabsContent value="chat">
+                  <div className="h-[300px] mb-4 overflow-auto">
+                    <ScrollArea className="h-full">
+                      {messages.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">No messages yet</p>
+                      ) : (
+                        <div className="space-y-2 p-2">
+                          {messages.map((msg, idx) => (
+                            <div 
+                              key={idx} 
+                              className={`flex flex-col ${msg.sender === identity ? 'items-end' : 'items-start'}`}
+                            >
+                              <div className={`px-3 py-2 rounded-lg ${
+                                msg.sender === identity ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                              }`}>
+                                {msg.content}
+                              </div>
+                              <span className="text-xs text-muted-foreground mt-1">
+                                {msg.sender} • {msg.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              </span>
                             </div>
-                            <span className="text-xs text-muted-foreground mt-1">
-                              {msg.sender} • {msg.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </ScrollArea>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </div>
                   <div className="flex gap-2">
                     <Input
                       value={messageInput}
@@ -453,73 +454,18 @@ const VideoConference: React.FC<VideoConferenceProps> = ({
                       <MessageSquare className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <div className="text-sm text-muted-foreground">
-              {isVideoOff ? 'Camera is turned off' : 'Camera is on'} • 
-              {isMuted ? ' Microphone is muted' : ' Microphone is on'}
-            </div>
-          </CardFooter>
-        </Card>
-      )}
-
-      <style>
-        {`
-        .video-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 1rem;
-          margin-bottom: 1rem;
-        }`}
-        
-        .local-video-container {
-          position: relative;
-          width: 100%;
-          aspect-ratio: 16/9;
-          background: #1c1c1c;
-          border-radius: 0.5rem;
-          overflow: hidden;
-        }
-        
-        .local-video {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        
-        .remote-participants {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 1rem;
-        }
-        
-        .remote-participant {
-          position: relative;
-          width: 100%;
-          aspect-ratio: 16/9;
-          background: #1c1c1c;
-          border-radius: 0.5rem;
-          overflow: hidden;
-        }
-        
-        .participant-name {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background: rgba(0, 0, 0, 0.5);
-          color: white;
-          padding: 0.25rem 0.5rem;
-          font-size: 0.75rem;
-        }
-        
-        .video-controls {
-          margin-top: 1rem;
-        }
-      `}</style>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <div className="text-sm text-muted-foreground">
+                {isVideoOff ? 'Camera is turned off' : 'Camera is on'} • 
+                {isMuted ? ' Microphone is muted' : ' Microphone is on'}
+              </div>
+            </CardFooter>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
