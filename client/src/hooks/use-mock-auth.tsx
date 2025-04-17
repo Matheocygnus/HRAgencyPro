@@ -1,21 +1,49 @@
 import { createContext, ReactNode, useContext } from "react";
-import { User } from "@shared/schema";
+import { User, Role } from "@shared/schema";
+
+// Define available modules (these correspond to sidebar items)
+export const MODULES = {
+  DASHBOARD: "dashboard",
+  PROSPECTS: "prospects",
+  INTERVIEWS: "interviews",
+  HEROES: "heroes",
+  COMPANIES: "companies",
+  CONTRACTS: "contracts",
+  INVOICES: "invoices",
+  USER_MANAGEMENT: "user_management",
+  JOB_MANAGEMENT: "job_management",
+  SYSTEM_SETTINGS: "settings",
+  ROLE_MANAGEMENT: "role_management"
+};
+
+// Mock role for development
+const mockRole: Role = {
+  id: 1,
+  name: "Administrator",
+  description: "Full system access",
+  permissions: JSON.stringify(Object.values(MODULES)), // All permissions
+  createdAt: new Date()
+};
+
+// Extended User type with role field
+type ExtendedUser = User & { role?: Role };
 
 // Mock user for development
-const mockUser: User = {
+const mockUser: ExtendedUser = {
   id: 1,
   username: "admin",
   email: "admin@remotehero.com",
   firstName: "Admin",
   lastName: "User",
-  role: "super_admin",
+  roleId: 1,
   password: "hashed_password", // This would be hashed in a real scenario
   createdAt: new Date(),
-  updatedAt: new Date()
+  avatar: null,
+  role: mockRole // Add role object for convenience
 };
 
 type MockAuthContextType = {
-  user: User | null;
+  user: ExtendedUser | null;
   isLoading: boolean;
   error: Error | null;
   loginMutation: any;
@@ -50,5 +78,23 @@ export function MockAuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useMockAuth() {
-  return useContext(MockAuthContext);
+  const context = useContext(MockAuthContext);
+  
+  // Add a helper function to check if user has permission for a specific module
+  const hasPermission = (module: string) => {
+    if (!context.user || !context.user.role) return false;
+    
+    try {
+      const permissions = JSON.parse(context.user.role.permissions);
+      return permissions.includes(module);
+    } catch (error) {
+      console.error("Error parsing permissions:", error);
+      return false;
+    }
+  };
+  
+  return {
+    ...context,
+    hasPermission
+  };
 }

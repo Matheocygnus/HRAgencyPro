@@ -2,6 +2,20 @@ import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision } f
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Role models
+export const roles = pgTable("roles", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  permissions: text("permissions").notNull(), // JSON string of module permissions
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertRoleSchema = createInsertSchema(roles).omit({
+  id: true,
+  createdAt: true,
+});
+
 // User models
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -11,7 +25,7 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   avatar: text("avatar"),
-  role: text("role", { enum: ["super_admin", "admin", "recruiter"] }).notNull().default("recruiter"),
+  roleId: integer("role_id"), // Reference to roles table
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -142,6 +156,9 @@ export const insertInvoiceSchema = createInsertSchema(invoices).omit({
 });
 
 // Define types from schemas
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+export type Role = typeof roles.$inferSelect;
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
