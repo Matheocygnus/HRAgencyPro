@@ -99,6 +99,8 @@ function ensureContractFields(contractData: any): Contract {
     startDate: contractData.startDate,
     endDate: contractData.endDate || null,
     compensation: contractData.compensation,
+    companyPayment: contractData.companyPayment || Math.round(contractData.compensation * 1.3), // Default to 130% of compensation
+    profit: contractData.profit || Math.round(contractData.compensation * 0.3), // Default to 30% of compensation
     status: contractData.status || "draft",
     document: contractData.document || null,
     createdAt: contractData.createdAt
@@ -629,6 +631,8 @@ export class MemStorage implements IStorage {
         startDate: new Date("2023-10-01"),
         endDate: new Date("2024-10-01"),
         compensation: 130000,
+        companyPayment: 169000, // 130% of compensation
+        profit: 39000, // 30% profit margin
         status: "active",
         document: "contract_4.pdf",
       },
@@ -639,6 +643,8 @@ export class MemStorage implements IStorage {
         startDate: new Date("2023-09-15"),
         endDate: new Date("2024-09-15"),
         compensation: 135000,
+        companyPayment: 175500, // 130% of compensation
+        profit: 40500, // 30% profit margin
         status: "active",
         document: "contract_5.pdf",
       },
@@ -649,6 +655,8 @@ export class MemStorage implements IStorage {
         startDate: new Date("2023-11-01"),
         endDate: new Date("2024-11-01"),
         compensation: 125000,
+        companyPayment: 162500, // 130% of compensation
+        profit: 37500, // 30% profit margin
         status: "active",
         document: "contract_6.pdf",
       },
@@ -659,6 +667,8 @@ export class MemStorage implements IStorage {
         startDate: new Date("2024-01-15"),
         endDate: new Date("2025-01-15"),
         compensation: 105000,
+        companyPayment: 136500, // 130% of compensation
+        profit: 31500, // 30% profit margin
         status: "active",
         document: "contract_7.pdf",
       },
@@ -669,6 +679,8 @@ export class MemStorage implements IStorage {
         startDate: new Date("2024-02-01"),
         endDate: new Date("2025-02-01"),
         compensation: 145000,
+        companyPayment: 188500, // 130% of compensation
+        profit: 43500, // 30% profit margin
         status: "active",
         document: "contract_8.pdf",
       }
