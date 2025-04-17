@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -420,6 +420,7 @@ export default function Prospects() {
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Prospect</DialogTitle>
+            <DialogDescription>Create a new prospect record</DialogDescription>
           </DialogHeader>
           <ProspectForm onSuccess={() => setIsAddDialogOpen(false)} />
         </DialogContent>
@@ -430,6 +431,7 @@ export default function Prospects() {
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Prospect</DialogTitle>
+            <DialogDescription>Update prospect information</DialogDescription>
           </DialogHeader>
           {selectedProspect && (
             <ProspectForm 
