@@ -62,12 +62,14 @@ export const prospects = pgTable("prospects", {
   position: text("position").notNull(),
   skills: text("skills"),
   resume: text("resume"),
+  voiceMessageUrl: text("voice_message_url"),
   status: text("status", { 
     enum: ["sourcing", "contacted", "interview", "client_review", "budget", "contract", "hired", "rejected"] 
   }).notNull().default("sourcing"),
   clientId: integer("client_id"),
   companyId: integer("company_id"),
   notes: text("notes"),
+  notesHistory: text("notes_history"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   
   // Workflow tracking boolean fields

@@ -38,8 +38,11 @@ import {
   MapPin,
   Building,
   DollarSign,
-  FileText
+  FileText,
+  Headphones,
+  History
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
@@ -100,14 +103,14 @@ export default function Prospects() {
 
   // Update prospect status mutation
   const updateProspectMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const res = await apiRequest("PUT", `/api/prospects/${id}`, { status });
+    mutationFn: async (data: Partial<Prospect> & { id: number }) => {
+      const res = await apiRequest("PUT", `/api/prospects/${data.id}`, data);
       return res.json();
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Prospect status updated successfully",
+        description: "Prospect updated successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/prospects"] });
     },
@@ -490,6 +493,29 @@ export default function Prospects() {
                           ) : "Not available"}
                         </p>
                       </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Voice Message</Label>
+                        <p className="text-base flex items-center">
+                          <Headphones className="mr-1 h-4 w-4 text-muted-foreground" />
+                          {selectedProspect.voiceMessageUrl ? (
+                            <div className="flex flex-col space-y-1 w-full">
+                              <audio 
+                                src={selectedProspect.voiceMessageUrl} 
+                                controls 
+                                className="max-w-full mt-1"
+                              />
+                              <a 
+                                href={selectedProspect.voiceMessageUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline text-xs"
+                              >
+                                Open voice message in new tab
+                              </a>
+                            </div>
+                          ) : "No voice message available"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                   
@@ -501,7 +527,56 @@ export default function Prospects() {
                     <div className="mt-2 space-y-2">
                       <div>
                         <Label className="text-sm text-muted-foreground">Client</Label>
-                        <p className="text-base">{getClientName(selectedProspect.clientId)}</p>
+                        <Select
+                          value={selectedProspect.clientId?.toString() || ""}
+                          onValueChange={(value) => {
+                            const clientId = value === "" ? null : parseInt(value);
+                            updateProspectMutation.mutate({ 
+                              id: selectedProspect.id, 
+                              clientId 
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="w-full mt-1">
+                            <SelectValue placeholder="Select a client" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {clients.map((client) => (
+                              <SelectItem key={client.id} value={client.id.toString()}>
+                                {client.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Company</Label>
+                        <Select
+                          value={selectedProspect.companyId?.toString() || ""}
+                          onValueChange={(value) => {
+                            const companyId = value === "" ? null : parseInt(value);
+                            updateProspectMutation.mutate({ 
+                              id: selectedProspect.id, 
+                              companyId 
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="w-full mt-1">
+                            <SelectValue placeholder="Select a company" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {companies
+                              .filter(company => !selectedProspect.clientId || company.clientId === selectedProspect.clientId)
+                              .map((company) => (
+                                <SelectItem key={company.id} value={company.id.toString()}>
+                                  {company.name}
+                                </SelectItem>
+                              ))
+                            }
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <Label className="text-sm text-muted-foreground">Position</Label>
@@ -528,7 +603,6 @@ export default function Prospects() {
                         <Label className="text-sm text-muted-foreground">Created Date</Label>
                         <p className="text-base">{new Date(selectedProspect.createdAt).toLocaleDateString()}</p>
                       </div>
-                      {/* Removed updated date field since it's not in the schema */}
                     </div>
                   </div>
                   
@@ -538,28 +612,107 @@ export default function Prospects() {
                       Budget Status
                     </h3>
                     <div className="mt-2 space-y-2">
-                      <div>
+                      <div className="flex items-center space-x-2">
                         <Label className="text-sm text-muted-foreground">Budget Agreed</Label>
-                        <p className="text-base">
+                        <Switch
+                          checked={!!selectedProspect.isBudgetAgreed}
+                          onCheckedChange={(checked) => {
+                            updateProspectMutation.mutate({ 
+                              id: selectedProspect.id, 
+                              isBudgetAgreed: checked 
+                            });
+                          }}
+                        />
+                        <span className="text-sm font-medium">
                           {selectedProspect.isBudgetAgreed ? "Yes" : "No"}
-                        </p>
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div>
-                <h3 className="text-lg font-semibold flex items-center">
-                  <BookOpen className="mr-2 h-5 w-5 text-primary" />
-                  Additional Information
-                </h3>
-                <div className="mt-2">
-                  <div>
-                    <Label className="text-sm text-muted-foreground">Notes</Label>
-                    <p className="text-base bg-gray-50 p-3 rounded-md mt-1">
-                      {selectedProspect.notes || "No notes available."}
-                    </p>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <BookOpen className="mr-2 h-5 w-5 text-primary" />
+                    Current Notes
+                  </h3>
+                  <div className="mt-2">
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex justify-between">
+                        <Label className="text-sm text-muted-foreground">Notes</Label>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Add current note to history
+                            if (selectedProspect.notes) {
+                              const notesHistory = selectedProspect.notesHistory || [];
+                              const newHistory = [
+                                ...notesHistory,
+                                {
+                                  timestamp: new Date().toISOString(),
+                                  note: selectedProspect.notes,
+                                  status: selectedProspect.status,
+                                  userName: "Current User" // Would be replaced with actual user name from auth
+                                }
+                              ];
+                              
+                              updateProspectMutation.mutate({ 
+                                id: selectedProspect.id, 
+                                notesHistory: newHistory,
+                                notes: "" // Clear current notes after archiving
+                              });
+                            }
+                          }}
+                        >
+                          Archive Note
+                        </Button>
+                      </div>
+                      <Textarea 
+                        value={selectedProspect.notes || ""} 
+                        placeholder="Add notes here..."
+                        className="min-h-[100px]"
+                        onChange={(e) => {
+                          updateProspectMutation.mutate({ 
+                            id: selectedProspect.id, 
+                            notes: e.target.value 
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <History className="mr-2 h-5 w-5 text-primary" />
+                    Notes History
+                  </h3>
+                  <div className="mt-2 space-y-2">
+                    {selectedProspect.notesHistory && selectedProspect.notesHistory.length > 0 ? (
+                      <div className="space-y-3">
+                        {[...selectedProspect.notesHistory].reverse().map((entry, index) => (
+                          <div key={index} className="border rounded-lg p-3">
+                            <div className="flex justify-between items-center mb-2">
+                              <div className="flex items-center">
+                                <Badge className={`${STATUS_BADGES[entry.status]?.color || 'bg-gray-100'} mr-2`}>
+                                  {STATUS_BADGES[entry.status]?.label || entry.status}
+                                </Badge>
+                                <span className="text-sm font-medium">{entry.userName}</span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(entry.timestamp).toLocaleString()}
+                              </span>
+                            </div>
+                            <p className="text-sm whitespace-pre-wrap">{entry.note}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No previous notes found.</p>
+                    )}
                   </div>
                 </div>
               </div>
