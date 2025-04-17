@@ -15,7 +15,10 @@ export const MODULES = {
   USER_MANAGEMENT: "user_management",
   JOB_MANAGEMENT: "job_management",
   SYSTEM_SETTINGS: "settings",
-  ROLE_MANAGEMENT: "role_management"
+  ROLE_MANAGEMENT: "role_management",
+  CLIENT_DASHBOARD: "client_dashboard",
+  HERO_DASHBOARD: "hero_dashboard",
+  PROSPECT_DASHBOARD: "prospect_dashboard"
 };
 
 // Mock role for development - Super Admin

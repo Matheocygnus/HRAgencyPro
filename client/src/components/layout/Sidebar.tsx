@@ -14,18 +14,29 @@ import {
   Briefcase,
   FileSignature,
   ClipboardCheck,
-  Shield
+  Shield,
+  Building,
+  UserCircle,
+  UserCog
 } from "lucide-react";
 
 // Define sidebar navigation items with their corresponding permission modules
 const navigation = [
-  { name: "Dashboard", path: "/", icon: LayoutDashboard, module: MODULES.DASHBOARD },
+  // Admin dashboards
+  { name: "Admin Dashboard", path: "/", icon: LayoutDashboard, module: MODULES.DASHBOARD },
   { name: "Prospects", path: "/prospects", icon: UserRound, module: MODULES.PROSPECTS },
   { name: "Interviews", path: "/interviews", icon: FileCheck, module: MODULES.INTERVIEWS },
   { name: "Heroes", path: "/heroes", icon: Medal, module: MODULES.HEROES },
   { name: "Companies", path: "/clients", icon: Building2, module: MODULES.COMPANIES },
   { name: "Contracts", path: "/contracts", icon: FileSignature, module: MODULES.CONTRACTS },
   { name: "Invoices", path: "/invoices", icon: FileText, module: MODULES.INVOICES },
+  
+  // Role-specific dashboards
+  { name: "Client Dashboard", path: "/client-dashboard", icon: Building, module: MODULES.CLIENT_DASHBOARD },
+  { name: "Hero Dashboard", path: "/hero-dashboard", icon: UserCircle, module: MODULES.HERO_DASHBOARD },
+  { name: "Prospect Dashboard", path: "/prospect-dashboard", icon: UserCog, module: MODULES.PROSPECT_DASHBOARD },
+  
+  // Admin management pages
   { name: "User Management", path: "/users", icon: Users, module: MODULES.USER_MANAGEMENT },
   { name: "Job Management", path: "/jobs", icon: Briefcase, module: MODULES.JOB_MANAGEMENT },
   { name: "Role Management", path: "/roles", icon: Shield, module: MODULES.ROLE_MANAGEMENT },

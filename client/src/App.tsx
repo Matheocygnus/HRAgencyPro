@@ -22,6 +22,8 @@ import JobRequests from "@/pages/job-requests";
 import JobRequestManagement from "@/pages/job-request-management";
 import JobApplications from "@/pages/job-applications";
 import ClientDashboard from "@/pages/client-dashboard";
+import HeroDashboard from "@/pages/hero-dashboard";
+import ProspectDashboard from "@/pages/prospect-dashboard";
 import RoleManagement from "@/pages/role-management";
 
 function Router() {

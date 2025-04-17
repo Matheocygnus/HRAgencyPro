@@ -1,806 +1,407 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import Dashboard from '@/components/layout/Dashboard';
-import { useToast } from '@/hooks/use-toast';
-import { useMockAuth } from '@/hooks/use-mock-auth';
-import { JobRequest, Hero, Contract, Company, Client } from '@shared/schema';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import Dashboard from "@/components/layout/Dashboard";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useMockAuth } from "@/hooks/use-mock-auth";
+import { MODULES } from "@/hooks/use-mock-auth";
+import { Button } from "@/components/ui/button";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Client, Company, Hero, Contract, JobRequest } from "@shared/schema";
+import { Building2, Plus, Users, FileSignature, BriefcaseBusiness } from "lucide-react";
+import { Link } from "wouter";
 
-// UI Components
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+export default function ClientDashboard() {
+  const { hasPermission } = useMockAuth();
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
-// Icons
-import {
-  Briefcase,
-  Building2,
-  Calendar,
-  FileText,
-  Plus,
-  RefreshCcw,
-  User,
-  FileCheck,
-  Star,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Eye,
-  MoreHorizontal,
-  ExternalLink,
-  Calendar as CalendarIcon,
-  Loader2,
-} from 'lucide-react';
+  // Check if user has permission to access this page
+  if (!hasPermission(MODULES.CLIENT_DASHBOARD)) {
+    return (
+      <Dashboard>
+        <div className="flex items-center justify-center h-[70vh]">
+          <Card className="w-[400px]">
+            <CardHeader>
+              <CardTitle className="text-center text-red-500">Access Denied</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-center">
+                You do not have permission to access the client dashboard. You need the "client_dashboard" permission to view this page.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </Dashboard>
+    );
+  }
 
-// Request form schema with validation
-const jobRequestSchema = z.object({
-  title: z.string().min(5, { message: 'Title must be at least 5 characters' }),
-  description: z.string().min(20, { message: 'Description must be at least 20 characters' }),
-  requirements: z.string().min(20, { message: 'Requirements must be at least 20 characters' }),
-  location: z.string().min(2, { message: 'Location is required' }),
-  jobType: z.enum(['full_time', 'part_time', 'contract', 'remote'], {
-    errorMap: () => ({ message: 'Please select a valid job type' }),
-  }),
-  salary: z.string().optional(),
-  companyId: z.number().nullable().optional(),
-  notes: z.string().optional(),
-});
-
-export default function ClientDashboardPage() {
-  const { user } = useMockAuth();
-  const [isRequestFormOpen, setIsRequestFormOpen] = useState(false);
-  const [selectedContract, setSelectedContract] = useState<number | null>(null);
-  const { toast } = useToast();
-  
-  // Client information fetch
-  const { data: clients } = useQuery<Client[]>({
+  // Fetch all clients (in a real app, you'd fetch just the client assigned to this user)
+  const { data: clients = [], isLoading: isLoadingClients } = useQuery<Client[]>({
     queryKey: ['/api/clients'],
-    enabled: true,
   });
-  
-  // Using a mock client ID for now. In a real application, this would come from the authenticated user
-  const clientId = 1; // Mock client ID for development
-  
-  const { data: client } = useQuery<Client>({
-    queryKey: ['/api/clients', clientId],
-    queryFn: async () => {
-      if (!clientId) return null;
-      const res = await apiRequest('GET', `/api/clients/${clientId}`);
-      return await res.json();
-    },
-    enabled: !!clientId,
-  });
-  
-  // Get all companies for this client
-  const { data: companies } = useQuery<Company[]>({
-    queryKey: ['/api/clients', clientId, 'companies'],
-    queryFn: async () => {
-      if (!clientId) return [];
-      const res = await apiRequest('GET', `/api/clients/${clientId}/companies`);
-      return await res.json();
-    },
-    enabled: !!clientId,
-  });
-  
-  // Get all job requests for this client
-  const { data: jobRequests, isLoading: isLoadingRequests } = useQuery<JobRequest[]>({
-    queryKey: ['/api/clients', clientId, 'job-requests'],
-    queryFn: async () => {
-      if (!clientId) return [];
-      const res = await apiRequest('GET', `/api/job-requests?clientId=${clientId}`);
-      return await res.json();
-    },
-    enabled: !!clientId,
-  });
-  
-  // Get all heroes for this client
-  const { data: heroes, isLoading: isLoadingHeroes } = useQuery<Hero[]>({
-    queryKey: ['/api/clients', clientId, 'heroes'],
-    queryFn: async () => {
-      if (!clientId) return [];
-      const res = await apiRequest('GET', `/api/clients/${clientId}/heroes`);
-      return await res.json();
-    },
-    enabled: !!clientId,
-  });
-  
-  // Get all contracts for this client
-  const { data: contracts, isLoading: isLoadingContracts } = useQuery<Contract[]>({
-    queryKey: ['/api/clients', clientId, 'contracts'],
-    queryFn: async () => {
-      if (!clientId) return [];
-      const res = await apiRequest('GET', `/api/clients/${clientId}/contracts`);
-      return await res.json();
-    },
-    enabled: !!clientId,
-  });
-  
-  // Set up form for job request submission
-  const requestForm = useForm<z.infer<typeof jobRequestSchema>>({
-    resolver: zodResolver(jobRequestSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      requirements: '',
-      location: '',
-      jobType: 'full_time',
-      salary: '',
-      companyId: companies && companies.length > 0 ? companies[0].id : null,
-      notes: '',
-    },
-  });
-  
-  // Mutation to create a job request
-  const createRequestMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof jobRequestSchema>) => {
-      // Include the clientId with the request data
-      const requestData = {
-        ...data,
-        clientId,
-        status: 'pending', // All new requests start as pending
-      };
-      const res = await apiRequest('POST', '/api/job-requests', requestData);
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/clients', clientId, 'job-requests'] });
-      toast({
-        title: 'Request Submitted',
-        description: 'Your job request has been submitted successfully and is pending approval.',
-      });
-      setIsRequestFormOpen(false);
-      requestForm.reset();
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Submission Failed',
-        description: error.message || 'There was an error submitting your request. Please try again.',
-        variant: 'destructive',
-      });
-    },
-  });
-  
-  // Handle form submission
-  const handleSubmitRequest = (data: z.infer<typeof jobRequestSchema>) => {
-    createRequestMutation.mutate(data);
-  };
-  
-  // Get badge color based on request status
-  const getRequestStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Pending</Badge>;
-      case 'approved':
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Approved</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
-      case 'published':
-        return <Badge variant="default">Published</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+
+  // Set first client as default if none selected
+  useEffect(() => {
+    if (clients.length > 0 && !selectedClient) {
+      setSelectedClient(clients[0]);
     }
-  };
-  
-  // Format date helper
-  const formatDate = (dateString: string | Date) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  }, [clients, selectedClient]);
+
+  // Fetch companies for the selected client
+  const { data: companies = [], isLoading: isLoadingCompanies } = useQuery<Company[]>({
+    queryKey: [`/api/clients/${selectedClient?.id}/companies`],
+    enabled: !!selectedClient,
+  });
+
+  // Fetch heroes for the selected client
+  const { data: heroes = [], isLoading: isLoadingHeroes } = useQuery<Hero[]>({
+    queryKey: [`/api/clients/${selectedClient?.id}/heroes`],
+    enabled: !!selectedClient,
+  });
+
+  // Fetch contracts for the selected client
+  const { data: contracts = [], isLoading: isLoadingContracts } = useQuery<Contract[]>({
+    queryKey: [`/api/clients/${selectedClient?.id}/contracts`],
+    enabled: !!selectedClient,
+  });
+
+  // Fetch job requests for the selected client
+  const { data: jobRequests = [], isLoading: isLoadingRequests } = useQuery<JobRequest[]>({
+    queryKey: ['/api/job-requests'],
+    enabled: !!selectedClient,
+  });
+
+  // Filter job requests for current client
+  const clientJobRequests = jobRequests.filter(req => req.clientId === selectedClient?.id);
+
+  // Loading state
+  if (isLoadingClients) {
+    return (
+      <Dashboard>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      </Dashboard>
+    );
+  }
+
+  // Empty state
+  if (clients.length === 0) {
+    return (
+      <Dashboard>
+        <div className="flex items-center justify-center h-[70vh]">
+          <Card className="w-[500px] text-center">
+            <CardHeader>
+              <CardTitle>No Clients Found</CardTitle>
+              <CardDescription>There are no clients associated with your account</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4">Contact your administrator to associate your account with a client.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </Dashboard>
+    );
+  }
 
   return (
     <Dashboard>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Client Dashboard</h1>
-            <p className="text-muted-foreground">
-              Welcome back, {client?.contactPerson || 'User'}
-            </p>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Client Dashboard</h1>
+        {clients.length > 1 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Select Client:</span>
+            <select 
+              className="border rounded p-1 text-sm"
+              value={selectedClient?.id}
+              onChange={(e) => {
+                const clientId = parseInt(e.target.value);
+                const client = clients.find(c => c.id === clientId);
+                setSelectedClient(client || null);
+              }}
+            >
+              {clients.map(client => (
+                <option key={client.id} value={client.id}>{client.name}</option>
+              ))}
+            </select>
           </div>
-          <div className="flex items-center gap-4">
-            <Button onClick={() => setIsRequestFormOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> New Job Request
-            </Button>
-          </div>
-        </div>
+        )}
+      </div>
 
-        {/* Dashboard Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Job Requests
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {jobRequests ? jobRequests.length : 0}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {jobRequests?.filter(req => req.status === 'published').length || 0} published
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Active Heroes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {heroes ? heroes.length : 0}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Across {contracts ? new Set(contracts.map(c => c.companyId)).size : 0} companies
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Active Contracts
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {contracts ? contracts.length : 0}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Total monthly value: {
-                  contracts
-                    ? `$${contracts.reduce((sum, contract) => sum + (contract.compensation || 0), 0).toLocaleString()}`
-                    : '$0'
-                }
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="requests" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="requests">
-              <FileText className="mr-2 h-4 w-4" /> Job Requests
-            </TabsTrigger>
-            <TabsTrigger value="heroes">
-              <User className="mr-2 h-4 w-4" /> Contracted Heroes
-            </TabsTrigger>
-            <TabsTrigger value="companies">
-              <Building2 className="mr-2 h-4 w-4" /> Your Companies
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Job Requests Tab */}
-          <TabsContent value="requests">
-            {isLoadingRequests ? (
-              <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : jobRequests && jobRequests.length > 0 ? (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead>Job Type</TableHead>
-                      <TableHead>Date Requested</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {jobRequests.map((request) => (
-                      <TableRow key={request.id}>
-                        <TableCell className="font-medium">{request.title}</TableCell>
-                        <TableCell>{companies?.find(c => c.id === request.companyId)?.name || request.companyName || 'Not specified'}</TableCell>
-                        <TableCell className="capitalize">{request.jobType?.replace('_', ' ') || 'Not specified'}</TableCell>
-                        <TableCell>{formatDate(request.createdAt)}</TableCell>
-                        <TableCell>{getRequestStatusBadge(request.status)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-center">
-                <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium">No job requests found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Submit your first job request to start the hiring process.
-                </p>
-                <Button onClick={() => setIsRequestFormOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> New Job Request
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Heroes Tab */}
-          <TabsContent value="heroes">
-            {isLoadingHeroes ? (
-              <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : heroes && heroes.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {heroes.map((hero) => {
-                  const heroContract = contracts?.find(c => c.heroId === hero.id);
-                  return (
-                    <Card key={hero.id} className="overflow-hidden">
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10 border">
-                              <AvatarFallback>{hero.firstName?.[0]}{hero.lastName?.[0]}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <CardTitle className="text-base">{hero.firstName} {hero.lastName}</CardTitle>
-                              <CardDescription className="text-sm">
-                                {heroContract?.title || 'Remote Hero'}
-                              </CardDescription>
-                            </div>
-                          </div>
-                          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-                            Active
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-sm text-muted-foreground mb-4">
-                          {hero.skills || 'Specialized skills not specified'}
-                        </div>
-                        
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Start Date:</span>
-                            <span>{hero.startDate ? formatDate(hero.startDate) : 'Not specified'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Company:</span>
-                            <span>{
-                              heroContract 
-                                ? companies?.find(c => c.id === heroContract.companyId)?.name || 'Unknown'
-                                : 'Not assigned'
-                            }</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Contract Value:</span>
-                            <span>${heroContract?.compensation || '0'}/month</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="border-t bg-muted/50 px-6 py-3">
-                        <div className="flex justify-between items-center w-full">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => heroContract && setSelectedContract(heroContract.id)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" /> View Contract
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-center">
-                <User className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium">No heroes contracted yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Start by submitting a job request to find the perfect heroes for your company.
-                </p>
-                <Button onClick={() => setIsRequestFormOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> New Job Request
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Companies Tab */}
-          <TabsContent value="companies">
-            {companies && companies.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {companies.map((company) => {
-                  const companyContracts = contracts?.filter(c => c.companyId === company.id) || [];
-                  const companyHeroes = heroes?.filter(h => 
-                    companyContracts.some(c => c.heroId === h.id)
-                  ) || [];
-                  
-                  return (
-                    <Card key={company.id}>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Building2 className="h-5 w-5" />
-                          {company.name}
-                        </CardTitle>
-                        <CardDescription>
-                          {company.industry || 'Industry not specified'}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="flex flex-col">
-                              <span className="text-sm text-muted-foreground">Heroes</span>
-                              <span className="text-xl font-semibold">{companyHeroes.length}</span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-sm text-muted-foreground">Contracts</span>
-                              <span className="text-xl font-semibold">{companyContracts.length}</span>
-                            </div>
-                          </div>
-                          
-                          {companyHeroes.length > 0 && (
-                            <div>
-                              <h4 className="text-sm font-medium mb-2">Active Heroes</h4>
-                              <div className="flex -space-x-2 overflow-hidden">
-                                {companyHeroes.slice(0, 5).map((hero, i) => (
-                                  <Avatar key={hero.id} className="border-2 border-background">
-                                    <AvatarFallback>{hero.firstName?.[0]}{hero.lastName?.[0]}</AvatarFallback>
-                                  </Avatar>
-                                ))}
-                                {companyHeroes.length > 5 && (
-                                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-xs font-medium">
-                                    +{companyHeroes.length - 5}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                      <CardFooter className="border-t bg-muted/50 px-6 py-3">
-                        <Button variant="outline" className="w-full" size="sm">
-                          <Building2 className="h-4 w-4 mr-1" /> View Company Details
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-center">
-                <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium">No companies registered</h3>
-                <p className="text-muted-foreground">
-                  Please contact your account manager to register your companies.
-                </p>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-
-        {/* New Job Request Dialog */}
-        {/* Contract Details Dialog */}
-        <Dialog open={!!selectedContract} onOpenChange={(open) => !open && setSelectedContract(null)}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Contract Details</DialogTitle>
-              <DialogDescription>
-                View the details of this contract
-              </DialogDescription>
-            </DialogHeader>
+      {selectedClient && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card>
+              <CardHeader className="py-4">
+                <CardTitle className="text-lg flex items-center">
+                  <Building2 className="w-5 h-5 mr-2 text-primary" />
+                  Companies
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4">
+                <div className="text-3xl font-bold">
+                  {companies.length}
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">Registered companies</p>
+              </CardContent>
+            </Card>
             
-            {selectedContract && contracts && (() => {
-              const contract = contracts.find(c => c.id === selectedContract);
-              const hero = heroes?.find(h => h.id === contract?.heroId);
-              const company = companies?.find(c => c.id === contract?.companyId);
-              
-              if (!contract) return <div>Contract not found</div>;
-              
-              return (
-                <div className="space-y-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Hero</h3>
-                      <p className="font-medium">{hero?.firstName} {hero?.lastName}</p>
+            <Card>
+              <CardHeader className="py-4">
+                <CardTitle className="text-lg flex items-center">
+                  <Users className="w-5 h-5 mr-2 text-primary" />
+                  Heroes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4">
+                <div className="text-3xl font-bold">
+                  {heroes.length}
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">Active heroes</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="py-4">
+                <CardTitle className="text-lg flex items-center">
+                  <FileSignature className="w-5 h-5 mr-2 text-primary" />
+                  Contracts
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4">
+                <div className="text-3xl font-bold">
+                  {contracts.length}
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">Active contracts</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+            <TabsList className="grid grid-cols-3 w-[400px]">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="heroes">Heroes</TabsTrigger>
+              <TabsTrigger value="requests">Job Requests</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="overview" className="mt-6">
+              <div className="grid grid-cols-1 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Building2 className="w-5 h-5 mr-2 text-primary" />
+                      Client Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="font-semibold mb-2">Basic Information</h3>
+                        <div className="space-y-2">
+                          <div>
+                            <span className="text-sm text-muted-foreground block">Company Name</span>
+                            <span className="font-medium">{selectedClient.name}</span>
+                          </div>
+                          <div>
+                            <span className="text-sm text-muted-foreground block">Contact Person</span>
+                            <span className="font-medium">{selectedClient.contactPerson || "Not specified"}</span>
+                          </div>
+                          <div>
+                            <span className="text-sm text-muted-foreground block">Email</span>
+                            <span className="font-medium">{selectedClient.email || "Not specified"}</span>
+                          </div>
+                          <div>
+                            <span className="text-sm text-muted-foreground block">Phone</span>
+                            <span className="font-medium">{selectedClient.phone || "Not specified"}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="font-semibold mb-2">Your Companies</h3>
+                        {companies.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">No companies registered yet</p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {companies.map(company => (
+                              <li key={company.id} className="border rounded-md p-2">
+                                <div className="font-medium">{company.name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {company.industry || "Industry not specified"}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Position</h3>
-                      <p className="font-medium">{contract.title}</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="heroes" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Users className="w-5 h-5 mr-2 text-primary" />
+                    Your Heroes
+                  </CardTitle>
+                  <CardDescription>
+                    Heroes currently contracted with your company
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {heroes.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">No heroes contracted yet</p>
+                      <p className="text-sm text-muted-foreground">
+                        Contact your RemoteHero manager to find the perfect talent for your needs
+                      </p>
                     </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Company</h3>
-                      <p className="font-medium">{company?.name}</p>
+                  ) : (
+                    <div className="rounded-md border overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Hero</TableHead>
+                            <TableHead>Start Date</TableHead>
+                            <TableHead>Contract</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {heroes.map(hero => {
+                            const heroContract = contracts.find(c => c.heroId === hero.id);
+                            return (
+                              <TableRow key={hero.id}>
+                                <TableCell>
+                                  <div className="font-medium">
+                                    {/* In a real app, fetch the prospect info too */}
+                                    Hero #{hero.id}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {hero.startDate ? new Date(hero.startDate).toLocaleDateString() : "N/A"}
+                                </TableCell>
+                                <TableCell>
+                                  {heroContract ? (
+                                    <Badge variant={
+                                      heroContract.status === 'active' ? 'default' : 
+                                      heroContract.status === 'signed' ? 'secondary' : 
+                                      'outline'
+                                    }>
+                                      {heroContract.status.charAt(0).toUpperCase() + heroContract.status.slice(1)}
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline">No Contract</Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button variant="outline" size="sm" asChild>
+                                    <Link href={`/hero/${hero.id}`}>View Details</Link>
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
                     </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Status</h3>
-                      <Badge variant={contract.status === 'active' ? 'default' : 'secondary'}>
-                        {contract.status.charAt(0).toUpperCase() + contract.status.slice(1)}
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">Start Date</h3>
-                      <p className="font-medium">{formatDate(contract.startDate)}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-1">End Date</h3>
-                      <p className="font-medium">{contract.endDate ? formatDate(contract.endDate) : 'Not specified'}</p>
-                    </div>
-                  </div>
-                  
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="requests" className="mt-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Monthly Compensation</h3>
-                    <p className="text-lg font-bold">${contract.compensation.toLocaleString()}</p>
+                    <CardTitle className="flex items-center">
+                      <BriefcaseBusiness className="w-5 h-5 mr-2 text-primary" />
+                      Job Requests
+                    </CardTitle>
+                    <CardDescription>
+                      Manage your job requests
+                    </CardDescription>
                   </div>
-                  
-                  {contract.document && (
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Contract Document</h3>
-                      <Button variant="outline">
-                        <FileText className="mr-2 h-4 w-4" /> View Document
+                  <Button size="sm" asChild>
+                    <Link href="/job-requests">
+                      <Plus className="h-4 w-4 mr-1" />
+                      New Request
+                    </Link>
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {clientJobRequests.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground mb-4">No job requests submitted yet</p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Create a new job request to find the perfect talent for your needs
+                      </p>
+                      <Button asChild>
+                        <Link href="/job-requests">
+                          <Plus className="h-4 w-4 mr-1" />
+                          New Job Request
+                        </Link>
                       </Button>
                     </div>
+                  ) : (
+                    <div className="rounded-md border overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Submitted</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {clientJobRequests.map(request => (
+                            <TableRow key={request.id}>
+                              <TableCell>
+                                <div className="font-medium">{request.title}</div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={
+                                  request.status === 'approved' ? 'default' : 
+                                  request.status === 'pending' ? 'secondary' : 
+                                  request.status === 'rejected' ? 'destructive' : 
+                                  'outline'
+                                }>
+                                  {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {new Date(request.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button variant="outline" size="sm" asChild>
+                                  <Link href={`/job-requests?id=${request.id}`}>View Details</Link>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   )}
-                </div>
-              );
-            })()}
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setSelectedContract(null)}>Close</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        
-        {/* New Job Request Dialog */}
-        <Dialog open={isRequestFormOpen} onOpenChange={setIsRequestFormOpen}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Submit New Job Request</DialogTitle>
-              <DialogDescription>
-                Fill out the form below to request a new job position. 
-                Your request will be reviewed by our team.
-              </DialogDescription>
-            </DialogHeader>
-
-            <Form {...requestForm}>
-              <form onSubmit={requestForm.handleSubmit(handleSubmitRequest)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={requestForm.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Job Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g. Senior React Developer" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={requestForm.control}
-                    name="companyId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company</FormLabel>
-                        <Select
-                          onValueChange={(value) => field.onChange(parseInt(value))}
-                          defaultValue={field.value?.toString()}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a company" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {companies?.map((company) => (
-                              <SelectItem key={company.id} value={company.id.toString()}>
-                                {company.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={requestForm.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g. Remote, New York, NY" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={requestForm.control}
-                    name="jobType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Job Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select job type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="full_time">Full-time</SelectItem>
-                            <SelectItem value="part_time">Part-time</SelectItem>
-                            <SelectItem value="contract">Contract</SelectItem>
-                            <SelectItem value="remote">Remote</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={requestForm.control}
-                  name="salary"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Salary Range (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. $80,000 - $100,000" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={requestForm.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Job Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Describe the role, responsibilities, and qualifications..."
-                          className="min-h-[100px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={requestForm.control}
-                  name="requirements"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Requirements</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="List the required skills, experience, and qualifications..."
-                          className="min-h-[100px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={requestForm.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Additional Notes (Optional)</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Any special requirements or additional information..."
-                          className="min-h-[80px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <DialogFooter>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setIsRequestFormOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={createRequestMutation.isPending}
-                  >
-                    {createRequestMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      <>Submit Request</>
-                    )}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
     </Dashboard>
   );
 }
