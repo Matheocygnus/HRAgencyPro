@@ -466,13 +466,14 @@ const VideoConference: React.FC<VideoConferenceProps> = ({
         </Card>
       )}
 
-      <style jsx>{`
+      <style>
+        {`
         .video-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
           gap: 1rem;
           margin-bottom: 1rem;
-        }
+        }`}
         
         .local-video-container {
           position: relative;

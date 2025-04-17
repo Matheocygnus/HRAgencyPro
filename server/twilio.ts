@@ -71,7 +71,8 @@ if (!AccessToken) {
             update: () => Promise.resolve({ status: 'completed' })
           };
         },
-        rooms: {
+        // Fix duplicated property name
+        roomsApi: {
           create: (options: any) => Promise.resolve({ sid: 'mock-room-sid', uniqueName: options.uniqueName }),
           list: () => Promise.resolve([])
         }
@@ -119,7 +120,7 @@ export async function createVideoRoom(roomName: string) {
       room = await twilioClient.video.v1.rooms(roomName).fetch();
     } catch (error) {
       // If the room doesn't exist, create a new one
-      room = await twilioClient.video.v1.rooms.create({
+      room = await twilioClient.video.v1.roomsApi.create({
         uniqueName: roomName,
         type: 'group', // 'group' for small group rooms (up to 50 participants)
         recordParticipantsOnConnect: false,
@@ -151,7 +152,7 @@ export async function endVideoRoom(roomName: string) {
  */
 export async function listVideoRooms() {
   try {
-    return await twilioClient.video.v1.rooms.list({ status: 'in-progress' });
+    return await twilioClient.video.v1.roomsApi.list({ status: 'in-progress' });
   } catch (error) {
     console.error('Error listing video rooms:', error);
     throw error;
