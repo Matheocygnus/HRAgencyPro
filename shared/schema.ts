@@ -129,6 +129,8 @@ export const invoices = pgTable("invoices", {
   status: text("status", { enum: ["pending", "paid", "overdue", "cancelled"] }).notNull().default("pending"),
   dueDate: timestamp("due_date").notNull(),
   paidDate: timestamp("paid_date"),
+  stripeInvoiceId: text("stripe_invoice_id"),
+  stripeInvoiceUrl: text("stripe_invoice_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
