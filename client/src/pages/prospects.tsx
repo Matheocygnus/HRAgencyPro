@@ -39,8 +39,7 @@ import {
   Building,
   DollarSign,
   FileText,
-  Headphones,
-  History
+  Headphones
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -621,7 +620,7 @@ export default function Prospects() {
                         <Label className="text-sm text-muted-foreground">Budget Agreed</Label>
                         <Switch
                           checked={!!selectedProspect.isBudgetAgreed}
-                          onCheckedChange={(checked) => {
+                          onCheckedChange={(checked: boolean) => {
                             updateProspectMutation.mutate({ 
                               id: selectedProspect.id, 
                               isBudgetAgreed: checked 
@@ -700,7 +699,7 @@ export default function Prospects() {
 
                 <div>
                   <h3 className="text-lg font-semibold flex items-center">
-                    <History className="mr-2 h-5 w-5 text-primary" />
+                    <FileText className="mr-2 h-5 w-5 text-primary" />
                     Notes History
                   </h3>
                   <div className="mt-2 space-y-2">
