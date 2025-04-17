@@ -593,6 +593,8 @@ export class MemStorage implements IStorage {
         startDate: new Date("2023-11-01"),
         endDate: new Date("2024-11-01"),
         compensation: 120000,
+        companyPayment: 156000, // 130% of compensation
+        profit: 36000, // 30% profit margin
         status: "active",
         document: "contract_1.pdf",
       },
@@ -603,6 +605,8 @@ export class MemStorage implements IStorage {
         startDate: new Date("2023-08-15"),
         endDate: new Date("2024-08-15"),
         compensation: 140000,
+        companyPayment: 182000, // 130% of compensation
+        profit: 42000, // 30% profit margin
         status: "active",
         document: "contract_2.pdf",
       },
@@ -613,6 +617,8 @@ export class MemStorage implements IStorage {
         startDate: new Date("2023-12-01"),
         endDate: new Date("2024-12-01"),
         compensation: 110000,
+        companyPayment: 143000, // 130% of compensation
+        profit: 33000, // 30% profit margin
         status: "active",
         document: "contract_3.pdf",
       },
