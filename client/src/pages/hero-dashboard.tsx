@@ -151,37 +151,7 @@ export default function HeroDashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardHeader className="py-4">
-            <CardTitle className="text-lg flex items-center">
-              <CircleDollarSign className="w-5 h-5 mr-2 text-primary" />
-              Total Earnings
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="text-3xl font-bold">
-              ${totalEarnings.toFixed(2)}
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">Lifetime earnings</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="py-4">
-            <CardTitle className="text-lg flex items-center">
-              <FileText className="w-5 h-5 mr-2 text-primary" />
-              Invoices
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-4">
-            <div className="text-3xl font-bold">
-              {heroInvoices.length}
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">Total invoices</p>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 mb-6">
         <Card>
           <CardHeader className="py-4">
             <CardTitle className="text-lg flex items-center">
@@ -199,10 +169,9 @@ export default function HeroDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-        <TabsList className="grid grid-cols-3 w-[400px]">
+        <TabsList className="grid grid-cols-2 w-[300px]">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="contract">Contract</TabsTrigger>
-          <TabsTrigger value="invoices">Invoices</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="mt-6">
@@ -496,85 +465,7 @@ export default function HeroDashboard() {
           </Card>
         </TabsContent>
         
-        <TabsContent value="invoices" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FileText className="w-5 h-5 mr-2 text-primary" />
-                Your Invoices
-              </CardTitle>
-              <CardDescription>
-                History of all your invoices
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {heroInvoices.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No invoices found</p>
-                  <p className="text-sm text-muted-foreground">
-                    Invoices will appear here once they are generated
-                  </p>
-                </div>
-              ) : (
-                <div className="rounded-md border overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Invoice #</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {heroInvoices.map(invoice => (
-                        <TableRow key={invoice.id}>
-                          <TableCell>
-                            <div className="font-medium">#{invoice.invoiceNumber}</div>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(invoice.createdAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>${invoice.amount.toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              invoice.status === "paid" ? "default" : 
-                              invoice.status === "pending" ? "secondary" : 
-                              "outline"
-                            }>
-                              {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {invoice.stripeInvoiceUrl ? (
-                              <Button variant="outline" size="sm" asChild>
-                                <a 
-                                  href={invoice.stripeInvoiceUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="flex items-center"
-                                >
-                                  <Download className="h-4 w-4 mr-1" />
-                                  View
-                                </a>
-                              </Button>
-                            ) : (
-                              <Button variant="outline" size="sm" disabled>
-                                <Download className="h-4 w-4 mr-1" />
-                                View
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+
       </Tabs>
     </Dashboard>
   );
