@@ -53,7 +53,7 @@ type HeroOption = {
 
 // Extend the insert schema for frontend validation
 const invoiceFormSchema = insertInvoiceSchema.extend({
-  contractId: z.number().min(1, "Contract is required"),
+  contractId: z.number().optional(), // Contract is now auto-selected from heroes
   heroIds: z.array(z.number()).min(1, "At least one hero is required"), // Multiple heroes
   heroId: z.number().optional(), // Keep for backward compatibility
   clientId: z.number().min(1, "Client is required"),
@@ -310,46 +310,14 @@ export default function InvoiceForm({ invoiceId, onSuccess, onCancel }: InvoiceF
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="contractId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Contract</FormLabel>
-                <Select
-                  onValueChange={(value) => {
-                    const contractId = parseInt(value);
-                    field.onChange(contractId);
-                    handleContractChange(contractId);
-                  }}
-                  defaultValue={field.value?.toString()}
-                  value={field.value?.toString()}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a contract" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {contracts?.map((contract) => (
-                      <SelectItem key={contract.id} value={contract.id.toString()}>
-                        {contract.title} (ID: {contract.id})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="grid grid-cols-1 gap-4">
 
           <FormField
             control={form.control}
             name="heroIds"
             render={({ field }) => {
-              // Prepare hero options with name/company info and related data
-              const heroOptions: HeroOption[] = heroes?.map(hero => {
+              // Prepare all hero options with name/company info and related data
+              const allHeroOptions: HeroOption[] = heroes?.map(hero => {
                 const prospect = prospects?.find(p => p.id === hero.prospectId);
                 const company = companies?.find(c => c.id === hero.companyId);
                 const contract = contracts?.find(c => c.heroId === hero.id);
@@ -363,6 +331,21 @@ export default function InvoiceForm({ invoiceId, onSuccess, onCancel }: InvoiceF
                   contractId: contract?.id
                 };
               }) || [];
+              
+              // Filter heroes based on selection
+              let heroOptions = [...allHeroOptions];
+              
+              // If at least one hero is selected, filter by the same company
+              if (field.value.length > 0) {
+                const firstSelectedHero = allHeroOptions.find(h => h.id === field.value[0]);
+                if (firstSelectedHero && firstSelectedHero.companyId) {
+                  // Filter to include only heroes from the same company and already selected heroes
+                  heroOptions = allHeroOptions.filter(hero => 
+                    hero.companyId === firstSelectedHero.companyId || 
+                    field.value.includes(hero.id)
+                  );
+                }
+              }
               
               // Get selected heroes
               const selectedHeroes = heroOptions.filter(h => field.value.includes(h.id));
@@ -502,6 +485,7 @@ export default function InvoiceForm({ invoiceId, onSuccess, onCancel }: InvoiceF
                   }}
                   defaultValue={field.value?.toString()}
                   value={field.value?.toString()}
+                  disabled={form.watch('heroIds').length > 0} // Disable if heroes are selected
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -531,7 +515,7 @@ export default function InvoiceForm({ invoiceId, onSuccess, onCancel }: InvoiceF
                   onValueChange={(value) => field.onChange(parseInt(value))}
                   defaultValue={field.value?.toString()}
                   value={field.value?.toString()}
-                  disabled={!clientId}
+                  disabled={!clientId || form.watch('heroIds').length > 0}
                 >
                   <FormControl>
                     <SelectTrigger>
