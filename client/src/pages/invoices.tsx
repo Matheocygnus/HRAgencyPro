@@ -207,7 +207,7 @@ export default function InvoicesPage() {
                 <TableBody>
                   {filteredInvoices.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
+                      <TableCell colSpan={9} className="text-center py-8">
                         No invoices found. {isAdmin ? "Create a new invoice to get started." : ""}
                       </TableCell>
                     </TableRow>
@@ -230,6 +230,21 @@ export default function InvoicesPage() {
                           <TableCell>
                             <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
                           </TableCell>
+                          <TableCell>
+                            {invoice.stripeInvoiceUrl ? (
+                              <a 
+                                href={invoice.stripeInvoiceUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center text-primary hover:text-primary/80"
+                              >
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                View Invoice
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">Not available</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             {isAdmin && (
                               <DropdownMenu>
@@ -241,6 +256,17 @@ export default function InvoicesPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem>View Details</DropdownMenuItem>
+                                  {invoice.stripeInvoiceUrl && (
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        if (invoice.stripeInvoiceUrl) {
+                                          window.open(invoice.stripeInvoiceUrl, '_blank');
+                                        }
+                                      }}
+                                    >
+                                      View Stripe Invoice
+                                    </DropdownMenuItem>
+                                  )}
                                   <DropdownMenuItem
                                     onClick={() => updateInvoiceMutation.mutate({ 
                                       id: invoice.id, 
