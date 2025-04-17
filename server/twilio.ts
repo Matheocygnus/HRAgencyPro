@@ -1,15 +1,84 @@
 import twilio from 'twilio';
-import { AccessToken } from 'twilio';
-import VideoGrant from 'twilio/lib/jwt/AccessToken/VideoGrant';
 
 // Check for required environment variables
-if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_API_KEY || !process.env.TWILIO_API_SECRET) {
+const hasRequiredVars = process.env.TWILIO_ACCOUNT_SID && 
+                       process.env.TWILIO_API_KEY && 
+                       process.env.TWILIO_API_SECRET;
+
+if (!hasRequiredVars) {
   console.error('ERROR: Missing required Twilio environment variables. Video conferencing will not work.');
 }
 
-const twilioClient = twilio(process.env.TWILIO_API_KEY, process.env.TWILIO_API_SECRET, {
-  accountSid: process.env.TWILIO_ACCOUNT_SID
-});
+// Create a mock implementation for development without Twilio credentials
+// This allows the app to start even without proper Twilio setup
+let AccessToken: any;
+let VideoGrant: any;
+let twilioClient: any;
+
+try {
+  // Try to use real Twilio implementation
+  if (hasRequiredVars) {
+    // @ts-ignore - The twilio types may not be accurate
+    const { jwt } = twilio as any;
+    // @ts-ignore - The twilio types may not be accurate
+    AccessToken = jwt.AccessToken;
+    // @ts-ignore - The twilio types may not be accurate
+    VideoGrant = AccessToken.VideoGrant;
+    
+    // Only create the client if we have valid credentials
+    if (process.env.TWILIO_ACCOUNT_SID?.startsWith('AC')) {
+      twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_API_SECRET);
+    } else {
+      console.error('ERROR: Invalid Twilio Account SID format. Must start with "AC".');
+      // Will use mock implementation
+    }
+  }
+} catch (error) {
+  console.error('Failed to initialize Twilio client:', error);
+  // Will use mock implementation
+}
+
+// Fallback mock implementations if Twilio initialization failed
+if (!AccessToken) {
+  console.warn('Using mock Twilio implementation');
+  
+  // Mock AccessToken class
+  AccessToken = class {
+    identity: string;
+    constructor(_accountSid: string, _apiKey: string, _apiSecret: string, options: { identity: string }) {
+      this.identity = options.identity;
+    }
+    
+    addGrant() {}
+    
+    toJwt() {
+      return 'mock-jwt-token-for-' + this.identity;
+    }
+  };
+  
+  // Mock VideoGrant class
+  VideoGrant = class {
+    constructor(options: { room?: string } = {}) {}
+  };
+  
+  // Mock twilioClient
+  twilioClient = {
+    video: {
+      v1: {
+        rooms: function(roomName: string) {
+          return {
+            fetch: () => Promise.reject(new Error('Room not found (mock)')),
+            update: () => Promise.resolve({ status: 'completed' })
+          };
+        },
+        rooms: {
+          create: (options: any) => Promise.resolve({ sid: 'mock-room-sid', uniqueName: options.uniqueName }),
+          list: () => Promise.resolve([])
+        }
+      }
+    }
+  };
+}
 
 /**
  * Generate an Access Token for a video room

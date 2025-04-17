@@ -935,6 +935,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Video conferencing routes
+  app.post("/api/video/token", isAuthenticated, async (req, res) => {
+    try {
+      const { identity, roomName } = req.body;
+      
+      if (!identity || !roomName) {
+        return res.status(400).json({ message: "Identity and roomName are required" });
+      }
+      
+      const token = generateVideoToken(identity, roomName);
+      res.json({ token });
+    } catch (error: any) {
+      console.error("Error generating video token:", error);
+      res.status(500).json({ message: "Failed to generate video token", error: error.message });
+    }
+  });
+  
+  app.post("/api/video/room", isAuthenticated, async (req, res) => {
+    try {
+      const { roomName } = req.body;
+      
+      if (!roomName) {
+        return res.status(400).json({ message: "Room name is required" });
+      }
+      
+      const room = await createVideoRoom(roomName);
+      res.json({ room });
+    } catch (error: any) {
+      console.error("Error creating video room:", error);
+      res.status(500).json({ message: "Failed to create video room", error: error.message });
+    }
+  });
+  
+  app.post("/api/video/room/end", isAuthenticated, async (req, res) => {
+    try {
+      const { roomName } = req.body;
+      
+      if (!roomName) {
+        return res.status(400).json({ message: "Room name is required" });
+      }
+      
+      const result = await endVideoRoom(roomName);
+      res.json({ success: true, result });
+    } catch (error: any) {
+      console.error("Error ending video room:", error);
+      res.status(500).json({ message: "Failed to end video room", error: error.message });
+    }
+  });
+  
+  app.get("/api/video/rooms", isAuthenticated, async (req, res) => {
+    try {
+      const rooms = await listVideoRooms();
+      res.json({ rooms });
+    } catch (error: any) {
+      console.error("Error listing video rooms:", error);
+      res.status(500).json({ message: "Failed to list video rooms", error: error.message });
+    }
+  });
+  
   const httpServer = createServer(app);
   return httpServer;
 }
