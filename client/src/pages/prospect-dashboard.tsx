@@ -205,9 +205,9 @@ export default function ProspectDashboard() {
                         <span className="text-sm text-muted-foreground block">Status</span>
                         <Badge
                           variant={
-                            currentProspect.status === "active" ? "default" :
+                            currentProspect.status === "sourcing" ? "default" :
                             currentProspect.status === "contacted" ? "secondary" :
-                            currentProspect.status === "interviewing" ? "outline" :
+                            currentProspect.status === "interview" ? "outline" :
                             currentProspect.status === "hired" ? "default" :
                             "outline"
                           }
@@ -346,12 +346,12 @@ export default function ProspectDashboard() {
                                     {new Date(interview.scheduledDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                   </div>
                                 </TableCell>
-                                <TableCell>{interview.type || "Technical"}</TableCell>
-                                <TableCell>{interview.interviewerName || "RemoteHero Team"}</TableCell>
+                                <TableCell>{interview.title || "Technical"}</TableCell>
+                                <TableCell>{interview.interviewerIds?.[0] ? "RemoteHero Interviewer" : "RemoteHero Team"}</TableCell>
                                 <TableCell className="text-right">
-                                  {interview.meetingUrl ? (
+                                  {interview.meetingLink ? (
                                     <Button size="sm" asChild>
-                                      <a href={interview.meetingUrl} target="_blank" rel="noopener noreferrer">
+                                      <a href={interview.meetingLink} target="_blank" rel="noopener noreferrer">
                                         <ArrowUpRight className="mr-1 h-4 w-4" />
                                         Join Meeting
                                       </a>
@@ -390,8 +390,8 @@ export default function ProspectDashboard() {
                                 <TableCell>
                                   {new Date(interview.scheduledDate).toLocaleDateString()}
                                 </TableCell>
-                                <TableCell>{interview.type || "Technical"}</TableCell>
-                                <TableCell>{interview.interviewerName || "RemoteHero Team"}</TableCell>
+                                <TableCell>{interview.title || "Technical"}</TableCell>
+                                <TableCell>{interview.interviewerIds?.[0] ? "RemoteHero Interviewer" : "RemoteHero Team"}</TableCell>
                                 <TableCell>
                                   <Badge variant="outline">Completed</Badge>
                                 </TableCell>
