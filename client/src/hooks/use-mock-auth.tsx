@@ -18,11 +18,11 @@ export const MODULES = {
   ROLE_MANAGEMENT: "role_management"
 };
 
-// Mock role for development
+// Mock role for development - Super Admin
 const mockRole: Role = {
   id: 1,
-  name: "Administrator",
-  description: "Full system access",
+  name: "Super Administrator",
+  description: "Complete system access with all permissions",
   permissions: JSON.stringify(Object.values(MODULES)), // All permissions
   createdAt: new Date()
 };
@@ -30,13 +30,13 @@ const mockRole: Role = {
 // Extended User type with role field
 type ExtendedUser = User & { role?: Role };
 
-// Mock user for development
+// Mock user for development - Super Admin
 const mockUser: ExtendedUser = {
   id: 1,
-  username: "admin",
+  username: "superadmin",
   email: "admin@remotehero.com",
-  firstName: "Admin",
-  lastName: "User",
+  firstName: "Super",
+  lastName: "Admin",
   roleId: 1,
   password: "hashed_password", // This would be hashed in a real scenario
   createdAt: new Date(),
