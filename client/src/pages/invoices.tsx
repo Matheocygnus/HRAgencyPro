@@ -28,7 +28,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Invoice, Contract, Hero, Client, Company } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
+import { ExternalLink, Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
 import InvoiceFormDialog from "@/components/dialogs/InvoiceFormDialog";
 import { useMockAuth } from "@/hooks/use-mock-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -200,6 +200,7 @@ export default function InvoicesPage() {
                     <TableHead>Amount</TableHead>
                     <TableHead>Due Date</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Stripe Invoice</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
