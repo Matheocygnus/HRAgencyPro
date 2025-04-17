@@ -46,12 +46,16 @@ type HeroOption = {
   id: number;
   name: string;
   companyName?: string;
+  clientId?: number;
+  companyId?: number;
+  contractId?: number;
 };
 
 // Extend the insert schema for frontend validation
 const invoiceFormSchema = insertInvoiceSchema.extend({
   contractId: z.number().min(1, "Contract is required"),
-  heroId: z.number().min(1, "Hero is required"),
+  heroIds: z.array(z.number()).min(1, "At least one hero is required"), // Multiple heroes
+  heroId: z.number().optional(), // Keep for backward compatibility
   clientId: z.number().min(1, "Client is required"),
   companyId: z.number().min(1, "Company is required"),
   invoiceNumber: z.string().min(3, "Invoice number is required"),
@@ -79,6 +83,7 @@ export default function InvoiceForm({ invoiceId, onSuccess, onCancel }: InvoiceF
       invoiceNumber: '',
       contractId: undefined,
       heroId: undefined,
+      heroIds: [], // Array for multiple heroes
       clientId: undefined,
       companyId: undefined,
       amount: undefined,
@@ -213,6 +218,7 @@ export default function InvoiceForm({ invoiceId, onSuccess, onCancel }: InvoiceF
         invoiceNumber: invoiceData.invoiceNumber,
         contractId: invoiceData.contractId,
         heroId: invoiceData.heroId,
+        heroIds: invoiceData.heroId ? [invoiceData.heroId] : [], // Convert single heroId to array for backwards compatibility
         clientId: invoiceData.clientId,
         companyId: invoiceData.companyId,
         amount: invoiceData.amount,
@@ -340,71 +346,140 @@ export default function InvoiceForm({ invoiceId, onSuccess, onCancel }: InvoiceF
 
           <FormField
             control={form.control}
-            name="heroId"
+            name="heroIds"
             render={({ field }) => {
-              // Prepare hero options with name/company info
+              // Prepare hero options with name/company info and related data
               const heroOptions: HeroOption[] = heroes?.map(hero => {
                 const prospect = prospects?.find(p => p.id === hero.prospectId);
                 const company = companies?.find(c => c.id === hero.companyId);
+                const contract = contracts?.find(c => c.heroId === hero.id);
                 
                 return {
                   id: hero.id,
                   name: prospect ? `${prospect.firstName} ${prospect.lastName}` : `Hero #${hero.id}`,
-                  companyName: company?.name
+                  companyName: company?.name,
+                  clientId: company?.clientId,
+                  companyId: company?.id,
+                  contractId: contract?.id
                 };
               }) || [];
               
-              // Get currently selected hero option
-              const selectedHero = heroOptions.find(h => h.id === field.value);
+              // Get selected heroes
+              const selectedHeroes = heroOptions.filter(h => field.value.includes(h.id));
+              
+              // Auto-select common client and company if available
+              useEffect(() => {
+                if (selectedHeroes.length > 0) {
+                  // Check if all heroes have the same client and company
+                  const clientId = selectedHeroes[0].clientId;
+                  const companyId = selectedHeroes[0].companyId;
+                  const contractId = selectedHeroes[0].contractId;
+                  
+                  const allSameClient = selectedHeroes.every(h => h.clientId === clientId);
+                  const allSameCompany = selectedHeroes.every(h => h.companyId === companyId);
+                  
+                  // Auto-set client and company if they're all the same
+                  if (clientId && allSameClient) {
+                    form.setValue('clientId', clientId);
+                  }
+                  
+                  if (companyId && allSameCompany) {
+                    form.setValue('companyId', companyId);
+                  }
+                  
+                  // Set first hero's contract if only one hero is selected
+                  if (selectedHeroes.length === 1 && contractId) {
+                    form.setValue('contractId', contractId);
+                  }
+                  
+                  // For backward compatibility, set the first hero as heroId
+                  if (selectedHeroes.length > 0) {
+                    form.setValue('heroId', selectedHeroes[0].id);
+                  }
+                }
+              }, [field.value, form]);
               
               return (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Hero</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className={cn(
-                            "w-full justify-between",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {selectedHero ? selectedHero.name : "Select hero"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput placeholder="Search heroes..." />
-                        <CommandEmpty>No hero found.</CommandEmpty>
-                        <CommandGroup>
-                          {heroOptions.map((hero) => (
-                            <CommandItem
-                              key={hero.id}
-                              value={hero.name}
-                              onSelect={() => {
-                                field.onChange(hero.id);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  field.value === hero.id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {hero.name}
-                              {hero.companyName && (
-                                <span className="ml-1 text-muted-foreground"> - {hero.companyName}</span>
+                  <FormLabel>Heroes</FormLabel>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value.length && "text-muted-foreground"
                               )}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                            >
+                              {field.value.length > 0
+                                ? `${field.value.length} hero${field.value.length > 1 ? 's' : ''} selected`
+                                : "Select heroes"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search heroes..." />
+                            <CommandEmpty>No hero found.</CommandEmpty>
+                            <CommandGroup>
+                              {heroOptions.map((hero) => (
+                                <CommandItem
+                                  key={hero.id}
+                                  value={hero.name}
+                                  onSelect={() => {
+                                    const newValue = [...field.value];
+                                    const index = newValue.indexOf(hero.id);
+                                    
+                                    if (index === -1) {
+                                      newValue.push(hero.id);
+                                    } else {
+                                      newValue.splice(index, 1);
+                                    }
+                                    
+                                    field.onChange(newValue);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value.includes(hero.id) ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {hero.name}
+                                  {hero.companyName && (
+                                    <span className="ml-1 text-muted-foreground"> - {hero.companyName}</span>
+                                  )}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    
+                    {/* Show selected heroes as badges */}
+                    {selectedHeroes.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {selectedHeroes.map(hero => (
+                          <Badge key={hero.id} variant="secondary" className="flex items-center gap-1">
+                            {hero.name}
+                            <X 
+                              className="h-3 w-3 cursor-pointer"
+                              onClick={() => {
+                                const newValue = field.value.filter(id => id !== hero.id);
+                                field.onChange(newValue);
+                              }}
+                            />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <FormMessage />
                 </FormItem>
               );
