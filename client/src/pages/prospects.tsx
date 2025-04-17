@@ -46,6 +46,7 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 // Status badge configuration
 const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | "primary" | null, color: string }> = {
   "sourcing": { label: "Sourcing", variant: "outline", color: "bg-gray-100" },
+  "contacted": { label: "Contacted", variant: "outline", color: "bg-cyan-100" },
   "interview": { label: "Interview", variant: "secondary", color: "bg-blue-100" },
   "client_review": { label: "Client Review", variant: "outline", color: "bg-purple-100" },
   "budget": { label: "Budget", variant: "primary", color: "bg-green-100" },
@@ -56,6 +57,7 @@ const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outli
 
 const COLUMNS = [
   { id: "sourcing", title: "Sourcing", color: "bg-gray-100" },
+  { id: "contacted", title: "Contacted", color: "bg-cyan-100" },
   { id: "interview", title: "Interview", color: "bg-blue-100" },
   { id: "client_review", title: "Client Review", color: "bg-purple-100" },
   { id: "budget", title: "Budget", color: "bg-green-100" },
@@ -152,7 +154,7 @@ export default function Prospects() {
       prospect.id === prospectId 
         ? { 
             ...prospect, 
-            status: newStatus as "sourcing" | "interview" | "client_review" | "budget" | "contract" | "hired" | "rejected" 
+            status: newStatus as "sourcing" | "contacted" | "interview" | "client_review" | "budget" | "contract" | "hired" | "rejected" 
           }
         : prospect
     );
@@ -217,6 +219,7 @@ export default function Prospects() {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="sourcing">Sourcing</SelectItem>
+                <SelectItem value="contacted">Contacted</SelectItem>
                 <SelectItem value="interview">Interview</SelectItem>
                 <SelectItem value="client_review">Client Review</SelectItem>
                 <SelectItem value="budget">Budget</SelectItem>
@@ -310,6 +313,16 @@ export default function Prospects() {
                                                   }}
                                                 >
                                                   Move to Sourcing
+                                                </DropdownMenuItem>
+                                              )}
+                                              {column.id !== "contacted" && (
+                                                <DropdownMenuItem
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusChange(prospect.id, "contacted");
+                                                  }}
+                                                >
+                                                  Move to Contacted
                                                 </DropdownMenuItem>
                                               )}
                                               {column.id !== "interview" && (

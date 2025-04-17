@@ -63,7 +63,7 @@ export const prospects = pgTable("prospects", {
   skills: text("skills"),
   resume: text("resume"),
   status: text("status", { 
-    enum: ["sourcing", "interview", "client_review", "budget", "contract", "hired", "rejected"] 
+    enum: ["sourcing", "contacted", "interview", "client_review", "budget", "contract", "hired", "rejected"] 
   }).notNull().default("sourcing"),
   clientId: integer("client_id"),
   companyId: integer("company_id"),
