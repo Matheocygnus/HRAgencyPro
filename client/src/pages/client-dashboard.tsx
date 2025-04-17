@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Client, Company, Hero, Contract, JobRequest } from "@shared/schema";
-import { Building2, Plus, Users, FileSignature, BriefcaseBusiness } from "lucide-react";
+import { Building2, Plus, Users, FileSignature, Briefcase } from "lucide-react";
 import { Link } from "wouter";
 
 export default function ClientDashboard() {
@@ -327,7 +327,7 @@ export default function ClientDashboard() {
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle className="flex items-center">
-                      <BriefcaseBusiness className="w-5 h-5 mr-2 text-primary" />
+                      <Briefcase className="w-5 h-5 mr-2 text-primary" />
                       Job Requests
                     </CardTitle>
                     <CardDescription>

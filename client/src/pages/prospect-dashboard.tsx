@@ -67,13 +67,13 @@ export default function ProspectDashboard() {
 
   // Get upcoming interviews for the current prospect
   const upcomingInterviews = interviews
-    .filter(interview => interview.prospectId === currentProspect?.id && new Date(interview.scheduledAt) > new Date())
-    .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+    .filter(interview => interview.prospectId === currentProspect?.id && new Date(interview.scheduledDate) > new Date())
+    .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime());
 
   // Get completed interviews for the current prospect
   const completedInterviews = interviews
     .filter(interview => interview.prospectId === currentProspect?.id && interview.status === 'completed')
-    .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+    .sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime());
 
   // Loading state
   if (isLoadingProspects || isLoadingInterviews) {

@@ -104,9 +104,15 @@ function Router() {
         <Careers />
       </Route>
       
-      {/* Client dashboard page */}
+      {/* Role-specific dashboard pages */}
       <Route path="/client-dashboard">
         <ClientDashboard />
+      </Route>
+      <Route path="/hero-dashboard">
+        <HeroDashboard />
+      </Route>
+      <Route path="/prospect-dashboard">
+        <ProspectDashboard />
       </Route>
       
       {/* Login and auth pages redirect to dashboard in dev mode */}
