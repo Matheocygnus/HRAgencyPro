@@ -187,7 +187,9 @@ export default function ContractsPage() {
                     <TableHead>Company</TableHead>
                     <TableHead>Start Date</TableHead>
                     <TableHead>End Date</TableHead>
-                    <TableHead>Compensation</TableHead>
+                    <TableHead>Hero Compensation</TableHead>
+                    <TableHead>Company Payment</TableHead>
+                    <TableHead>Profit</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -212,6 +214,13 @@ export default function ContractsPage() {
                           <TableCell>{formatDate(contract.startDate)}</TableCell>
                           <TableCell>{formatDate(contract.endDate)}</TableCell>
                           <TableCell>{formatCurrency(contract.compensation)}</TableCell>
+                          <TableCell>{contract.companyPayment ? formatCurrency(contract.companyPayment) : '-'}</TableCell>
+                          <TableCell>
+                            {contract.profit ? formatCurrency(contract.profit) : 
+                              (contract.companyPayment ? 
+                                formatCurrency(contract.companyPayment - contract.compensation) : 
+                                '-')}
+                          </TableCell>
                           <TableCell>
                             <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
                           </TableCell>

@@ -42,6 +42,8 @@ const contractFormSchema = insertContractSchema.extend({
   clientId: z.number().min(1, "Client is required"),
   companyId: z.number().min(1, "Company is required"),
   compensation: z.number().min(0.01, "Compensation must be greater than 0"),
+  companyPayment: z.number().min(0.01, "Company payment must be greater than 0").optional(),
+  profit: z.number().optional(),
   startDate: z.date({
     required_error: "Start date is required",
   }),
@@ -72,6 +74,8 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
       startDate: new Date(),
       endDate: null,
       compensation: undefined,
+      companyPayment: undefined,
+      profit: undefined,
       status: 'draft',
       document: '',
     },
@@ -223,6 +227,8 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
         startDate: new Date(contractData.startDate),
         endDate: contractData.endDate ? new Date(contractData.endDate) : null,
         compensation: contractData.compensation,
+        companyPayment: contractData.companyPayment,
+        profit: contractData.profit || (contractData.companyPayment ? contractData.companyPayment - contractData.compensation : undefined),
         status: contractData.status,
         document: contractData.document || '',
       });
@@ -399,11 +405,70 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
             name="compensation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Compensation</FormLabel>
+                <FormLabel>Hero Compensation</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
                     placeholder="e.g. 5000.00" 
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const compensation = value === '' ? undefined : parseFloat(value);
+                      field.onChange(compensation);
+                      
+                      // Automatically calculate profit if company payment exists
+                      const companyPayment = form.getValues('companyPayment');
+                      if (companyPayment && compensation) {
+                        form.setValue('profit', companyPayment - compensation);
+                      }
+                    }}
+                    value={field.value === undefined ? '' : field.value}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="companyPayment"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Company Payment</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="e.g. 7000.00" 
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const companyPayment = value === '' ? undefined : parseFloat(value);
+                      field.onChange(companyPayment);
+                      
+                      // Automatically calculate profit
+                      const compensation = form.getValues('compensation');
+                      if (companyPayment && compensation) {
+                        form.setValue('profit', companyPayment - compensation);
+                      }
+                    }}
+                    value={field.value === undefined ? '' : field.value}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="profit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Profit</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="Calculated automatically" 
                     {...field}
                     onChange={(e) => {
                       const value = e.target.value;

@@ -123,6 +123,8 @@ export const contracts = pgTable("contracts", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date"),
   compensation: doublePrecision("compensation").notNull(),
+  companyPayment: doublePrecision("company_payment"),
+  profit: doublePrecision("profit"),
   status: text("status", { enum: ["draft", "signed", "active", "completed", "terminated"] }).notNull().default("draft"),
   document: text("document"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
