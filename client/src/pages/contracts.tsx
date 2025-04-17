@@ -24,7 +24,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Contract, Hero, Client, Company } from "@shared/schema";
+import { Contract, Hero, Client, Company, Prospect } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, MoreHorizontal, Plus, Search, FileText } from "lucide-react";
@@ -70,13 +70,19 @@ export default function ContractsPage() {
   const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
   });
+  
+  // Fetch prospects
+  const { data: prospects = [] } = useQuery<Prospect[]>({
+    queryKey: ["/api/prospects"],
+  });
 
   // Filter contracts based on search query and status
   const filteredContracts = contracts.filter(contract => {
     const matchesSearch = searchQuery === "" || 
       contract.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       getClientName(contract.clientId).toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getCompanyName(contract.companyId).toLowerCase().includes(searchQuery.toLowerCase());
+      getCompanyName(contract.companyId).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getHeroName(contract.heroId).toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || contract.status === statusFilter;
     
@@ -98,8 +104,14 @@ export default function ContractsPage() {
   // Get hero name by ID
   const getHeroName = (heroId: number) => {
     const hero = heroes.find(h => h.id === heroId);
-    const heroProspectId = hero?.prospectId;
-    return hero ? `Hero #${heroId} (Prospect ID: ${heroProspectId})` : `Hero #${heroId}`;
+    if (!hero) return `Hero #${heroId}`;
+    
+    // Find the prospect associated with this hero
+    const prospect = prospects.find(p => p.id === hero.prospectId);
+    if (!prospect) return `Hero #${heroId}`;
+    
+    // Return hero's full name from the prospect data
+    return `${prospect.firstName} ${prospect.lastName}`;
   };
 
   // Format currency
@@ -111,8 +123,11 @@ export default function ContractsPage() {
   };
 
   // Format date
-  const formatDate = (date: string | null) => {
+  const formatDate = (date: Date | string | null) => {
     if (!date) return 'N/A';
+    if (date instanceof Date) {
+      return date.toLocaleDateString();
+    }
     return new Date(date).toLocaleDateString();
   };
 
