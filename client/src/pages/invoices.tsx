@@ -43,13 +43,13 @@ const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outli
 
 export default function InvoicesPage() {
   const { toast } = useToast();
-  const { user } = useMockAuth();
+  const { user, hasPermission } = useMockAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // Check if user has admin access
-  const isAdmin = user && (user.role === "admin" || user.role === "super_admin");
+  // Check if user has admin access using permissions
+  const isAdmin = hasPermission("user_management");
 
   // Fetch invoices
   const { data: invoices = [], isLoading: isInvoicesLoading } = useQuery<Invoice[]>({

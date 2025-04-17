@@ -8,25 +8,13 @@ export default function Dashboard({ children }: { children: ReactNode }) {
   const [isMobileOpen, setMobileOpen] = useState(false);
   const { user } = useMockAuth();
   
-  // Function to get role display name
+  // Function to get role display
   const getRoleBadge = () => {
-    if (!user) return null;
-    
-    const roleColors = {
-      "super_admin": "bg-purple-600",
-      "admin": "bg-blue-600", 
-      "recruiter": "bg-emerald-600"
-    };
-    
-    const roleName = 
-      user.role === "super_admin" ? "Super Admin" : 
-      user.role === "admin" ? "Admin" : "Recruiter";
-    
-    const colorClass = roleColors[user.role as keyof typeof roleColors] || "bg-primary";
+    if (!user || !user.role) return null;
     
     return (
-      <Badge className={`${colorClass} hover:${colorClass} font-medium px-3 py-1`}>
-        {roleName}
+      <Badge className="bg-primary hover:bg-primary font-medium px-3 py-1">
+        {user.role.name}
       </Badge>
     );
   };

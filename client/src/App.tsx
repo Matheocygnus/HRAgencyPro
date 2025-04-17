@@ -20,6 +20,7 @@ import JobRequests from "@/pages/job-requests";
 import JobRequestManagement from "@/pages/job-request-management";
 import JobApplications from "@/pages/job-applications";
 import ClientDashboard from "@/pages/client-dashboard";
+import RoleManagement from "@/pages/role-management";
 
 function Router() {
   return (
@@ -56,6 +57,11 @@ function Router() {
       </Route>
       <Route path="/settings">
         <Settings />
+      </Route>
+      
+      {/* Role management */}
+      <Route path="/roles">
+        <RoleManagement />
       </Route>
       
       {/* Job management */}
