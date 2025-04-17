@@ -26,10 +26,13 @@ import {
   CheckSquare 
 } from "lucide-react";
 import { Link } from "wouter";
+import VideoConference from "@/components/video/VideoConference";
 
 export default function ProspectDashboard() {
-  const { hasPermission } = useMockAuth();
+  const { hasPermission, user } = useMockAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [showVideoConference, setShowVideoConference] = useState(false);
+  const [activeInterviewId, setActiveInterviewId] = useState<number | undefined>(undefined);
 
   // Check if user has permission to access this page
   if (!hasPermission(MODULES.PROSPECT_DASHBOARD)) {
@@ -350,11 +353,15 @@ export default function ProspectDashboard() {
                                 <TableCell>{interview.interviewerIds?.[0] ? "RemoteHero Interviewer" : "RemoteHero Team"}</TableCell>
                                 <TableCell className="text-right">
                                   {interview.meetingLink ? (
-                                    <Button size="sm" asChild>
-                                      <a href={interview.meetingLink} target="_blank" rel="noopener noreferrer">
-                                        <ArrowUpRight className="mr-1 h-4 w-4" />
-                                        Join Meeting
-                                      </a>
+                                    <Button 
+                                      size="sm" 
+                                      onClick={() => {
+                                        setActiveInterviewId(interview.id);
+                                        setShowVideoConference(true);
+                                      }}
+                                    >
+                                      <Video className="mr-1 h-4 w-4" />
+                                      Join Meeting
                                     </Button>
                                   ) : (
                                     <Badge variant="outline">No Link Yet</Badge>
