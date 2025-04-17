@@ -10,6 +10,7 @@ import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import Dashboard from '@/components/layout/Dashboard';
 import { Interview, Prospect, User } from '@shared/schema';
+import VideoConference from '@/components/video/VideoConference';
 
 // UI Components
 import {
@@ -334,7 +335,7 @@ function InterviewForm({ interview, onSuccess }: InterviewFormProps) {
                 <FormControl>
                   <div className="flex flex-wrap gap-2 p-2 border rounded-md">
                     {users
-                      .filter(user => user.role === "admin" || user.role === "recruiter")
+                      .filter(user => (user.roleId === 1 || user.roleId === 2))
                       .map((user) => (
                         <div
                           key={user.id}
@@ -456,6 +457,8 @@ function InterviewForm({ interview, onSuccess }: InterviewFormProps) {
 
 export default function InterviewsPage() {
   const { toast } = useToast();
+  const [isVideoConferenceOpen, setVideoConferenceOpen] = useState(false);
+  const [selectedInterviewId, setSelectedInterviewId] = useState<number | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
@@ -692,14 +695,25 @@ export default function InterviewsPage() {
                             <div>
                               <p className="text-sm font-medium">Meeting Link</p>
                               {interview.meetingLink ? (
-                                <a
-                                  href={interview.meetingLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-primary hover:underline"
+                                <Button 
+                                  variant="link" 
+                                  className="text-sm p-0 h-auto text-primary hover:underline"
+                                  onClick={() => {
+                                    // Get the current user
+                                    const currentUser = {
+                                      id: 1, // This would be the actual user ID
+                                      firstName: "Admin", // This would be the actual user's first name
+                                      lastName: "User", // This would be the actual user's last name
+                                      username: "admin" // This would be the actual username
+                                    };
+                                    
+                                    // Open the VideoConference component as a modal
+                                    setVideoConferenceOpen(true);
+                                    setSelectedInterviewId(interview.id);
+                                  }}
                                 >
                                   Join Meeting
-                                </a>
+                                </Button>
                               ) : (
                                 <p className="text-sm text-muted-foreground italic">No link provided</p>
                               )}
@@ -761,6 +775,23 @@ export default function InterviewsPage() {
           )}
         </DialogContent>
       </Dialog>
+      
+      {/* Video Conference Modal */}
+      {isVideoConferenceOpen && selectedInterviewId && (
+        <VideoConference
+          currentUser={{
+            id: 1, // This would be the actual user ID
+            firstName: "Admin", // This would be the actual user's first name
+            lastName: "User", // This would be the actual user's last name
+            username: "admin" // This would be the actual username
+          }}
+          interviewId={selectedInterviewId}
+          onClose={() => {
+            setVideoConferenceOpen(false);
+            setSelectedInterviewId(null);
+          }}
+        />
+      )}
     </Dashboard>
   );
 }
