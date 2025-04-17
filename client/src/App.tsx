@@ -9,6 +9,8 @@ import DashboardDev from "@/pages/dashboard-dev";
 import Prospects from "@/pages/prospects";
 import Clients from "@/pages/clients";
 import Heroes from "@/pages/heroes";
+import HeroDetail from "@/pages/hero-detail";
+import CompanyDetail from "@/pages/company-detail";
 import Contracts from "@/pages/contracts";
 import Invoices from "@/pages/invoices";
 import Interviews from "@/pages/interviews";
@@ -42,6 +44,14 @@ function Router() {
       </Route>
       <Route path="/heroes">
         <Heroes />
+      </Route>
+      {/* Hero detail page */}
+      <Route path="/hero/:id">
+        <HeroDetail />
+      </Route>
+      {/* Company detail page */}
+      <Route path="/company/:id">
+        <CompanyDetail />
       </Route>
       <Route path="/contracts">
         <Contracts />

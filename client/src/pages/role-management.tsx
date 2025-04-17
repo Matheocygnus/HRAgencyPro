@@ -45,12 +45,14 @@ const MODULE_GROUPS = [
       { id: MODULES.PROSPECTS, label: "Prospects", description: "Manage candidate pipeline" },
       { id: MODULES.INTERVIEWS, label: "Interviews", description: "Schedule and manage interviews" },
       { id: MODULES.HEROES, label: "Heroes", description: "View and manage contracted talent" },
+      { id: MODULES.HERO_DETAIL, label: "Hero Details", description: "Access hero detailed profiles" },
     ]
   },
   {
     name: "Business Modules",
     modules: [
       { id: MODULES.COMPANIES, label: "Companies", description: "Manage client companies" },
+      { id: MODULES.COMPANY_DETAIL, label: "Company Details", description: "Access company detailed profiles" },
       { id: MODULES.CONTRACTS, label: "Contracts", description: "Create and manage contracts" },
       { id: MODULES.INVOICES, label: "Invoices", description: "Generate and track invoices" },
     ]
