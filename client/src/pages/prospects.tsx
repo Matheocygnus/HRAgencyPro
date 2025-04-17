@@ -445,6 +445,7 @@ export default function Prospects() {
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Prospect Details</DialogTitle>
+            <DialogDescription>View and manage prospect information</DialogDescription>
           </DialogHeader>
           {selectedProspect && (
             <div className="space-y-4">
@@ -532,9 +533,9 @@ export default function Prospects() {
                       <div>
                         <Label className="text-sm text-muted-foreground">Client</Label>
                         <Select
-                          value={selectedProspect.clientId?.toString() || ""}
+                          value={selectedProspect.clientId?.toString() || "null"}
                           onValueChange={(value) => {
-                            const clientId = value === "" ? null : parseInt(value);
+                            const clientId = value === "null" ? null : parseInt(value);
                             updateProspectMutation.mutate({ 
                               id: selectedProspect.id, 
                               clientId 
@@ -545,7 +546,7 @@ export default function Prospects() {
                             <SelectValue placeholder="Select a client" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="null">None</SelectItem>
                             {clients.map((client) => (
                               <SelectItem key={client.id} value={client.id.toString()}>
                                 {client.name}
@@ -557,9 +558,9 @@ export default function Prospects() {
                       <div>
                         <Label className="text-sm text-muted-foreground">Company</Label>
                         <Select
-                          value={selectedProspect.companyId?.toString() || ""}
+                          value={selectedProspect.companyId?.toString() || "null"}
                           onValueChange={(value) => {
-                            const companyId = value === "" ? null : parseInt(value);
+                            const companyId = value === "null" ? null : parseInt(value);
                             updateProspectMutation.mutate({ 
                               id: selectedProspect.id, 
                               companyId 
@@ -570,7 +571,7 @@ export default function Prospects() {
                             <SelectValue placeholder="Select a company" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="null">None</SelectItem>
                             {companies
                               .filter(company => !selectedProspect.clientId || company.clientId === selectedProspect.clientId)
                               .map((company) => (
