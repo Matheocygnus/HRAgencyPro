@@ -152,19 +152,24 @@ export default function Prospects() {
   };
 
   const handleStatusChange = (prospectId: number, newStatus: string) => {
+    // Make sure newStatus is a valid status value
+    const validStatus = ["sourcing", "contacted", "interview", "client_review", "budget", "contract", "hired", "rejected"].includes(newStatus) 
+      ? newStatus as "sourcing" | "contacted" | "interview" | "client_review" | "budget" | "contract" | "hired" | "rejected"
+      : "sourcing";
+      
     // Optimistic UI update - update local state immediately
     const updatedProspects = prospects.map(prospect => 
       prospect.id === prospectId 
         ? { 
             ...prospect, 
-            status: newStatus as "sourcing" | "contacted" | "interview" | "client_review" | "budget" | "contract" | "hired" | "rejected" 
+            status: validStatus
           }
         : prospect
     );
     setProspects(updatedProspects);
     
     // Then update on the server
-    updateProspectMutation.mutate({ id: prospectId, status: newStatus });
+    updateProspectMutation.mutate({ id: prospectId, status: validStatus });
   };
 
   const handleDragEnd = (result: any) => {
@@ -648,9 +653,17 @@ export default function Prospects() {
                           onClick={() => {
                             // Add current note to history
                             if (selectedProspect.notes) {
-                              const notesHistory = selectedProspect.notesHistory || [];
+                              // Parse existing notes history or initialize empty array
+                              let existingNotes = [];
+                              try {
+                                existingNotes = selectedProspect.notesHistory ? JSON.parse(selectedProspect.notesHistory) : [];
+                              } catch (e) {
+                                console.error("Failed to parse notes history:", e);
+                              }
+
+                              // Add new note
                               const newHistory = [
-                                ...notesHistory,
+                                ...existingNotes,
                                 {
                                   timestamp: new Date().toISOString(),
                                   note: selectedProspect.notes,
@@ -661,7 +674,7 @@ export default function Prospects() {
                               
                               updateProspectMutation.mutate({ 
                                 id: selectedProspect.id, 
-                                notesHistory: newHistory,
+                                notesHistory: JSON.stringify(newHistory),
                                 notes: "" // Clear current notes after archiving
                               });
                             }
@@ -691,25 +704,37 @@ export default function Prospects() {
                     Notes History
                   </h3>
                   <div className="mt-2 space-y-2">
-                    {selectedProspect.notesHistory && selectedProspect.notesHistory.length > 0 ? (
-                      <div className="space-y-3">
-                        {[...selectedProspect.notesHistory].reverse().map((entry, index) => (
-                          <div key={index} className="border rounded-lg p-3">
-                            <div className="flex justify-between items-center mb-2">
-                              <div className="flex items-center">
-                                <Badge className={`${STATUS_BADGES[entry.status]?.color || 'bg-gray-100'} mr-2`}>
-                                  {STATUS_BADGES[entry.status]?.label || entry.status}
-                                </Badge>
-                                <span className="text-sm font-medium">{entry.userName}</span>
+                    {selectedProspect.notesHistory ? (
+                      (() => {
+                        try {
+                          const notesHistory = JSON.parse(selectedProspect.notesHistory);
+                          if (notesHistory && notesHistory.length > 0) {
+                            return (
+                              <div className="space-y-3">
+                                {[...notesHistory].reverse().map((entry, index) => (
+                                  <div key={index} className="border rounded-lg p-3">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <div className="flex items-center">
+                                        <Badge className={`${STATUS_BADGES[entry.status]?.color || 'bg-gray-100'} mr-2`}>
+                                          {STATUS_BADGES[entry.status]?.label || entry.status}
+                                        </Badge>
+                                        <span className="text-sm font-medium">{entry.userName}</span>
+                                      </div>
+                                      <span className="text-xs text-muted-foreground">
+                                        {new Date(entry.timestamp).toLocaleString()}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm whitespace-pre-wrap">{entry.note}</p>
+                                  </div>
+                                ))}
                               </div>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(entry.timestamp).toLocaleString()}
-                              </span>
-                            </div>
-                            <p className="text-sm whitespace-pre-wrap">{entry.note}</p>
-                          </div>
-                        ))}
-                      </div>
+                            );
+                          }
+                        } catch (e) {
+                          console.error("Failed to parse notes history:", e);
+                        }
+                        return <p className="text-sm text-muted-foreground">No previous notes found.</p>;
+                      })()
                     ) : (
                       <p className="text-sm text-muted-foreground">No previous notes found.</p>
                     )}

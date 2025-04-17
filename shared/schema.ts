@@ -69,7 +69,7 @@ export const prospects = pgTable("prospects", {
   clientId: integer("client_id"),
   companyId: integer("company_id"),
   notes: text("notes"),
-  notesHistory: text("notes_history"),
+  notesHistory: text("notes_history").default("[]"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   
   // Workflow tracking boolean fields
