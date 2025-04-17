@@ -88,7 +88,7 @@ export default function HeroDashboard() {
 
   // Filter invoices for the current hero
   const heroInvoices = invoices.filter(invoice => 
-    invoice.heroIds && Array.isArray(invoice.heroIds) && invoice.heroIds.includes(currentHero?.id || 0)
+    invoice.heroId === currentHero?.id
   );
 
   // Calculate total earnings

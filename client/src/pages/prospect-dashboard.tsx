@@ -191,7 +191,7 @@ export default function ProspectDashboard() {
                     <div className="space-y-2">
                       <div>
                         <span className="text-sm text-muted-foreground block">Name</span>
-                        <span className="font-medium">{currentProspect.name}</span>
+                        <span className="font-medium">{`${currentProspect.firstName} ${currentProspect.lastName}`}</span>
                       </div>
                       <div>
                         <span className="text-sm text-muted-foreground block">Email</span>
@@ -238,7 +238,7 @@ export default function ProspectDashboard() {
                       </div>
                       <div>
                         <span className="text-sm text-muted-foreground block">Budget Agreed</span>
-                        <span className="font-medium">{currentProspect.budgetAgreed ? `$${currentProspect.budgetAgreed}` : "Not yet determined"}</span>
+                        <span className="font-medium">{currentProspect.isBudgetAgreed ? "Yes" : "Not yet determined"}</span>
                       </div>
                     </div>
                   </div>
@@ -258,24 +258,24 @@ export default function ProspectDashboard() {
                       </li>
                       
                       <li className="relative pl-10">
-                        <div className={`absolute left-0 top-1 rounded-full p-1.5 ${currentProspect.status === "contacted" || currentProspect.status === "interviewing" || currentProspect.status === "hired" ? "bg-green-500" : "bg-gray-300"}`}>
-                          <CheckSquare className={`h-4 w-4 ${currentProspect.status === "contacted" || currentProspect.status === "interviewing" || currentProspect.status === "hired" ? "text-white" : "text-gray-500"}`} />
+                        <div className={`absolute left-0 top-1 rounded-full p-1.5 ${currentProspect.status === "contacted" || currentProspect.status === "interview" || currentProspect.status === "hired" ? "bg-green-500" : "bg-gray-300"}`}>
+                          <CheckSquare className={`h-4 w-4 ${currentProspect.status === "contacted" || currentProspect.status === "interview" || currentProspect.status === "hired" ? "text-white" : "text-gray-500"}`} />
                         </div>
                         <div className="font-medium">Initial Contact</div>
                         <div className="text-sm text-muted-foreground">
-                          {currentProspect.status === "contacted" || currentProspect.status === "interviewing" || currentProspect.status === "hired" 
+                          {currentProspect.status === "contacted" || currentProspect.status === "interview" || currentProspect.status === "hired" 
                             ? "Your application has been reviewed" 
                             : "Pending review"}
                         </div>
                       </li>
                       
                       <li className="relative pl-10">
-                        <div className={`absolute left-0 top-1 rounded-full p-1.5 ${currentProspect.status === "interviewing" || currentProspect.status === "hired" ? "bg-green-500" : "bg-gray-300"}`}>
-                          <CheckSquare className={`h-4 w-4 ${currentProspect.status === "interviewing" || currentProspect.status === "hired" ? "text-white" : "text-gray-500"}`} />
+                        <div className={`absolute left-0 top-1 rounded-full p-1.5 ${currentProspect.status === "interview" || currentProspect.status === "hired" ? "bg-green-500" : "bg-gray-300"}`}>
+                          <CheckSquare className={`h-4 w-4 ${currentProspect.status === "interview" || currentProspect.status === "hired" ? "text-white" : "text-gray-500"}`} />
                         </div>
                         <div className="font-medium">Interviews</div>
                         <div className="text-sm text-muted-foreground">
-                          {currentProspect.status === "interviewing" || currentProspect.status === "hired"
+                          {currentProspect.status === "interview" || currentProspect.status === "hired"
                             ? `${completedInterviews.length} completed, ${upcomingInterviews.length} upcoming`
                             : "Not yet scheduled"}
                         </div>
@@ -340,10 +340,10 @@ export default function ProspectDashboard() {
                               <TableRow key={interview.id}>
                                 <TableCell>
                                   <div className="font-medium">
-                                    {new Date(interview.scheduledAt).toLocaleDateString()}
+                                    {new Date(interview.scheduledDate).toLocaleDateString()}
                                   </div>
                                   <div className="text-sm text-muted-foreground">
-                                    {new Date(interview.scheduledAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    {new Date(interview.scheduledDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                   </div>
                                 </TableCell>
                                 <TableCell>{interview.type || "Technical"}</TableCell>
@@ -388,7 +388,7 @@ export default function ProspectDashboard() {
                             {completedInterviews.map(interview => (
                               <TableRow key={interview.id}>
                                 <TableCell>
-                                  {new Date(interview.scheduledAt).toLocaleDateString()}
+                                  {new Date(interview.scheduledDate).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell>{interview.type || "Technical"}</TableCell>
                                 <TableCell>{interview.interviewerName || "RemoteHero Team"}</TableCell>
