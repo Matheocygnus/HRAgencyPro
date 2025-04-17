@@ -27,6 +27,9 @@ const mockRole: Role = {
   createdAt: new Date()
 };
 
+// Log permissions to debug
+console.log("Super Admin permissions:", Object.values(MODULES));
+
 // Extended User type with role field
 type ExtendedUser = User & { role?: Role };
 

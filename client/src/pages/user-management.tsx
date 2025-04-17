@@ -65,8 +65,8 @@ export default function UserManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
 
-  // Only super_admin should access this page - additional protection
-  const isSuperAdmin = user && user.role === "super_admin";
+  // Check if user has permission to manage users
+  const isSuperAdmin = useMockAuth().hasPermission("user_management");
 
   // Fetch users
   const { data: users = [], isLoading } = useQuery<User[]>({
@@ -149,7 +149,7 @@ export default function UserManagementPage() {
             </CardHeader>
             <CardContent>
               <p className="text-center">
-                You do not have permission to access the user management page. Only Super Admins can manage users.
+                You do not have permission to access the user management page. You need the "user_management" permission to view this page.
               </p>
             </CardContent>
           </Card>
