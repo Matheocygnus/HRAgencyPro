@@ -108,12 +108,13 @@ export default function Prospects() {
       const res = await apiRequest("PUT", `/api/prospects/${data.id}`, data);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Success",
         description: "Prospect updated successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/prospects"] });
+      return data;
     },
     onError: (error: Error) => {
       toast({
@@ -660,10 +661,18 @@ export default function Prospects() {
                               updateProspectMutation.mutate({ 
                                 id: selectedProspect.id, 
                                 notes: selectedProspect.notes 
-                              });
-                              toast({
-                                title: "Notes saved",
-                                description: "Your notes have been saved successfully.",
+                              }, {
+                                onSuccess: (updatedProspect) => {
+                                  // Update local state to match server
+                                  setSelectedProspect({
+                                    ...selectedProspect,
+                                    notes: updatedProspect.notes
+                                  });
+                                  toast({
+                                    title: "Notes saved",
+                                    description: "Your notes have been saved successfully.",
+                                  });
+                                }
                               });
                             }}
                           >
@@ -702,18 +711,20 @@ export default function Prospects() {
                                   id: selectedProspect.id, 
                                   notesHistory: JSON.stringify(newHistory),
                                   notes: "" // Clear current notes after archiving
-                                });
-                                
-                                // Update local state immediately
-                                setSelectedProspect({
-                                  ...selectedProspect,
-                                  notes: "",
-                                  notesHistory: JSON.stringify(newHistory)
-                                });
-                                
-                                toast({
-                                  title: "Note archived",
-                                  description: "Your note has been archived to history.",
+                                }, {
+                                  onSuccess: (updatedProspect) => {
+                                    // Update local state with server response
+                                    setSelectedProspect({
+                                      ...selectedProspect,
+                                      notes: updatedProspect.notes,
+                                      notesHistory: updatedProspect.notesHistory
+                                    });
+                                    
+                                    toast({
+                                      title: "Note archived",
+                                      description: "Your note has been archived to history.",
+                                    });
+                                  }
                                 });
                               }
                             }}
