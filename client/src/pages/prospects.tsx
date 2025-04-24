@@ -71,6 +71,7 @@ const COLUMNS = [
 
 export default function Prospects() {
   const { toast } = useToast();
+  const { user } = useMockAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -682,7 +683,9 @@ export default function Prospects() {
                                   console.error("Failed to parse notes history:", e);
                                 }
 
-                                const userName = "Admin"; // Replace with actual user name when auth is implemented
+                                const userName = user?.firstName && user.lastName 
+                                  ? `${user.firstName} ${user.lastName}` 
+                                  : "Admin";
                                 
                                 // Add new note
                                 const newHistory = [
