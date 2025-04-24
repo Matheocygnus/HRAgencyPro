@@ -24,6 +24,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Prospect, Client, Company } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useMockAuth } from "@/hooks/use-mock-auth";
 import ProspectForm from "@/components/forms/ProspectForm";
 import { 
   Loader2, 
@@ -647,52 +648,86 @@ export default function Prospects() {
                   </h3>
                   <div className="mt-2">
                     <div className="flex flex-col space-y-2">
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <Label className="text-sm text-muted-foreground">Notes</Label>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            // Add current note to history
-                            if (selectedProspect.notes) {
-                              // Parse existing notes history or initialize empty array
-                              let existingNotes = [];
-                              try {
-                                existingNotes = selectedProspect.notesHistory ? JSON.parse(selectedProspect.notesHistory) : [];
-                              } catch (e) {
-                                console.error("Failed to parse notes history:", e);
-                              }
-
-                              // Add new note
-                              const newHistory = [
-                                ...existingNotes,
-                                {
-                                  timestamp: new Date().toISOString(),
-                                  note: selectedProspect.notes,
-                                  status: selectedProspect.status,
-                                  userName: "Current User" // Would be replaced with actual user name from auth
-                                }
-                              ];
-                              
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={() => {
+                              // Save notes explicitly
                               updateProspectMutation.mutate({ 
                                 id: selectedProspect.id, 
-                                notesHistory: JSON.stringify(newHistory),
-                                notes: "" // Clear current notes after archiving
+                                notes: selectedProspect.notes 
                               });
-                            }
-                          }}
-                        >
-                          Archive Note
-                        </Button>
+                              toast({
+                                title: "Notes saved",
+                                description: "Your notes have been saved successfully.",
+                              });
+                            }}
+                          >
+                            Save Notes
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              // Add current note to history
+                              if (selectedProspect.notes) {
+                                // Parse existing notes history or initialize empty array
+                                let existingNotes = [];
+                                try {
+                                  existingNotes = selectedProspect.notesHistory ? JSON.parse(selectedProspect.notesHistory) : [];
+                                } catch (e) {
+                                  console.error("Failed to parse notes history:", e);
+                                }
+
+                                const userName = "Admin"; // Replace with actual user name when auth is implemented
+                                
+                                // Add new note
+                                const newHistory = [
+                                  ...existingNotes,
+                                  {
+                                    timestamp: new Date().toISOString(),
+                                    note: selectedProspect.notes,
+                                    status: selectedProspect.status,
+                                    userName: userName
+                                  }
+                                ];
+                                
+                                updateProspectMutation.mutate({ 
+                                  id: selectedProspect.id, 
+                                  notesHistory: JSON.stringify(newHistory),
+                                  notes: "" // Clear current notes after archiving
+                                });
+                                
+                                // Update local state immediately
+                                setSelectedProspect({
+                                  ...selectedProspect,
+                                  notes: "",
+                                  notesHistory: JSON.stringify(newHistory)
+                                });
+                                
+                                toast({
+                                  title: "Note archived",
+                                  description: "Your note has been archived to history.",
+                                });
+                              }
+                            }}
+                          >
+                            Archive Note
+                          </Button>
+                        </div>
                       </div>
                       <Textarea 
                         value={selectedProspect.notes || ""} 
                         placeholder="Add notes here..."
                         className="min-h-[100px]"
                         onChange={(e) => {
-                          updateProspectMutation.mutate({ 
-                            id: selectedProspect.id, 
-                            notes: e.target.value 
+                          // Update local state immediately for responsive UI
+                          setSelectedProspect({
+                            ...selectedProspect,
+                            notes: e.target.value
                           });
                         }}
                       />
