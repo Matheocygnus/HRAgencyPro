@@ -30,7 +30,7 @@ function ensureUserFields(userData: any): User {
     firstName: userData.firstName,
     lastName: userData.lastName,
     avatar: userData.avatar || null,
-    roleId: userData.roleId || null,
+    role: userData.role || "user",
     createdAt: userData.createdAt
   };
 }
@@ -235,17 +235,17 @@ export class DatabaseStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return user ? ensureUserFields(user) : undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    return user ? ensureUserFields(user) : undefined;
   }
 
   async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(userData).returning();
-    return user;
+    return ensureUserFields(user);
   }
 
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
@@ -254,11 +254,12 @@ export class DatabaseStorage implements IStorage {
       .set(userData)
       .where(eq(users.id, id))
       .returning();
-    return updatedUser;
+    return updatedUser ? ensureUserFields(updatedUser) : undefined;
   }
 
   async getUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    const allUsers = await db.select().from(users);
+    return allUsers.map(u => ensureUserFields(u));
   }
 
   // Client methods
@@ -325,9 +326,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProspectsByStatus(status: string): Promise<Prospect[]> {
-    // Using type casting for enum values in WHERE clause
-    const filteredProspects = await db.select().from(prospects)
-      .where(eq(prospects.status, status as any));
+    // Get all prospects and filter by status in memory
+    const allProspects = await db.select().from(prospects);
+    const filteredProspects = allProspects.filter(p => p.status === status);
     return filteredProspects.map(p => ensureProspectFields(p));
   }
 
@@ -338,7 +339,7 @@ export class DatabaseStorage implements IStorage {
 
   async createProspect(prospectData: InsertProspect): Promise<Prospect> {
     const [prospect] = await db.insert(prospects).values(prospectData).returning();
-    return prospect;
+    return ensureProspectFields(prospect);
   }
 
   async updateProspect(id: number, prospectData: Partial<Prospect>): Promise<Prospect | undefined> {
@@ -347,7 +348,7 @@ export class DatabaseStorage implements IStorage {
       .set(prospectData)
       .where(eq(prospects.id, id))
       .returning();
-    return updatedProspect;
+    return updatedProspect ? ensureProspectFields(updatedProspect) : undefined;
   }
 
   // Hero methods
@@ -488,20 +489,22 @@ export class DatabaseStorage implements IStorage {
   // Job Opening methods
   async getJobOpening(id: number): Promise<JobOpening | undefined> {
     const [jobOpening] = await db.select().from(jobOpenings).where(eq(jobOpenings.id, id));
-    return jobOpening;
+    return jobOpening ? ensureJobOpeningFields(jobOpening) : undefined;
   }
 
   async getJobOpenings(): Promise<JobOpening[]> {
-    return await db.select().from(jobOpenings);
+    const allJobOpenings = await db.select().from(jobOpenings);
+    return allJobOpenings.map(jo => ensureJobOpeningFields(jo));
   }
 
   async getActiveJobOpenings(): Promise<JobOpening[]> {
-    return await db.select().from(jobOpenings).where(eq(jobOpenings.isActive, true));
+    const activeJobOpenings = await db.select().from(jobOpenings).where(eq(jobOpenings.isActive, true));
+    return activeJobOpenings.map(jo => ensureJobOpeningFields(jo));
   }
 
   async createJobOpening(jobOpeningData: InsertJobOpening): Promise<JobOpening> {
     const [jobOpening] = await db.insert(jobOpenings).values(jobOpeningData).returning();
-    return jobOpening;
+    return ensureJobOpeningFields(jobOpening);
   }
 
   async updateJobOpening(id: number, jobOpeningData: Partial<JobOpening>): Promise<JobOpening | undefined> {
@@ -510,30 +513,35 @@ export class DatabaseStorage implements IStorage {
       .set(jobOpeningData)
       .where(eq(jobOpenings.id, id))
       .returning();
-    return updatedJobOpening;
+    return updatedJobOpening ? ensureJobOpeningFields(updatedJobOpening) : undefined;
   }
 
   // Job Application methods
   async getJobApplication(id: number): Promise<JobApplication | undefined> {
     const [jobApplication] = await db.select().from(jobApplications).where(eq(jobApplications.id, id));
-    return jobApplication;
+    return jobApplication ? ensureJobApplicationFields(jobApplication) : undefined;
   }
 
   async getJobApplications(): Promise<JobApplication[]> {
-    return await db.select().from(jobApplications);
+    const allApplications = await db.select().from(jobApplications);
+    return allApplications.map(app => ensureJobApplicationFields(app));
   }
 
   async getJobApplicationsByJobOpening(jobOpeningId: number): Promise<JobApplication[]> {
-    return await db.select().from(jobApplications).where(eq(jobApplications.jobOpeningId, jobOpeningId));
+    const openingApplications = await db.select().from(jobApplications).where(eq(jobApplications.jobOpeningId, jobOpeningId));
+    return openingApplications.map(app => ensureJobApplicationFields(app));
   }
 
   async getJobApplicationsByStatus(status: string): Promise<JobApplication[]> {
-    return await db.select().from(jobApplications).where(eq(jobApplications.status, status));
+    // Get all applications and filter in memory
+    const allApplications = await db.select().from(jobApplications);
+    const filteredApplications = allApplications.filter(app => app.status === status);
+    return filteredApplications.map(app => ensureJobApplicationFields(app));
   }
 
   async createJobApplication(jobApplicationData: InsertJobApplication): Promise<JobApplication> {
     const [jobApplication] = await db.insert(jobApplications).values(jobApplicationData).returning();
-    return jobApplication;
+    return ensureJobApplicationFields(jobApplication);
   }
 
   async updateJobApplication(id: number, jobApplicationData: Partial<JobApplication>): Promise<JobApplication | undefined> {
@@ -542,7 +550,7 @@ export class DatabaseStorage implements IStorage {
       .set(jobApplicationData)
       .where(eq(jobApplications.id, id))
       .returning();
-    return updatedJobApplication;
+    return updatedJobApplication ? ensureJobApplicationFields(updatedJobApplication) : undefined;
   }
 
   // Job Request methods
@@ -562,8 +570,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getJobRequestsByStatus(status: string): Promise<JobRequest[]> {
-    const statusJobRequests = await db.select().from(jobRequests).where(eq(jobRequests.status, status));
-    return statusJobRequests.map(jr => ensureJobRequestFields(jr));
+    // Get all job requests and filter in memory
+    const allJobRequests = await db.select().from(jobRequests);
+    const filteredJobRequests = allJobRequests.filter(jr => jr.status === status);
+    return filteredJobRequests.map(jr => ensureJobRequestFields(jr));
   }
 
   async createJobRequest(jobRequestData: InsertJobRequest): Promise<JobRequest> {
@@ -624,8 +634,7 @@ export class DatabaseStorage implements IStorage {
       salary: jobRequest.salary,
       isActive: true,
       clientId: jobRequest.clientId,
-      companyId: jobRequest.companyId,
-      createdAt: new Date()
+      companyId: jobRequest.companyId
     };
     
     // Insert the job opening
@@ -640,7 +649,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(jobRequests.id, id));
     
-    return jobOpening;
+    return ensureJobOpeningFields(jobOpening);
   }
 }
 
