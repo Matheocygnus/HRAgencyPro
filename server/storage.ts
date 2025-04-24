@@ -14,7 +14,7 @@ import {
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
-import { eq, and, desc, asc, isNull } from "drizzle-orm";
+import { eq, and, desc, asc, isNull, gt } from "drizzle-orm";
 import { db, pool } from "./db";
 
 // Memory store for session
@@ -411,20 +411,22 @@ export class DatabaseStorage implements IStorage {
   // Invoice methods
   async getInvoice(id: number): Promise<Invoice | undefined> {
     const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));
-    return invoice;
+    return invoice ? ensureInvoiceFields(invoice) : undefined;
   }
 
   async getInvoices(): Promise<Invoice[]> {
-    return await db.select().from(invoices);
+    const allInvoices = await db.select().from(invoices);
+    return allInvoices.map(i => ensureInvoiceFields(i));
   }
 
   async getInvoicesByClient(clientId: number): Promise<Invoice[]> {
-    return await db.select().from(invoices).where(eq(invoices.clientId, clientId));
+    const clientInvoices = await db.select().from(invoices).where(eq(invoices.clientId, clientId));
+    return clientInvoices.map(i => ensureInvoiceFields(i));
   }
 
   async createInvoice(invoiceData: InsertInvoice): Promise<Invoice> {
     const [invoice] = await db.insert(invoices).values(invoiceData).returning();
-    return invoice;
+    return ensureInvoiceFields(invoice);
   }
 
   async updateInvoice(id: number, invoiceData: Partial<Invoice>): Promise<Invoice | undefined> {
@@ -433,7 +435,7 @@ export class DatabaseStorage implements IStorage {
       .set(invoiceData)
       .where(eq(invoices.id, id))
       .returning();
-    return updatedInvoice;
+    return updatedInvoice ? ensureInvoiceFields(updatedInvoice) : undefined;
   }
 
   // Interview methods
@@ -453,17 +455,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUpcomingInterviews(): Promise<Interview[]> {
-    const now = new Date();
-    const upcomingInterviews = await db
+    // Get all scheduled interviews and filter in memory
+    const scheduledInterviews = await db
       .select()
       .from(interviews)
-      .where(
-        and(
-          eq(interviews.status, "scheduled"),
-          // Ensure scheduledDate is after now
-          db.sql`${interviews.scheduledDate} > ${now.toISOString()}`
-        )
-      );
+      .where(eq(interviews.status, "scheduled"));
+    
+    // Filter for upcoming interviews
+    const now = new Date();
+    const upcomingInterviews = scheduledInterviews.filter(interview => {
+      const interviewDate = new Date(interview.scheduledDate);
+      return interviewDate > now;
+    });
+    
     return upcomingInterviews.map(i => ensureInterviewFields(i));
   }
 
@@ -544,24 +548,27 @@ export class DatabaseStorage implements IStorage {
   // Job Request methods
   async getJobRequest(id: number): Promise<JobRequest | undefined> {
     const [jobRequest] = await db.select().from(jobRequests).where(eq(jobRequests.id, id));
-    return jobRequest;
+    return jobRequest ? ensureJobRequestFields(jobRequest) : undefined;
   }
 
   async getJobRequests(): Promise<JobRequest[]> {
-    return await db.select().from(jobRequests);
+    const allJobRequests = await db.select().from(jobRequests);
+    return allJobRequests.map(jr => ensureJobRequestFields(jr));
   }
 
   async getJobRequestsByClient(clientId: number): Promise<JobRequest[]> {
-    return await db.select().from(jobRequests).where(eq(jobRequests.clientId, clientId));
+    const clientJobRequests = await db.select().from(jobRequests).where(eq(jobRequests.clientId, clientId));
+    return clientJobRequests.map(jr => ensureJobRequestFields(jr));
   }
 
   async getJobRequestsByStatus(status: string): Promise<JobRequest[]> {
-    return await db.select().from(jobRequests).where(eq(jobRequests.status, status));
+    const statusJobRequests = await db.select().from(jobRequests).where(eq(jobRequests.status, status));
+    return statusJobRequests.map(jr => ensureJobRequestFields(jr));
   }
 
   async createJobRequest(jobRequestData: InsertJobRequest): Promise<JobRequest> {
     const [jobRequest] = await db.insert(jobRequests).values(jobRequestData).returning();
-    return jobRequest;
+    return ensureJobRequestFields(jobRequest);
   }
 
   async updateJobRequest(id: number, jobRequestData: Partial<JobRequest>): Promise<JobRequest | undefined> {
@@ -570,7 +577,7 @@ export class DatabaseStorage implements IStorage {
       .set(jobRequestData)
       .where(eq(jobRequests.id, id))
       .returning();
-    return updatedJobRequest;
+    return updatedJobRequest ? ensureJobRequestFields(updatedJobRequest) : undefined;
   }
 
   async approveJobRequest(id: number, notes?: string): Promise<JobRequest | undefined> {
@@ -583,7 +590,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(jobRequests.id, id))
       .returning();
-    return updatedJobRequest;
+    return updatedJobRequest ? ensureJobRequestFields(updatedJobRequest) : undefined;
   }
 
   async rejectJobRequest(id: number, notes?: string): Promise<JobRequest | undefined> {
@@ -596,7 +603,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(jobRequests.id, id))
       .returning();
-    return updatedJobRequest;
+    return updatedJobRequest ? ensureJobRequestFields(updatedJobRequest) : undefined;
   }
 
   async publishJobRequest(id: number): Promise<JobOpening | undefined> {
@@ -697,6 +704,8 @@ function ensureJobRequestFields(jobRequestData: any): JobRequest {
     id: jobRequestData.id,
     clientId: jobRequestData.clientId,
     companyId: jobRequestData.companyId,
+    clientName: jobRequestData.clientName || null,
+    companyName: jobRequestData.companyName || null,
     title: jobRequestData.title,
     description: jobRequestData.description,
     requirements: jobRequestData.requirements,
