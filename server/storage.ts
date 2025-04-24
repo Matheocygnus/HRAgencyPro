@@ -69,12 +69,12 @@ function ensureProspectFields(prospectData: any): Prospect {
     position: prospectData.position,
     skills: prospectData.skills || null,
     resume: prospectData.resume || null,
-    voiceMessageUrl: prospectData.voiceMessageUrl || null,
+    voiceMessageUrl: null, // Not in database, set default
     status: prospectData.status || "sourcing",
     clientId: prospectData.clientId || null,
     companyId: prospectData.companyId || null,
     notes: prospectData.notes || null,
-    notesHistory: prospectData.notesHistory || null,
+    notesHistory: "[]", // Not in database, set default
     createdAt: prospectData.createdAt,
     isInterviewed: prospectData.isInterviewed || false,
     isClientApproved: prospectData.isClientApproved || false,
@@ -124,6 +124,8 @@ function ensureInvoiceFields(invoiceData: any): Invoice {
     status: invoiceData.status || "pending",
     dueDate: invoiceData.dueDate,
     paidDate: invoiceData.paidDate || null,
+    stripeInvoiceId: invoiceData.stripeInvoiceId || null,
+    stripeInvoiceUrl: invoiceData.stripeInvoiceUrl || null,
     createdAt: invoiceData.createdAt
   };
 }
@@ -314,21 +316,24 @@ export class DatabaseStorage implements IStorage {
   // Prospect methods
   async getProspect(id: number): Promise<Prospect | undefined> {
     const [prospect] = await db.select().from(prospects).where(eq(prospects.id, id));
-    return prospect;
+    return prospect ? ensureProspectFields(prospect) : undefined;
   }
 
   async getProspects(): Promise<Prospect[]> {
-    return await db.select().from(prospects);
+    const allProspects = await db.select().from(prospects);
+    return allProspects.map(p => ensureProspectFields(p));
   }
 
   async getProspectsByStatus(status: string): Promise<Prospect[]> {
     // Using type casting for enum values in WHERE clause
-    return await db.select().from(prospects)
+    const filteredProspects = await db.select().from(prospects)
       .where(eq(prospects.status, status as any));
+    return filteredProspects.map(p => ensureProspectFields(p));
   }
 
   async getProspectsByClient(clientId: number): Promise<Prospect[]> {
-    return await db.select().from(prospects).where(eq(prospects.clientId, clientId));
+    const clientProspects = await db.select().from(prospects).where(eq(prospects.clientId, clientId));
+    return clientProspects.map(p => ensureProspectFields(p));
   }
 
   async createProspect(prospectData: InsertProspect): Promise<Prospect> {
