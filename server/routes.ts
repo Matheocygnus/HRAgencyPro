@@ -162,10 +162,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Prospect routes
   app.get("/api/prospects", isAuthenticated, async (req, res) => {
     try {
+      console.log("Getting prospects...");
       const prospects = await storage.getProspects();
+      console.log("Prospects retrieved:", prospects ? "success" : "null or undefined");
       res.json(prospects);
     } catch (error) {
-      res.status(500).json({ message: "Failed to retrieve prospects" });
+      console.error("Error retrieving prospects:", error);
+      res.status(500).json({ message: "Failed to retrieve prospects", error: String(error) });
     }
   });
   
@@ -449,10 +452,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 // Invoice routes
   app.get("/api/invoices", isAuthenticated, async (req, res) => {
     try {
+      console.log("Getting invoices...");
       const invoices = await storage.getInvoices();
+      console.log("Invoices retrieved:", invoices ? "success" : "null or undefined");
       res.json(invoices);
     } catch (error) {
-      res.status(500).json({ message: "Failed to retrieve invoices" });
+      console.error("Error retrieving invoices:", error);
+      res.status(500).json({ message: "Failed to retrieve invoices", error: String(error) });
     }
   });
   

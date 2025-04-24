@@ -60,10 +60,11 @@ function ensureCompanyFields(companyData: any): Company {
 }
 
 function ensureProspectFields(prospectData: any): Prospect {
+  // Map snake_case database fields to camelCase application fields
   return {
     id: prospectData.id,
-    firstName: prospectData.firstName,
-    lastName: prospectData.lastName,
+    firstName: prospectData.first_name || prospectData.firstName,
+    lastName: prospectData.last_name || prospectData.lastName,
     email: prospectData.email,
     phone: prospectData.phone || null,
     position: prospectData.position,
@@ -71,14 +72,14 @@ function ensureProspectFields(prospectData: any): Prospect {
     resume: prospectData.resume || null,
     voiceMessageUrl: null, // Not in database, set default
     status: prospectData.status || "sourcing",
-    clientId: prospectData.clientId || null,
-    companyId: prospectData.companyId || null,
+    clientId: prospectData.client_id || prospectData.clientId || null,
+    companyId: prospectData.company_id || prospectData.companyId || null,
     notes: prospectData.notes || null,
     notesHistory: "[]", // Not in database, set default
-    createdAt: prospectData.createdAt,
-    isInterviewed: prospectData.isInterviewed || false,
-    isClientApproved: prospectData.isClientApproved || false,
-    isBudgetAgreed: prospectData.isBudgetAgreed || false
+    createdAt: prospectData.created_at || prospectData.createdAt,
+    isInterviewed: prospectData.is_interviewed || prospectData.isInterviewed || false,
+    isClientApproved: prospectData.is_client_approved || prospectData.isClientApproved || false,
+    isBudgetAgreed: prospectData.is_budget_agreed || prospectData.isBudgetAgreed || false
   };
 }
 
@@ -113,20 +114,21 @@ function ensureContractFields(contractData: any): Contract {
 }
 
 function ensureInvoiceFields(invoiceData: any): Invoice {
+  // Map snake_case database fields to camelCase application fields
   return {
     id: invoiceData.id,
-    invoiceNumber: invoiceData.invoiceNumber,
-    contractId: invoiceData.contractId,
-    heroId: invoiceData.heroId,
-    clientId: invoiceData.clientId,
-    companyId: invoiceData.companyId,
+    invoiceNumber: invoiceData.invoice_number || invoiceData.invoiceNumber,
+    contractId: invoiceData.contract_id || invoiceData.contractId,
+    heroId: invoiceData.hero_id || invoiceData.heroId,
+    clientId: invoiceData.client_id || invoiceData.clientId,
+    companyId: invoiceData.company_id || invoiceData.companyId,
     amount: invoiceData.amount,
     status: invoiceData.status || "pending",
-    dueDate: invoiceData.dueDate,
-    paidDate: invoiceData.paidDate || null,
-    stripeInvoiceId: invoiceData.stripeInvoiceId || null,
-    stripeInvoiceUrl: invoiceData.stripeInvoiceUrl || null,
-    createdAt: invoiceData.createdAt
+    dueDate: invoiceData.due_date || invoiceData.dueDate,
+    paidDate: invoiceData.paid_date || invoiceData.paidDate || null,
+    stripeInvoiceId: invoiceData.stripe_invoice_id || invoiceData.stripeInvoiceId || null,
+    stripeInvoiceUrl: invoiceData.stripe_invoice_url || invoiceData.stripeInvoiceUrl || null,
+    createdAt: invoiceData.created_at || invoiceData.createdAt
   };
 }
 
