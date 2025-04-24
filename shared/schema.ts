@@ -25,7 +25,7 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   avatar: text("avatar"),
-  roleId: integer("role_id"), // Reference to roles table
+  role: text("role").notNull().default("recruiter"), // String role value
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

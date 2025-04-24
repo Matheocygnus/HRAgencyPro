@@ -41,7 +41,7 @@ async function createSuperAdminIfNotExists() {
         firstName: "Bruno",
         lastName: "Verutti",
         password: await hashPassword("Rollo001"),
-        role: "super_admin",
+        roleId: 1, // Super admin role
         avatar: null
       });
       console.log("Super admin user created successfully");
