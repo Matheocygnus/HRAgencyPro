@@ -318,13 +318,79 @@ export class DatabaseStorage implements IStorage {
 
   // Prospect methods
   async getProspect(id: number): Promise<Prospect | undefined> {
-    const [prospect] = await db.select().from(prospects).where(eq(prospects.id, id));
-    return prospect ? ensureProspectFields(prospect) : undefined;
+    try {
+      // Only select columns that exist in the database
+      const [prospect] = await db.select({
+        id: prospects.id,
+        first_name: prospects.firstName,
+        last_name: prospects.lastName,
+        email: prospects.email,
+        phone: prospects.phone,
+        position: prospects.position,
+        skills: prospects.skills,
+        resume: prospects.resume,
+        status: prospects.status,
+        client_id: prospects.clientId,
+        company_id: prospects.companyId,
+        notes: prospects.notes,
+        created_at: prospects.createdAt,
+        is_interviewed: prospects.isInterviewed,
+        is_client_approved: prospects.isClientApproved,
+        is_budget_agreed: prospects.isBudgetAgreed
+      }).from(prospects).where(eq(prospects.id, id));
+      
+      return prospect ? ensureProspectFields(prospect) : undefined;
+    } catch (error) {
+      console.error(`Error in getProspect(${id}):`, error);
+      // For a single entity, if it fails, just return undefined
+      return undefined;
+    }
   }
 
   async getProspects(): Promise<Prospect[]> {
-    const allProspects = await db.select().from(prospects);
-    return allProspects.map(p => ensureProspectFields(p));
+    try {
+      // Only select columns that exist in the database
+      const allProspects = await db.select({
+        id: prospects.id,
+        first_name: prospects.firstName,
+        last_name: prospects.lastName,
+        email: prospects.email,
+        phone: prospects.phone,
+        position: prospects.position,
+        skills: prospects.skills,
+        resume: prospects.resume,
+        status: prospects.status,
+        client_id: prospects.clientId,
+        company_id: prospects.companyId,
+        notes: prospects.notes,
+        created_at: prospects.createdAt,
+        is_interviewed: prospects.isInterviewed,
+        is_client_approved: prospects.isClientApproved,
+        is_budget_agreed: prospects.isBudgetAgreed
+      }).from(prospects);
+      
+      console.log("Successfully retrieved prospects:", allProspects.length);
+      return allProspects.map(p => ensureProspectFields(p));
+    } catch (error) {
+      console.error("Error in getProspects:", error);
+      // Fallback to simpler query if column mapping is wrong
+      const basicProspects = await db.select({
+        id: prospects.id,
+      }).from(prospects);
+      
+      // Manually fetch each prospect with more detailed error handling
+      const detailedProspects = [];
+      for (const { id } of basicProspects) {
+        try {
+          const prospect = await this.getProspect(id);
+          if (prospect) detailedProspects.push(prospect);
+        } catch (err) {
+          console.error(`Error fetching prospect ${id}:`, err);
+        }
+      }
+      
+      return detailedProspects;
+    }
   }
 
   async getProspectsByStatus(status: string): Promise<Prospect[]> {
@@ -413,13 +479,71 @@ export class DatabaseStorage implements IStorage {
 
   // Invoice methods
   async getInvoice(id: number): Promise<Invoice | undefined> {
-    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));
-    return invoice ? ensureInvoiceFields(invoice) : undefined;
+    try {
+      // Only select columns that exist in the database
+      const [invoice] = await db.select({
+        id: invoices.id,
+        invoice_number: invoices.invoiceNumber,
+        contract_id: invoices.contractId,
+        hero_id: invoices.heroId,
+        client_id: invoices.clientId,
+        company_id: invoices.companyId,
+        amount: invoices.amount,
+        status: invoices.status,
+        due_date: invoices.dueDate,
+        paid_date: invoices.paidDate,
+        created_at: invoices.createdAt
+        // stripe_invoice_id and stripe_invoice_url are not in the database
+      }).from(invoices).where(eq(invoices.id, id));
+      
+      return invoice ? ensureInvoiceFields(invoice) : undefined;
+    } catch (error) {
+      console.error(`Error in getInvoice(${id}):`, error);
+      // For a single entity, if it fails, just return undefined
+      return undefined;
+    }
   }
 
   async getInvoices(): Promise<Invoice[]> {
-    const allInvoices = await db.select().from(invoices);
-    return allInvoices.map(i => ensureInvoiceFields(i));
+    try {
+      // Only select columns that exist in the database
+      const allInvoices = await db.select({
+        id: invoices.id,
+        invoice_number: invoices.invoiceNumber,
+        contract_id: invoices.contractId,
+        hero_id: invoices.heroId,
+        client_id: invoices.clientId,
+        company_id: invoices.companyId,
+        amount: invoices.amount,
+        status: invoices.status,
+        due_date: invoices.dueDate,
+        paid_date: invoices.paidDate,
+        created_at: invoices.createdAt
+        // stripe_invoice_id and stripe_invoice_url are not in the database
+      }).from(invoices);
+      
+      console.log("Successfully retrieved invoices:", allInvoices.length);
+      return allInvoices.map(i => ensureInvoiceFields(i));
+    } catch (error) {
+      console.error("Error in getInvoices:", error);
+      // Fallback to simpler query if column mapping is wrong
+      const basicInvoices = await db.select({
+        id: invoices.id,
+      }).from(invoices);
+      
+      // Manually fetch each invoice with more detailed error handling
+      const detailedInvoices = [];
+      for (const { id } of basicInvoices) {
+        try {
+          const invoice = await this.getInvoice(id);
+          if (invoice) detailedInvoices.push(invoice);
+        } catch (err) {
+          console.error(`Error fetching invoice ${id}:`, err);
+        }
+      }
+      
+      return detailedInvoices;
+    }
   }
 
   async getInvoicesByClient(clientId: number): Promise<Invoice[]> {
