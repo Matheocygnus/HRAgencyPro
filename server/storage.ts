@@ -12,7 +12,10 @@ import {
   jobRequests, type JobRequest, type InsertJobRequest
 } from "@shared/schema";
 import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
 import session from "express-session";
+import { eq, and, desc, asc, isNull } from "drizzle-orm";
+import { db, pool } from "./db";
 
 // Memory store for session
 const MemoryStore = createMemoryStore(session);
@@ -27,7 +30,7 @@ function ensureUserFields(userData: any): User {
     firstName: userData.firstName,
     lastName: userData.lastName,
     avatar: userData.avatar || null,
-    role: userData.role || "recruiter",
+    roleId: userData.roleId || null,
     createdAt: userData.createdAt
   };
 }
@@ -66,10 +69,12 @@ function ensureProspectFields(prospectData: any): Prospect {
     position: prospectData.position,
     skills: prospectData.skills || null,
     resume: prospectData.resume || null,
+    voiceMessageUrl: prospectData.voiceMessageUrl || null,
     status: prospectData.status || "sourcing",
     clientId: prospectData.clientId || null,
     companyId: prospectData.companyId || null,
     notes: prospectData.notes || null,
+    notesHistory: prospectData.notesHistory || null,
     createdAt: prospectData.createdAt,
     isInterviewed: prospectData.isInterviewed || false,
     isClientApproved: prospectData.isClientApproved || false,
@@ -211,10 +216,421 @@ export interface IStorage {
   sessionStore: any; // Using 'any' temporarily to resolve type issues
 }
 
-/* We'll implement the PostgreSQL storage in the future.
-export class PgStorage implements IStorage {
-  // Session store and implementation will go here
-} */
+// Create a PostgresSQL session store
+const PostgresSessionStore = connectPg(session);
+
+// PostgreSQL implementation of the storage
+export class DatabaseStorage implements IStorage {
+  sessionStore: any;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true
+    });
+  }
+
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(userData).returning();
+    return user;
+  }
+
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  // Client methods
+  async getClient(id: number): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(eq(clients.id, id));
+    return client;
+  }
+
+  async getClients(): Promise<Client[]> {
+    return await db.select().from(clients);
+  }
+
+  async createClient(clientData: InsertClient): Promise<Client> {
+    const [client] = await db.insert(clients).values(clientData).returning();
+    return client;
+  }
+
+  async updateClient(id: number, clientData: Partial<Client>): Promise<Client | undefined> {
+    const [updatedClient] = await db
+      .update(clients)
+      .set(clientData)
+      .where(eq(clients.id, id))
+      .returning();
+    return updatedClient;
+  }
+
+  // Company methods
+  async getCompany(id: number): Promise<Company | undefined> {
+    const [company] = await db.select().from(companies).where(eq(companies.id, id));
+    return company;
+  }
+
+  async getCompanies(): Promise<Company[]> {
+    return await db.select().from(companies);
+  }
+
+  async getCompaniesByClient(clientId: number): Promise<Company[]> {
+    return await db.select().from(companies).where(eq(companies.clientId, clientId));
+  }
+
+  async createCompany(companyData: InsertCompany): Promise<Company> {
+    const [company] = await db.insert(companies).values(companyData).returning();
+    return company;
+  }
+
+  async updateCompany(id: number, companyData: Partial<Company>): Promise<Company | undefined> {
+    const [updatedCompany] = await db
+      .update(companies)
+      .set(companyData)
+      .where(eq(companies.id, id))
+      .returning();
+    return updatedCompany;
+  }
+
+  // Prospect methods
+  async getProspect(id: number): Promise<Prospect | undefined> {
+    const [prospect] = await db.select().from(prospects).where(eq(prospects.id, id));
+    return prospect;
+  }
+
+  async getProspects(): Promise<Prospect[]> {
+    return await db.select().from(prospects);
+  }
+
+  async getProspectsByStatus(status: string): Promise<Prospect[]> {
+    // Using type casting for enum values in WHERE clause
+    return await db.select().from(prospects)
+      .where(eq(prospects.status, status as any));
+  }
+
+  async getProspectsByClient(clientId: number): Promise<Prospect[]> {
+    return await db.select().from(prospects).where(eq(prospects.clientId, clientId));
+  }
+
+  async createProspect(prospectData: InsertProspect): Promise<Prospect> {
+    const [prospect] = await db.insert(prospects).values(prospectData).returning();
+    return prospect;
+  }
+
+  async updateProspect(id: number, prospectData: Partial<Prospect>): Promise<Prospect | undefined> {
+    const [updatedProspect] = await db
+      .update(prospects)
+      .set(prospectData)
+      .where(eq(prospects.id, id))
+      .returning();
+    return updatedProspect;
+  }
+
+  // Hero methods
+  async getHero(id: number): Promise<Hero | undefined> {
+    const [hero] = await db.select().from(heroes).where(eq(heroes.id, id));
+    return hero;
+  }
+
+  async getHeroes(): Promise<Hero[]> {
+    return await db.select().from(heroes);
+  }
+
+  async getHeroesByClient(clientId: number): Promise<Hero[]> {
+    return await db.select().from(heroes).where(eq(heroes.clientId, clientId));
+  }
+
+  async createHero(heroData: InsertHero): Promise<Hero> {
+    const [hero] = await db.insert(heroes).values(heroData).returning();
+    return hero;
+  }
+
+  async updateHero(id: number, heroData: Partial<Hero>): Promise<Hero | undefined> {
+    const [updatedHero] = await db
+      .update(heroes)
+      .set(heroData)
+      .where(eq(heroes.id, id))
+      .returning();
+    return updatedHero;
+  }
+
+  // Contract methods
+  async getContract(id: number): Promise<Contract | undefined> {
+    const [contract] = await db.select().from(contracts).where(eq(contracts.id, id));
+    return contract ? ensureContractFields(contract) : undefined;
+  }
+
+  async getContracts(): Promise<Contract[]> {
+    const allContracts = await db.select().from(contracts);
+    return allContracts.map(c => ensureContractFields(c));
+  }
+
+  async getContractsByClient(clientId: number): Promise<Contract[]> {
+    const clientContracts = await db.select().from(contracts).where(eq(contracts.clientId, clientId));
+    return clientContracts.map(c => ensureContractFields(c));
+  }
+
+  async createContract(contractData: InsertContract): Promise<Contract> {
+    const [contract] = await db.insert(contracts).values(contractData).returning();
+    return ensureContractFields(contract);
+  }
+
+  async updateContract(id: number, contractData: Partial<Contract>): Promise<Contract | undefined> {
+    const [updatedContract] = await db
+      .update(contracts)
+      .set(contractData)
+      .where(eq(contracts.id, id))
+      .returning();
+    return updatedContract ? ensureContractFields(updatedContract) : undefined;
+  }
+
+  // Invoice methods
+  async getInvoice(id: number): Promise<Invoice | undefined> {
+    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));
+    return invoice;
+  }
+
+  async getInvoices(): Promise<Invoice[]> {
+    return await db.select().from(invoices);
+  }
+
+  async getInvoicesByClient(clientId: number): Promise<Invoice[]> {
+    return await db.select().from(invoices).where(eq(invoices.clientId, clientId));
+  }
+
+  async createInvoice(invoiceData: InsertInvoice): Promise<Invoice> {
+    const [invoice] = await db.insert(invoices).values(invoiceData).returning();
+    return invoice;
+  }
+
+  async updateInvoice(id: number, invoiceData: Partial<Invoice>): Promise<Invoice | undefined> {
+    const [updatedInvoice] = await db
+      .update(invoices)
+      .set(invoiceData)
+      .where(eq(invoices.id, id))
+      .returning();
+    return updatedInvoice;
+  }
+
+  // Interview methods
+  async getInterview(id: number): Promise<Interview | undefined> {
+    const [interview] = await db.select().from(interviews).where(eq(interviews.id, id));
+    return interview ? ensureInterviewFields(interview) : undefined;
+  }
+
+  async getInterviews(): Promise<Interview[]> {
+    const allInterviews = await db.select().from(interviews);
+    return allInterviews.map(i => ensureInterviewFields(i));
+  }
+
+  async getInterviewsByProspect(prospectId: number): Promise<Interview[]> {
+    const prospectInterviews = await db.select().from(interviews).where(eq(interviews.prospectId, prospectId));
+    return prospectInterviews.map(i => ensureInterviewFields(i));
+  }
+
+  async getUpcomingInterviews(): Promise<Interview[]> {
+    const now = new Date();
+    const upcomingInterviews = await db
+      .select()
+      .from(interviews)
+      .where(
+        and(
+          eq(interviews.status, "scheduled"),
+          // Ensure scheduledDate is after now
+          db.sql`${interviews.scheduledDate} > ${now.toISOString()}`
+        )
+      );
+    return upcomingInterviews.map(i => ensureInterviewFields(i));
+  }
+
+  async createInterview(interviewData: InsertInterview): Promise<Interview> {
+    const [interview] = await db.insert(interviews).values(interviewData).returning();
+    return ensureInterviewFields(interview);
+  }
+
+  async updateInterview(id: number, interviewData: Partial<Interview>): Promise<Interview | undefined> {
+    const [updatedInterview] = await db
+      .update(interviews)
+      .set(interviewData)
+      .where(eq(interviews.id, id))
+      .returning();
+    return updatedInterview ? ensureInterviewFields(updatedInterview) : undefined;
+  }
+
+  // Job Opening methods
+  async getJobOpening(id: number): Promise<JobOpening | undefined> {
+    const [jobOpening] = await db.select().from(jobOpenings).where(eq(jobOpenings.id, id));
+    return jobOpening;
+  }
+
+  async getJobOpenings(): Promise<JobOpening[]> {
+    return await db.select().from(jobOpenings);
+  }
+
+  async getActiveJobOpenings(): Promise<JobOpening[]> {
+    return await db.select().from(jobOpenings).where(eq(jobOpenings.isActive, true));
+  }
+
+  async createJobOpening(jobOpeningData: InsertJobOpening): Promise<JobOpening> {
+    const [jobOpening] = await db.insert(jobOpenings).values(jobOpeningData).returning();
+    return jobOpening;
+  }
+
+  async updateJobOpening(id: number, jobOpeningData: Partial<JobOpening>): Promise<JobOpening | undefined> {
+    const [updatedJobOpening] = await db
+      .update(jobOpenings)
+      .set(jobOpeningData)
+      .where(eq(jobOpenings.id, id))
+      .returning();
+    return updatedJobOpening;
+  }
+
+  // Job Application methods
+  async getJobApplication(id: number): Promise<JobApplication | undefined> {
+    const [jobApplication] = await db.select().from(jobApplications).where(eq(jobApplications.id, id));
+    return jobApplication;
+  }
+
+  async getJobApplications(): Promise<JobApplication[]> {
+    return await db.select().from(jobApplications);
+  }
+
+  async getJobApplicationsByJobOpening(jobOpeningId: number): Promise<JobApplication[]> {
+    return await db.select().from(jobApplications).where(eq(jobApplications.jobOpeningId, jobOpeningId));
+  }
+
+  async getJobApplicationsByStatus(status: string): Promise<JobApplication[]> {
+    return await db.select().from(jobApplications).where(eq(jobApplications.status, status));
+  }
+
+  async createJobApplication(jobApplicationData: InsertJobApplication): Promise<JobApplication> {
+    const [jobApplication] = await db.insert(jobApplications).values(jobApplicationData).returning();
+    return jobApplication;
+  }
+
+  async updateJobApplication(id: number, jobApplicationData: Partial<JobApplication>): Promise<JobApplication | undefined> {
+    const [updatedJobApplication] = await db
+      .update(jobApplications)
+      .set(jobApplicationData)
+      .where(eq(jobApplications.id, id))
+      .returning();
+    return updatedJobApplication;
+  }
+
+  // Job Request methods
+  async getJobRequest(id: number): Promise<JobRequest | undefined> {
+    const [jobRequest] = await db.select().from(jobRequests).where(eq(jobRequests.id, id));
+    return jobRequest;
+  }
+
+  async getJobRequests(): Promise<JobRequest[]> {
+    return await db.select().from(jobRequests);
+  }
+
+  async getJobRequestsByClient(clientId: number): Promise<JobRequest[]> {
+    return await db.select().from(jobRequests).where(eq(jobRequests.clientId, clientId));
+  }
+
+  async getJobRequestsByStatus(status: string): Promise<JobRequest[]> {
+    return await db.select().from(jobRequests).where(eq(jobRequests.status, status));
+  }
+
+  async createJobRequest(jobRequestData: InsertJobRequest): Promise<JobRequest> {
+    const [jobRequest] = await db.insert(jobRequests).values(jobRequestData).returning();
+    return jobRequest;
+  }
+
+  async updateJobRequest(id: number, jobRequestData: Partial<JobRequest>): Promise<JobRequest | undefined> {
+    const [updatedJobRequest] = await db
+      .update(jobRequests)
+      .set(jobRequestData)
+      .where(eq(jobRequests.id, id))
+      .returning();
+    return updatedJobRequest;
+  }
+
+  async approveJobRequest(id: number, notes?: string): Promise<JobRequest | undefined> {
+    const [updatedJobRequest] = await db
+      .update(jobRequests)
+      .set({
+        status: "approved",
+        notes: notes || null,
+        updatedAt: new Date()
+      })
+      .where(eq(jobRequests.id, id))
+      .returning();
+    return updatedJobRequest;
+  }
+
+  async rejectJobRequest(id: number, notes?: string): Promise<JobRequest | undefined> {
+    const [updatedJobRequest] = await db
+      .update(jobRequests)
+      .set({
+        status: "rejected",
+        notes: notes || null,
+        updatedAt: new Date()
+      })
+      .where(eq(jobRequests.id, id))
+      .returning();
+    return updatedJobRequest;
+  }
+
+  async publishJobRequest(id: number): Promise<JobOpening | undefined> {
+    // Get the job request
+    const [jobRequest] = await db.select().from(jobRequests).where(eq(jobRequests.id, id));
+    
+    if (!jobRequest) {
+      return undefined;
+    }
+    
+    // Create a job opening based on the job request
+    const jobOpeningData: InsertJobOpening = {
+      title: jobRequest.title,
+      description: jobRequest.description,
+      requirements: jobRequest.requirements,
+      location: jobRequest.location,
+      jobType: jobRequest.jobType,
+      salary: jobRequest.salary,
+      isActive: true,
+      clientId: jobRequest.clientId,
+      companyId: jobRequest.companyId,
+      createdAt: new Date()
+    };
+    
+    // Insert the job opening
+    const [jobOpening] = await db.insert(jobOpenings).values(jobOpeningData).returning();
+    
+    // Update the job request to published
+    await db
+      .update(jobRequests)
+      .set({
+        status: "published",
+        updatedAt: new Date()
+      })
+      .where(eq(jobRequests.id, id));
+    
+    return jobOpening;
+  }
+}
 
 // Helper function for interview fields
 function ensureInterviewFields(interviewData: any): Interview {
@@ -1708,4 +2124,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
