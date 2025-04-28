@@ -107,7 +107,9 @@ export default function UserManagementPage() {
         title: "Success",
         description: "User created successfully",
       });
+      // Force immediate refetch of users data
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      refetch(); // Explicitly trigger refetch
       setIsAddDialogOpen(false);
       setCreatedUser(userData);
       setIsConfirmationDialogOpen(true);
@@ -150,7 +152,9 @@ export default function UserManagementPage() {
         title: "Success",
         description: "User role updated successfully",
       });
+      // Force immediate refetch of users data
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      refetch(); // Explicitly trigger refetch
       setIsEditRoleDialogOpen(false);
     },
     onError: (error: Error) => {
@@ -354,7 +358,21 @@ export default function UserManagementPage() {
       </Card>
 
       {/* Add User Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <Dialog 
+        open={isAddDialogOpen} 
+        onOpenChange={(open) => {
+          if (!open) {
+            userForm.reset({
+              firstName: "",
+              lastName: "",
+              username: "",
+              email: "",
+              password: "",
+              role: "recruiter",
+            });
+          }
+          setIsAddDialogOpen(open);
+        }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add New User</DialogTitle>
