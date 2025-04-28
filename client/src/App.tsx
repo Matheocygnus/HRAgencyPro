@@ -67,6 +67,9 @@ function Router() {
       <Route path="/users">
         <UserManagement />
       </Route>
+      <Route path="/user-management">
+        <UserManagement />
+      </Route>
       <Route path="/settings">
         <Settings />
       </Route>
