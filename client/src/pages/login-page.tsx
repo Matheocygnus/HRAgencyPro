@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { Redirect, Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,27 +15,13 @@ const formSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-export default function LoginPage() {
-  const [, navigate] = useLocation();
+interface LoginPageProps {
+  onLoginSuccess?: () => void;
+}
+
+export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
-
-  // Check if user is already logged in
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/user');
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error("Error checking auth status:", error);
-      }
-    };
-    checkAuth();
-  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,11 +52,13 @@ export default function LoginPage() {
           description: "Welcome back!",
         });
         
-        // Set user to trigger redirection
-        setUser(userData);
-        
-        // Force navigation to dashboard
-        window.location.href = "/";
+        // Callback to redirect after successful login
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        } else {
+          // Fallback if no callback provided
+          window.location.href = "/";
+        }
       } else {
         const error = await response.json();
         throw new Error(error.message || "Invalid credentials");
@@ -84,11 +72,6 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  }
-
-  // If already logged in, redirect to dashboard
-  if (user) {
-    return <Redirect to="/" />;
   }
 
   return (
