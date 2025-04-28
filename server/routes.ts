@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword } from "./auth";
 import { 
   insertClientSchema, 
   insertCompanySchema, 
@@ -13,7 +13,8 @@ import {
   insertJobOpeningSchema,
   insertJobApplicationSchema,
   insertJobRequestSchema,
-  insertRoleSchema
+  insertRoleSchema,
+  insertUserSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";

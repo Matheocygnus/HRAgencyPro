@@ -43,6 +43,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 // Role badge configuration
 const ROLE_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | "primary" | null }> = {
@@ -56,12 +57,24 @@ const roleUpdateSchema = z.object({
   role: z.enum(["super_admin", "admin", "recruiter"])
 });
 
+// User creation schema
+const userCreateSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  username: z.string().min(1, "Username is required").email("Username must be a valid email"),
+  email: z.string().min(1, "Email is required").email("Must be a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  role: z.enum(["super_admin", "admin", "recruiter"])
+});
+
 export default function UserManagementPage() {
   const { toast } = useToast();
   const { user } = useMockAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState(false);
+  const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [createdUser, setCreatedUser] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
 
@@ -73,6 +86,49 @@ export default function UserManagementPage() {
     queryKey: ["/api/users"],
     enabled: isSuperAdmin // Only fetch if super admin
   });
+
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: z.infer<typeof userCreateSchema>) => {
+      const res = await apiRequest("POST", "/api/users", userData);
+      return res.json();
+    },
+    onSuccess: (userData) => {
+      toast({
+        title: "Success",
+        description: "User created successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      setIsAddDialogOpen(false);
+      setCreatedUser(userData);
+      setIsConfirmationDialogOpen(true);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // User creation form
+  const userForm = useForm<z.infer<typeof userCreateSchema>>({
+    resolver: zodResolver(userCreateSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      username: "",
+      email: "",
+      password: "",
+      role: "recruiter",
+    },
+  });
+  
+  // Handle user form submission
+  const onUserFormSubmit = (values: z.infer<typeof userCreateSchema>) => {
+    createUserMutation.mutate(values);
+  };
 
   // Update user role mutation
   const updateUserRoleMutation = useMutation({
@@ -291,21 +347,158 @@ export default function UserManagementPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add New User</DialogTitle>
+            <DialogDescription>
+              Create a new system user with appropriate permissions.
+            </DialogDescription>
           </DialogHeader>
-          <div className="text-center py-6">
-            <p>User creation form will be implemented here.</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              New users can also register directly from the authentication page.
-            </p>
-            <Button 
-              className="mt-4" 
-              onClick={() => setIsAddDialogOpen(false)}
-            >
-              Close
-            </Button>
-          </div>
+          <Form {...userForm}>
+            <form onSubmit={userForm.handleSubmit(onUserFormSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={userForm.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter first name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={userForm.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter last name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={userForm.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username (Email)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="user@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={userForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="user@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={userForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={userForm.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>User Role</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="recruiter">Recruiter</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter className="mt-6">
+                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {createUserMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create User"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
+      
+      {/* User Created Confirmation Dialog */}
+      <AlertDialog open={isConfirmationDialogOpen} onOpenChange={setIsConfirmationDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>User Created Successfully</AlertDialogTitle>
+            <AlertDialogDescription>
+              {createdUser && (
+                <div className="space-y-2 mt-2">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Avatar>
+                      <AvatarFallback className="bg-primary text-white">
+                        {createdUser.firstName && createdUser.lastName 
+                          ? getUserInitials(createdUser.firstName, createdUser.lastName)
+                          : "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{createdUser.firstName} {createdUser.lastName}</p>
+                      <p className="text-sm text-muted-foreground">{createdUser.email}</p>
+                    </div>
+                  </div>
+                  <p><span className="font-semibold">Username:</span> {createdUser.username}</p>
+                  <p><span className="font-semibold">Role:</span> {createdUser.role}</p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Role Dialog */}
       <Dialog open={isEditRoleDialogOpen} onOpenChange={setIsEditRoleDialogOpen}>
