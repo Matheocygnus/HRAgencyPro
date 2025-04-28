@@ -45,42 +45,42 @@ function Router() {
       {/* Protected routes - require authentication */}
       
       {/* Main dashboard - accessible from / */}
-      <ProtectedRoute path="/" component={Dashboard} />
-      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/" component={Dashboard} requiredPermission="dashboard" />
+      <ProtectedRoute path="/dashboard" component={Dashboard} requiredPermission="dashboard" />
       
       {/* Specialized pages with appropriate visualizations */}
-      <ProtectedRoute path="/prospects" component={Prospects} />
-      <ProtectedRoute path="/clients" component={Clients} />
-      <ProtectedRoute path="/heroes" component={Heroes} />
-      <ProtectedRoute path="/hero/:id" component={HeroDetail} />
-      <ProtectedRoute path="/company/:id" component={CompanyDetail} />
-      <ProtectedRoute path="/contracts" component={Contracts} />
-      <ProtectedRoute path="/invoices" component={Invoices} />
-      <ProtectedRoute path="/interviews" component={Interviews} />
-      <ProtectedRoute path="/users" component={UserManagement} />
-      <ProtectedRoute path="/user-management" component={UserManagement} />
-      <ProtectedRoute path="/settings" component={Settings} />
+      <ProtectedRoute path="/prospects" component={Prospects} requiredPermission="prospects" />
+      <ProtectedRoute path="/clients" component={Clients} requiredPermission="companies" />
+      <ProtectedRoute path="/heroes" component={Heroes} requiredPermission="heroes" />
+      <ProtectedRoute path="/hero/:id" component={HeroDetail} requiredPermission="hero_detail" />
+      <ProtectedRoute path="/company/:id" component={CompanyDetail} requiredPermission="company_detail" />
+      <ProtectedRoute path="/contracts" component={Contracts} requiredPermission="contracts" />
+      <ProtectedRoute path="/invoices" component={Invoices} requiredPermission="invoices" />
+      <ProtectedRoute path="/interviews" component={Interviews} requiredPermission="interviews" />
+      <ProtectedRoute path="/users" component={UserManagement} requiredPermission="user_management" />
+      <ProtectedRoute path="/user-management" component={UserManagement} requiredPermission="user_management" />
+      <ProtectedRoute path="/settings" component={Settings} requiredPermission="settings" />
       
       {/* Role management */}
-      <ProtectedRoute path="/roles" component={RoleManagement} />
+      <ProtectedRoute path="/roles" component={RoleManagement} requiredPermission="role_management" />
       
       {/* Job management */}
-      <ProtectedRoute path="/jobs" component={JobManagement} />
-      <ProtectedRoute path="/job-management" component={JobManagement} />
+      <ProtectedRoute path="/jobs" component={JobManagement} requiredPermission="job_management" />
+      <ProtectedRoute path="/job-management" component={JobManagement} requiredPermission="job_management" />
       
       {/* Job requests */}
-      <ProtectedRoute path="/job-requests" component={JobRequests} />
+      <ProtectedRoute path="/job-requests" component={JobRequests} requiredPermission="job_management" />
       
       {/* Job request management (admin) */}
-      <ProtectedRoute path="/job-request-management" component={JobRequestManagement} />
+      <ProtectedRoute path="/job-request-management" component={JobRequestManagement} requiredPermission="job_management" />
       
       {/* Job applications page */}
-      <ProtectedRoute path="/job-applications" component={JobApplications} />
+      <ProtectedRoute path="/job-applications" component={JobApplications} requiredPermission="job_management" />
       
       {/* Role-specific dashboard pages */}
-      <ProtectedRoute path="/client-dashboard" component={ClientDashboard} />
-      <ProtectedRoute path="/hero-dashboard" component={HeroDashboard} />
-      <ProtectedRoute path="/prospect-dashboard" component={ProspectDashboard} />
+      <ProtectedRoute path="/client-dashboard" component={ClientDashboard} requiredPermission="client_dashboard" />
+      <ProtectedRoute path="/hero-dashboard" component={HeroDashboard} requiredPermission="hero_dashboard" />
+      <ProtectedRoute path="/prospect-dashboard" component={ProspectDashboard} requiredPermission="prospect_dashboard" />
       
       {/* Development page */}
       
