@@ -44,7 +44,7 @@ import { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, MoreHorizontal, Plus, Search, UserPlus } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+// No longer using useAuth hook
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -76,7 +76,6 @@ const userCreateSchema = z.object({
 
 export default function UserManagementPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState(false);
   const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
@@ -84,14 +83,48 @@ export default function UserManagementPage() {
   const [createdUser, setCreatedUser] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [hasPermission, setHasPermission] = useState(false);
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
 
-  // Check if user has permission to manage users based on role
-  const isSuperAdmin = user && user.role === "super_admin";
+  // Fetch current user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userResponse = await fetch('/api/user');
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setCurrentUser(userData);
+          
+          // Check if user has permission
+          const permissionsResponse = await fetch('/api/permissions');
+          if (permissionsResponse.ok) {
+            const permissionsData = await permissionsResponse.json();
+            setHasPermission(
+              // User has permission if they are super_admin or have user_management permission
+              userData.role === 'super_admin' || 
+              (permissionsData.permissions && 
+                permissionsData.permissions.includes('user_management'))
+            );
+          } else {
+            // Fallback: only super_admin has access if permissions API fails
+            setHasPermission(userData.role === 'super_admin');
+          }
+        }
+        setPermissionsLoading(false);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setPermissionsLoading(false);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
 
   // Fetch users
   const { data: users = [], isLoading, refetch } = useQuery<User[]>({
     queryKey: ["/api/users"],
-    enabled: isSuperAdmin, // Only fetch if super admin
+    enabled: hasPermission, // Only fetch if user has permission
     refetchInterval: 5000, // Auto-refresh every 5 seconds
     refetchOnWindowFocus: true // Refresh when window regains focus
   });
@@ -210,7 +243,19 @@ export default function UserManagementPage() {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
-  if (!isSuperAdmin) {
+  // Show loading state while checking permissions
+  if (permissionsLoading) {
+    return (
+      <Dashboard>
+        <div className="flex items-center justify-center h-[70vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Dashboard>
+    );
+  }
+
+  // Show access denied if user doesn't have permission
+  if (!hasPermission) {
     return (
       <Dashboard>
         <div className="flex items-center justify-center h-[70vh]">
@@ -296,7 +341,7 @@ export default function UserManagementPage() {
                   ) : (
                     filteredUsers.map((userData) => {
                       const roleConfig = ROLE_BADGES[userData.role] || ROLE_BADGES.recruiter;
-                      const canEdit = userData.id !== user?.id; // Can't edit your own role
+                      const canEdit = userData.id !== currentUser?.id; // Can't edit your own role
                       
                       return (
                         <TableRow key={userData.id}>
