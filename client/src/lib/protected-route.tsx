@@ -53,7 +53,7 @@ export function ProtectedRoute({
   
   // Check if the user has the appropriate role for this route
   // For role-specific dashboards, redirect based on user role
-  if (path === "/" && user.role !== "super_admin" && user.role !== "admin") {
+  if (path === "/dashboard" && user.role !== "super_admin" && user.role !== "admin") {
     // Redirect non-admins to their appropriate dashboards
     if (user.role === "client") {
       return (
@@ -80,7 +80,7 @@ export function ProtectedRoute({
   if (path === "/client-dashboard" && user.role !== "client" && user.role !== "super_admin" && user.role !== "admin") {
     return (
       <Route path={path}>
-        <Redirect to="/" />
+        <Redirect to="/dashboard" />
       </Route>
     );
   }
@@ -88,7 +88,7 @@ export function ProtectedRoute({
   if (path === "/hero-dashboard" && user.role !== "hero" && user.role !== "super_admin" && user.role !== "admin") {
     return (
       <Route path={path}>
-        <Redirect to="/" />
+        <Redirect to="/dashboard" />
       </Route>
     );
   }
@@ -96,7 +96,7 @@ export function ProtectedRoute({
   if (path === "/prospect-dashboard" && user.role !== "prospect" && user.role !== "super_admin" && user.role !== "admin") {
     return (
       <Route path={path}>
-        <Redirect to="/" />
+        <Redirect to="/dashboard" />
       </Route>
     );
   }

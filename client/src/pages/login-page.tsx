@@ -79,7 +79,7 @@ export default function LoginPage() {
         let dashboardPath = "/";
         
         if (userData.role === "super_admin" || userData.role === "admin") {
-          dashboardPath = "/"; // Admin dashboard
+          dashboardPath = "/dashboard"; // Admin dashboard
         } else if (userData.role === "client") {
           dashboardPath = "/client-dashboard";
         } else if (userData.role === "hero") {
@@ -121,7 +121,7 @@ export default function LoginPage() {
     let dashboardPath = "/";
     
     if (user.role === "super_admin" || user.role === "admin") {
-      dashboardPath = "/"; // Admin dashboard
+      dashboardPath = "/dashboard"; // Admin dashboard
     } else if (user.role === "client") {
       dashboardPath = "/client-dashboard";
     } else if (user.role === "hero") {
