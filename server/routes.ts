@@ -12,7 +12,8 @@ import {
   insertInterviewSchema,
   insertJobOpeningSchema,
   insertJobApplicationSchema,
-  insertJobRequestSchema
+  insertJobRequestSchema,
+  insertRoleSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -614,6 +615,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return handleZodError(error, res);
       }
       res.status(500).json({ message: "Failed to update interview" });
+    }
+  });
+  
+  // Role management (Super Admin only)
+  app.get("/api/roles", hasRole(["super_admin"]), async (req, res) => {
+    try {
+      const roles = await storage.getRoles();
+      res.json(roles);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve roles" });
+    }
+  });
+  
+  app.get("/api/roles/:id", hasRole(["super_admin"]), async (req, res) => {
+    try {
+      const role = await storage.getRole(parseInt(req.params.id));
+      if (!role) {
+        return res.status(404).json({ message: "Role not found" });
+      }
+      res.json(role);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve role" });
+    }
+  });
+  
+  app.post("/api/roles", hasRole(["super_admin"]), async (req, res) => {
+    try {
+      const roleData = insertRoleSchema.parse(req.body);
+      const role = await storage.createRole(roleData);
+      res.status(201).json(role);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to create role" });
+    }
+  });
+  
+  app.patch("/api/roles/:id", hasRole(["super_admin"]), async (req, res) => {
+    try {
+      const roleData = insertRoleSchema.partial().parse(req.body);
+      const updatedRole = await storage.updateRole(parseInt(req.params.id), roleData);
+      if (!updatedRole) {
+        return res.status(404).json({ message: "Role not found" });
+      }
+      res.json(updatedRole);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to update role" });
+    }
+  });
+  
+  app.delete("/api/roles/:id", hasRole(["super_admin"]), async (req, res) => {
+    try {
+      const success = await storage.deleteRole(parseInt(req.params.id));
+      if (!success) {
+        return res.status(404).json({ message: "Role not found or could not be deleted" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete role" });
     }
   });
   

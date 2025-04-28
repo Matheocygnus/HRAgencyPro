@@ -139,6 +139,17 @@ function ensureInvoiceFields(invoiceData: any): Invoice {
   };
 }
 
+function ensureRoleFields(roleData: any): Role {
+  // Map snake_case database fields to camelCase application fields
+  return {
+    id: roleData.id,
+    name: roleData.name,
+    description: roleData.description || null,
+    permissions: roleData.permissions,
+    createdAt: roleData.created_at || roleData.createdAt
+  };
+}
+
 export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
@@ -146,6 +157,13 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<User>): Promise<User | undefined>;
   getUsers(): Promise<User[]>;
+  
+  // Role methods
+  getRole(id: number): Promise<Role | undefined>;
+  getRoles(): Promise<Role[]>;
+  createRole(roleData: InsertRole): Promise<Role>;
+  updateRole(id: number, roleData: Partial<Role>): Promise<Role | undefined>;
+  deleteRole(id: number): Promise<boolean>;
   
   // Client methods
   getClient(id: number): Promise<Client | undefined>;
@@ -269,6 +287,103 @@ export class DatabaseStorage implements IStorage {
   async getUsers(): Promise<User[]> {
     const allUsers = await db.select().from(users);
     return allUsers.map(u => ensureUserFields(u));
+  }
+  
+  // Role methods
+  async getRole(id: number): Promise<Role | undefined> {
+    try {
+      // Only select columns that exist in the database
+      const [role] = await db.select({
+        id: roles.id,
+        name: roles.name,
+        description: roles.description,
+        permissions: roles.permissions,
+        created_at: roles.createdAt
+      }).from(roles).where(eq(roles.id, id));
+      
+      return role ? ensureRoleFields(role) : undefined;
+    } catch (error) {
+      console.error(`Error in getRole(${id}):`, error);
+      return undefined;
+    }
+  }
+
+  async getRoles(): Promise<Role[]> {
+    try {
+      // Only select columns that exist in the database
+      const allRoles = await db.select({
+        id: roles.id,
+        name: roles.name,
+        description: roles.description,
+        permissions: roles.permissions,
+        created_at: roles.createdAt
+      }).from(roles);
+      
+      console.log("Successfully retrieved roles:", allRoles.length);
+      return allRoles.map(r => ensureRoleFields(r));
+    } catch (error) {
+      console.error("Error in getRoles:", error);
+      // Fallback to simpler query if column mapping is wrong
+      const basicRoles = await db.select({
+        id: roles.id,
+      }).from(roles);
+      
+      // Manually fetch each role with more detailed error handling
+      const detailedRoles = [];
+      for (const { id } of basicRoles) {
+        try {
+          const role = await this.getRole(id);
+          if (role) detailedRoles.push(role);
+        } catch (err) {
+          console.error(`Error fetching role ${id}:`, err);
+        }
+      }
+      
+      console.log(`Fallback retrieved ${detailedRoles.length} out of ${basicRoles.length} roles`);
+      return detailedRoles;
+    }
+  }
+
+  async createRole(roleData: InsertRole): Promise<Role> {
+    try {
+      const [role] = await db.insert(roles).values(roleData).returning();
+      console.log("Role created successfully:", role);
+      return ensureRoleFields(role);
+    } catch (error) {
+      console.error("Error in createRole:", error);
+      throw error; // Rethrow since we can't recover from a creation error
+    }
+  }
+
+  async updateRole(id: number, roleData: Partial<Role>): Promise<Role | undefined> {
+    try {
+      const [updatedRole] = await db
+        .update(roles)
+        .set(roleData)
+        .where(eq(roles.id, id))
+        .returning();
+      console.log("Role updated successfully:", updatedRole);
+      return updatedRole ? ensureRoleFields(updatedRole) : undefined;
+    } catch (error) {
+      console.error(`Error in updateRole(${id}):`, error);
+      // Try to get the current role to return if update fails
+      return await this.getRole(id);
+    }
+  }
+
+  async deleteRole(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(roles)
+        .where(eq(roles.id, id))
+        .returning();
+      
+      console.log("Role deletion result:", result);
+      return result.length > 0;
+    } catch (error) {
+      console.error(`Error in deleteRole(${id}):`, error);
+      return false;
+    }
   }
 
   // Client methods
