@@ -693,14 +693,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.post("/api/users", hasRole(["super_admin"]), async (req, res) => {
+    try {
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      // Validate user data
+      const userData = insertUserSchema.parse(req.body);
+      
+      // Hash the password
+      const hashedPassword = await hashPassword(userData.password);
+      
+      // Create the user
+      const user = await storage.createUser({
+        ...userData,
+        password: hashedPassword,
+      });
+
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+  
   app.put("/api/users/:id", hasRole(["super_admin"]), async (req, res) => {
     try {
       // Super admin can update user roles
       const userData = req.body;
       if (userData.password) {
         // If updating password, hash it
-        userData.password = await require('crypto').scryptSync(userData.password, 
-          require('crypto').randomBytes(16).toString('hex'), 64).toString('hex');
+        userData.password = await hashPassword(userData.password);
       }
       
       const updatedUser = await storage.updateUser(parseInt(req.params.id), userData);
