@@ -127,6 +127,14 @@ export function setupAuth(app: Express) {
     });
   });
 
+  // Force logout endpoint for the application's entry point
+  app.post("/api/force-logout", (req, res, next) => {
+    req.logout((err) => {
+      if (err) return next(err);
+      res.sendStatus(200);
+    });
+  });
+
   app.get("/api/user", async (req, res) => {
     // Check if the user is authenticated
     if (!req.isAuthenticated()) {

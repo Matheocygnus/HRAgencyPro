@@ -6,6 +6,21 @@
     <title>Remote Hero - HR Management Platform</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Force redirect to login page -->
+    <script>
+      // Immediately redirect to login page
+      window.onload = function() {
+        // Logout first to ensure no session data is present
+        fetch('/api/logout', { method: 'POST' })
+          .then(() => {
+            window.location.href = '/login';
+          })
+          .catch(() => {
+            // If logout fails, still redirect to login
+            window.location.href = '/login';
+          });
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>
