@@ -1340,6 +1340,7 @@ export class MemStorage implements IStorage {
   private jobOpeningsMap: Map<number, JobOpening>;
   private jobApplicationsMap: Map<number, JobApplication>;
   private jobRequestsMap: Map<number, JobRequest>;
+  private rolesMap: Map<number, Role>;
   
   // Auto-increment counters
   private userIdCounter: number;
@@ -1354,6 +1355,7 @@ export class MemStorage implements IStorage {
   private jobOpeningIdCounter: number;
   private jobApplicationIdCounter: number;
   private jobRequestIdCounter: number;
+  private roleIdCounter: number;
   
   // Session store
   sessionStore: any;
@@ -1371,6 +1373,7 @@ export class MemStorage implements IStorage {
     this.jobOpeningsMap = new Map();
     this.jobApplicationsMap = new Map();
     this.jobRequestsMap = new Map();
+    this.rolesMap = new Map();
     
     // Initialize counters
     this.userIdCounter = 1;
@@ -1385,6 +1388,7 @@ export class MemStorage implements IStorage {
     this.jobOpeningIdCounter = 1;
     this.jobApplicationIdCounter = 1;
     this.jobRequestIdCounter = 1;
+    this.roleIdCounter = 1;
     
     // Initialize session store with memory store
     this.sessionStore = new MemoryStore({
@@ -1396,6 +1400,15 @@ export class MemStorage implements IStorage {
   }
   
   private async initializeMockData() {
+    // Create a Super Admin role
+    await this.createRole({
+      name: "super_admin",
+      description: "Super Administrator with access to all features",
+      permissions: ["dashboard", "prospects", "interviews", "heroes", "hero_detail", "companies", 
+                   "company_detail", "contracts", "invoices", "user_management", "job_management", 
+                   "settings", "role_management", "client_dashboard", "hero_dashboard", "prospect_dashboard"]
+    });
+    
     // Create an admin user
     await this.createUser({
       username: "admin@remotehero.com",
@@ -2321,6 +2334,51 @@ export class MemStorage implements IStorage {
   
   async getUsers(): Promise<User[]> {
     return Array.from(this.usersMap.values());
+  }
+  
+  // Role methods
+  async getRole(id: number): Promise<Role | undefined> {
+    return this.rolesMap.get(id);
+  }
+
+  async getRoles(): Promise<Role[]> {
+    return Array.from(this.rolesMap.values());
+  }
+
+  async createRole(roleData: InsertRole): Promise<Role> {
+    const id = this.roleIdCounter++;
+    const now = new Date();
+    
+    const role: Role = {
+      id,
+      name: roleData.name,
+      description: roleData.description || null,
+      permissions: roleData.permissions,
+      createdAt: now
+    };
+    
+    this.rolesMap.set(id, role);
+    return role;
+  }
+
+  async updateRole(id: number, roleData: Partial<Role>): Promise<Role | undefined> {
+    const role = this.rolesMap.get(id);
+    
+    if (!role) {
+      return undefined;
+    }
+    
+    const updatedRole: Role = {
+      ...role,
+      ...roleData
+    };
+    
+    this.rolesMap.set(id, updatedRole);
+    return updatedRole;
+  }
+
+  async deleteRole(id: number): Promise<boolean> {
+    return this.rolesMap.delete(id);
   }
   
   // Client methods
