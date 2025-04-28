@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ProtectedRoute } from "./lib/protected-route";
 import NotFound from "@/pages/not-found";
 import AuthPageSimple from "@/pages/auth-page-simple";
-import LoginWrapper from "@/pages/login-wrapper";
+import LoginPage from "@/pages/login-page";
 import Dashboard from "@/pages/dashboard";
 import DashboardDev from "@/pages/dashboard-dev";
 import Prospects from "@/pages/prospects";
@@ -31,10 +31,10 @@ function Router() {
     <Switch>
       {/* Authentication page */}
       <Route path="/login">
-        <LoginWrapper />
+        <LoginPage />
       </Route>
       <Route path="/auth">
-        <LoginWrapper />
+        <LoginPage />
       </Route>
       
       {/* Public careers page */}

@@ -34,6 +34,9 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
+      // Step 1: Clear any existing user session from cache first to avoid conflicts
+      queryClient.setQueryData(["/api/user"], null);
+      
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
@@ -52,13 +55,10 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
           description: "Welcome back!",
         });
         
-        // Callback to redirect after successful login
-        if (onLoginSuccess) {
-          onLoginSuccess();
-        } else {
-          // Fallback if no callback provided
+        // Force a hard navigation to the dashboard
+        setTimeout(() => {
           window.location.href = "/";
-        }
+        }, 500); // Short delay to allow toast to be seen
       } else {
         const error = await response.json();
         throw new Error(error.message || "Invalid credentials");
