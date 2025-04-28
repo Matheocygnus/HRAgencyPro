@@ -66,8 +66,11 @@ export default function LoginPage() {
           description: "Welcome back!",
         });
         
-        // Navigate to dashboard
-        navigate("/");
+        // Set user to trigger redirection
+        setUser(userData);
+        
+        // Force navigation to dashboard
+        window.location.href = "/";
       } else {
         const error = await response.json();
         throw new Error(error.message || "Invalid credentials");
