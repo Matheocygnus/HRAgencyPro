@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Dashboard from "@/components/layout/Dashboard";
 import { 
   Card, 
@@ -89,9 +89,11 @@ export default function UserManagementPage() {
   const isSuperAdmin = useMockAuth().hasPermission("user_management");
 
   // Fetch users
-  const { data: users = [], isLoading } = useQuery<User[]>({
+  const { data: users = [], isLoading, refetch } = useQuery<User[]>({
     queryKey: ["/api/users"],
-    enabled: isSuperAdmin // Only fetch if super admin
+    enabled: isSuperAdmin, // Only fetch if super admin
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
+    refetchOnWindowFocus: true // Refresh when window regains focus
   });
 
   // Create user mutation
@@ -164,16 +166,18 @@ export default function UserManagementPage() {
   const roleForm = useForm<z.infer<typeof roleUpdateSchema>>({
     resolver: zodResolver(roleUpdateSchema),
     defaultValues: {
-      role: selectedUser?.role as "super_admin" | "admin" | "recruiter" || "recruiter",
+      role: "recruiter",
     },
   });
 
-  // Effect to reset form when selected user changes
-  if (selectedUser && roleForm.getValues().role !== selectedUser.role) {
-    roleForm.reset({
-      role: selectedUser.role as "super_admin" | "admin" | "recruiter",
-    });
-  }
+  // Reset form when selected user changes
+  useEffect(() => {
+    if (selectedUser) {
+      roleForm.reset({
+        role: selectedUser.role as "super_admin" | "admin" | "recruiter",
+      });
+    }
+  }, [selectedUser, roleForm]);
 
   // Handle role form submission
   const onRoleFormSubmit = (values: z.infer<typeof roleUpdateSchema>) => {
@@ -437,7 +441,7 @@ export default function UserManagementPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>User Role</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select role" />
@@ -512,6 +516,9 @@ export default function UserManagementPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Change User Role</DialogTitle>
+            <DialogDescription>
+              Update the permissions level for this user.
+            </DialogDescription>
           </DialogHeader>
           {selectedUser && (
             <Form {...roleForm}>
@@ -534,7 +541,7 @@ export default function UserManagementPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>User Role</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select role" />
