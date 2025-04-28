@@ -1,12 +1,28 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard({ children }: { children: ReactNode }) {
   const [isMobileOpen, setMobileOpen] = useState(false);
-  const { user } = useAuth();
+  const [user, setUser] = useState<any>(null);
+  
+  // Get user data directly
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    }
+    
+    fetchUser();
+  }, []);
   
   // Function to get role display
   const getRoleBadge = () => {

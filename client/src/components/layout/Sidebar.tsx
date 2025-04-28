@@ -1,6 +1,7 @@
-import { Link, useLocation } from "wouter";
-import { useMockAuth, MODULES } from "@/hooks/use-mock-auth";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { MODULES } from "@/hooks/use-auth";
 import { 
   LayoutDashboard, 
   Building2, 
@@ -19,6 +20,7 @@ import {
   UserCircle,
   UserCog
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 // Define sidebar navigation items with their corresponding permission modules
 const navigation = [
@@ -48,7 +50,44 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: {
   setMobileOpen: (open: boolean) => void;
 }) {
   const [location] = useLocation();
-  const { user, hasPermission } = useMockAuth();
+  const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Fetch user on component mount
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    }
+    
+    fetchUser();
+  }, []);
+  
+  // Function to check permissions based on role
+  const hasPermission = (module: string) => {
+    if (!user) return false;
+    
+    // Super admins can access everything
+    if (user.role === "super_admin") {
+      return true;
+    }
+    
+    // For now, admins have most permissions too
+    if (user.role === "admin") {
+      return true;
+    }
+    
+    // Default fallback - show limited modules for other roles
+    return ["dashboard", "client_dashboard", "prospect_dashboard", "hero_dashboard"].includes(module);
+  };
   
   // Filter navigation items based on user permissions
   const mainNavigation = navigation.filter(item => hasPermission(item.module));
@@ -107,11 +146,39 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: {
           <div className="border-t border-blue-800 my-4 mx-4"></div>
           <div className="px-3">
             <button 
-              onClick={handleNavClick}
+              onClick={async () => {
+                setIsLoggingOut(true);
+                try {
+                  const response = await fetch('/api/logout', {
+                    method: 'POST',
+                  });
+                  
+                  if (response.ok) {
+                    toast({
+                      title: "Logged out successfully",
+                      description: "You have been logged out of your account"
+                    });
+                    
+                    // Hard redirect to login page
+                    window.location.href = '/login';
+                  } else {
+                    throw new Error('Logout failed');
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Logout failed",
+                    description: "There was a problem logging out. Please try again.",
+                    variant: "destructive"
+                  });
+                } finally {
+                  setIsLoggingOut(false);
+                }
+              }}
+              disabled={isLoggingOut}
               className="flex items-center px-3 py-2.5 rounded-md text-sm font-medium text-blue-100 hover:text-white hover:bg-blue-700 w-full"
             >
               <LogOut className="w-5 h-5 mr-3" />
-              <span>Sign Out</span>
+              <span>{isLoggingOut ? "Signing out..." : "Sign Out"}</span>
             </button>
           </div>
         </nav>
