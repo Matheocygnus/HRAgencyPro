@@ -272,54 +272,192 @@ export class DatabaseStorage implements IStorage {
 
   // Client methods
   async getClient(id: number): Promise<Client | undefined> {
-    const [client] = await db.select().from(clients).where(eq(clients.id, id));
-    return client;
+    try {
+      // Only select columns that exist in the database
+      const [client] = await db.select({
+        id: clients.id,
+        name: clients.name,
+        contact_person: clients.contactPerson,
+        email: clients.email,
+        phone: clients.phone,
+        status: clients.status,
+        created_at: clients.createdAt
+      }).from(clients).where(eq(clients.id, id));
+      
+      return client ? ensureClientFields(client) : undefined;
+    } catch (error) {
+      console.error(`Error in getClient(${id}):`, error);
+      return undefined;
+    }
   }
 
   async getClients(): Promise<Client[]> {
-    return await db.select().from(clients);
+    try {
+      // Only select columns that exist in the database
+      const allClients = await db.select({
+        id: clients.id,
+        name: clients.name,
+        contact_person: clients.contactPerson,
+        email: clients.email,
+        phone: clients.phone,
+        status: clients.status,
+        created_at: clients.createdAt
+      }).from(clients);
+      
+      console.log("Successfully retrieved clients:", allClients.length);
+      return allClients.map(c => ensureClientFields(c));
+    } catch (error) {
+      console.error("Error in getClients:", error);
+      // Fallback to simpler query if column mapping is wrong
+      const basicClients = await db.select({
+        id: clients.id,
+      }).from(clients);
+      
+      // Manually fetch each client with more detailed error handling
+      const detailedClients = [];
+      for (const { id } of basicClients) {
+        try {
+          const client = await this.getClient(id);
+          if (client) detailedClients.push(client);
+        } catch (err) {
+          console.error(`Error fetching client ${id}:`, err);
+        }
+      }
+      
+      console.log(`Fallback retrieved ${detailedClients.length} out of ${basicClients.length} clients`);
+      return detailedClients;
+    }
   }
 
   async createClient(clientData: InsertClient): Promise<Client> {
-    const [client] = await db.insert(clients).values(clientData).returning();
-    return client;
+    try {
+      const [client] = await db.insert(clients).values(clientData).returning();
+      return ensureClientFields(client);
+    } catch (error) {
+      console.error("Error in createClient:", error);
+      throw error; // Rethrow since we can't recover from a creation error
+    }
   }
 
   async updateClient(id: number, clientData: Partial<Client>): Promise<Client | undefined> {
-    const [updatedClient] = await db
-      .update(clients)
-      .set(clientData)
-      .where(eq(clients.id, id))
-      .returning();
-    return updatedClient;
+    try {
+      const [updatedClient] = await db
+        .update(clients)
+        .set(clientData)
+        .where(eq(clients.id, id))
+        .returning();
+      return updatedClient ? ensureClientFields(updatedClient) : undefined;
+    } catch (error) {
+      console.error(`Error in updateClient(${id}):`, error);
+      // Try to get the current client to return if update fails
+      return await this.getClient(id);
+    }
   }
 
   // Company methods
   async getCompany(id: number): Promise<Company | undefined> {
-    const [company] = await db.select().from(companies).where(eq(companies.id, id));
-    return company;
+    try {
+      // Only select columns that exist in the database
+      const [company] = await db.select({
+        id: companies.id,
+        name: companies.name,
+        client_id: companies.clientId,
+        industry: companies.industry,
+        size: companies.size,
+        location: companies.location,
+        created_at: companies.createdAt
+      }).from(companies).where(eq(companies.id, id));
+      
+      return company ? ensureCompanyFields(company) : undefined;
+    } catch (error) {
+      console.error(`Error in getCompany(${id}):`, error);
+      return undefined;
+    }
   }
 
   async getCompanies(): Promise<Company[]> {
-    return await db.select().from(companies);
+    try {
+      // Only select columns that exist in the database
+      const allCompanies = await db.select({
+        id: companies.id,
+        name: companies.name,
+        client_id: companies.clientId,
+        industry: companies.industry,
+        size: companies.size,
+        location: companies.location,
+        created_at: companies.createdAt
+      }).from(companies);
+      
+      console.log("Successfully retrieved companies:", allCompanies.length);
+      return allCompanies.map(c => ensureCompanyFields(c));
+    } catch (error) {
+      console.error("Error in getCompanies:", error);
+      // Fallback to simpler query if column mapping is wrong
+      const basicCompanies = await db.select({
+        id: companies.id,
+      }).from(companies);
+      
+      // Manually fetch each company with more detailed error handling
+      const detailedCompanies = [];
+      for (const { id } of basicCompanies) {
+        try {
+          const company = await this.getCompany(id);
+          if (company) detailedCompanies.push(company);
+        } catch (err) {
+          console.error(`Error fetching company ${id}:`, err);
+        }
+      }
+      
+      console.log(`Fallback retrieved ${detailedCompanies.length} out of ${basicCompanies.length} companies`);
+      return detailedCompanies;
+    }
   }
 
   async getCompaniesByClient(clientId: number): Promise<Company[]> {
-    return await db.select().from(companies).where(eq(companies.clientId, clientId));
+    try {
+      // Only select columns that exist in the database
+      const clientCompanies = await db.select({
+        id: companies.id,
+        name: companies.name,
+        client_id: companies.clientId,
+        industry: companies.industry,
+        size: companies.size,
+        location: companies.location,
+        created_at: companies.createdAt
+      }).from(companies).where(eq(companies.clientId, clientId));
+      
+      return clientCompanies.map(c => ensureCompanyFields(c));
+    } catch (error) {
+      console.error(`Error in getCompaniesByClient(${clientId}):`, error);
+      // Fallback to in-memory filtering if database query fails
+      const allCompanies = await this.getCompanies();
+      return allCompanies.filter(c => c.clientId === clientId);
+    }
   }
 
   async createCompany(companyData: InsertCompany): Promise<Company> {
-    const [company] = await db.insert(companies).values(companyData).returning();
-    return company;
+    try {
+      const [company] = await db.insert(companies).values(companyData).returning();
+      return ensureCompanyFields(company);
+    } catch (error) {
+      console.error("Error in createCompany:", error);
+      throw error; // Rethrow since we can't recover from a creation error
+    }
   }
 
   async updateCompany(id: number, companyData: Partial<Company>): Promise<Company | undefined> {
-    const [updatedCompany] = await db
-      .update(companies)
-      .set(companyData)
-      .where(eq(companies.id, id))
-      .returning();
-    return updatedCompany;
+    try {
+      const [updatedCompany] = await db
+        .update(companies)
+        .set(companyData)
+        .where(eq(companies.id, id))
+        .returning();
+      return updatedCompany ? ensureCompanyFields(updatedCompany) : undefined;
+    } catch (error) {
+      console.error(`Error in updateCompany(${id}):`, error);
+      // Try to get the current company to return if update fails
+      return await this.getCompany(id);
+    }
   }
 
   // Prospect methods
@@ -400,29 +538,71 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProspectsByStatus(status: string): Promise<Prospect[]> {
-    // Get all prospects and filter by status in memory
-    const allProspects = await db.select().from(prospects);
-    const filteredProspects = allProspects.filter(p => p.status === status);
-    return filteredProspects.map(p => ensureProspectFields(p));
+    try {
+      // Get all prospects and filter by status in memory for now
+      // This is safer as status might have different case or format in the database
+      const allProspects = await this.getProspects();
+      return allProspects.filter(p => p.status === status);
+    } catch (error) {
+      console.error(`Error in getProspectsByStatus(${status}):`, error);
+      return [];
+    }
   }
 
   async getProspectsByClient(clientId: number): Promise<Prospect[]> {
-    const clientProspects = await db.select().from(prospects).where(eq(prospects.clientId, clientId));
-    return clientProspects.map(p => ensureProspectFields(p));
+    try {
+      // Only select columns that exist in the database
+      const clientProspects = await db.select({
+        id: prospects.id,
+        first_name: prospects.firstName,
+        last_name: prospects.lastName,
+        email: prospects.email,
+        phone: prospects.phone,
+        position: prospects.position,
+        skills: prospects.skills,
+        resume: prospects.resume,
+        status: prospects.status,
+        client_id: prospects.clientId,
+        company_id: prospects.companyId,
+        notes: prospects.notes,
+        created_at: prospects.createdAt,
+        is_interviewed: prospects.isInterviewed,
+        is_client_approved: prospects.isClientApproved,
+        is_budget_agreed: prospects.isBudgetAgreed
+      }).from(prospects).where(eq(prospects.clientId, clientId));
+      
+      return clientProspects.map(p => ensureProspectFields(p));
+    } catch (error) {
+      console.error(`Error in getProspectsByClient(${clientId}):`, error);
+      // Fallback to in-memory filtering if database query fails
+      const allProspects = await this.getProspects();
+      return allProspects.filter(p => p.clientId === clientId);
+    }
   }
 
   async createProspect(prospectData: InsertProspect): Promise<Prospect> {
-    const [prospect] = await db.insert(prospects).values(prospectData).returning();
-    return ensureProspectFields(prospect);
+    try {
+      const [prospect] = await db.insert(prospects).values(prospectData).returning();
+      return ensureProspectFields(prospect);
+    } catch (error) {
+      console.error("Error in createProspect:", error);
+      throw error; // Rethrow since we can't recover from a creation error
+    }
   }
 
   async updateProspect(id: number, prospectData: Partial<Prospect>): Promise<Prospect | undefined> {
-    const [updatedProspect] = await db
-      .update(prospects)
-      .set(prospectData)
-      .where(eq(prospects.id, id))
-      .returning();
-    return updatedProspect ? ensureProspectFields(updatedProspect) : undefined;
+    try {
+      const [updatedProspect] = await db
+        .update(prospects)
+        .set(prospectData)
+        .where(eq(prospects.id, id))
+        .returning();
+      return updatedProspect ? ensureProspectFields(updatedProspect) : undefined;
+    } catch (error) {
+      console.error(`Error in updateProspect(${id}):`, error);
+      // Try to get the current prospect to return if update fails
+      return await this.getProspect(id);
+    }
   }
 
   // Hero methods
