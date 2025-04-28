@@ -110,24 +110,29 @@ export default function RoleManagement() {
     permissions: [] as string[]
   });
   
-  // In a real app, this would be fetched from the server
-  const { data: roles = mockRoles, isLoading } = useQuery<Role[]>({
+  // Fetch all roles from the database
+  const { data: roles = [], isLoading } = useQuery<Role[]>({
     queryKey: ["/api/roles"],
-    queryFn: () => Promise.resolve(mockRoles) // Mock API call
   });
   
-  // Create role mutation - would call the API in a real app
+  // Create role mutation to call the API
   const createRoleMutation = useMutation({
     mutationFn: async (data: { name: string, description: string, permissions: string[] }) => {
-      // This is a mock implementation
-      const newRole: Role = {
-        id: roles.length + 1,
+      // Prepare the data to send to the server
+      const roleData = {
         name: data.name,
         description: data.description,
-        permissions: JSON.stringify(data.permissions),
-        createdAt: new Date()
+        permissions: JSON.stringify(data.permissions)
       };
-      return newRole;
+      
+      // Make the API request
+      const response = await apiRequest("POST", "/api/roles", roleData);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create role");
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -140,7 +145,8 @@ export default function RoleManagement() {
         description: "",
         permissions: []
       });
-      // In a real app, this would invalidate the roles query
+      // Invalidate the roles query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
     },
     onError: (error: Error) => {
       toast({
@@ -151,18 +157,24 @@ export default function RoleManagement() {
     },
   });
   
-  // Update role mutation - would call the API in a real app
+  // Update role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async (data: { id: number, name: string, description: string, permissions: string[] }) => {
-      // This is a mock implementation
-      const updatedRole: Role = {
-        id: data.id,
+      // Prepare the data to send to the server
+      const roleData = {
         name: data.name,
         description: data.description,
-        permissions: JSON.stringify(data.permissions),
-        createdAt: new Date()
+        permissions: JSON.stringify(data.permissions)
       };
-      return updatedRole;
+      
+      // Make the API request
+      const response = await apiRequest("PATCH", `/api/roles/${data.id}`, roleData);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update role");
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -170,7 +182,8 @@ export default function RoleManagement() {
         description: "Role updated successfully",
       });
       setIsEditDialogOpen(false);
-      // In a real app, this would invalidate the roles query
+      // Invalidate the roles query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
     },
     onError: (error: Error) => {
       toast({
@@ -181,10 +194,16 @@ export default function RoleManagement() {
     },
   });
   
-  // Delete role mutation - would call the API in a real app
+  // Delete role mutation
   const deleteRoleMutation = useMutation({
     mutationFn: async (id: number) => {
-      // This is a mock implementation
+      // Make the API request
+      const response = await apiRequest("DELETE", `/api/roles/${id}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete role");
+      }
+      
       return { id };
     },
     onSuccess: () => {
@@ -192,7 +211,8 @@ export default function RoleManagement() {
         title: "Success",
         description: "Role deleted successfully",
       });
-      // In a real app, this would invalidate the roles query
+      // Invalidate the roles query to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
     },
     onError: (error: Error) => {
       toast({

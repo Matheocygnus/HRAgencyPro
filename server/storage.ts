@@ -1,5 +1,6 @@
 import { 
   users, type User, type InsertUser,
+  roles, type Role, type InsertRole,
   clients, type Client, type InsertClient,
   companies, type Company, type InsertCompany,
   prospects, type Prospect, type InsertProspect,
