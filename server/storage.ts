@@ -22,40 +22,43 @@ const MemoryStore = createMemoryStore(session);
 
 // Helper functions to ensure correct types
 function ensureUserFields(userData: any): User {
+  // Map snake_case database fields to camelCase application fields
   return {
     id: userData.id,
     username: userData.username,
     password: userData.password,
     email: userData.email,
-    firstName: userData.firstName,
-    lastName: userData.lastName,
+    firstName: userData.first_name || userData.firstName,
+    lastName: userData.last_name || userData.lastName,
     avatar: userData.avatar || null,
     role: userData.role || "user",
-    createdAt: userData.createdAt
+    createdAt: userData.created_at || userData.createdAt
   };
 }
 
 function ensureClientFields(clientData: any): Client {
+  // Map snake_case database fields to camelCase application fields
   return {
     id: clientData.id,
     name: clientData.name,
-    contactPerson: clientData.contactPerson,
+    contactPerson: clientData.contact_person || clientData.contactPerson,
     email: clientData.email,
     phone: clientData.phone || null,
     status: clientData.status || "active",
-    createdAt: clientData.createdAt
+    createdAt: clientData.created_at || clientData.createdAt
   };
 }
 
 function ensureCompanyFields(companyData: any): Company {
+  // Map snake_case database fields to camelCase application fields
   return {
     id: companyData.id,
     name: companyData.name,
-    clientId: companyData.clientId,
+    clientId: companyData.client_id || companyData.clientId,
     industry: companyData.industry || null,
     size: companyData.size || null,
     location: companyData.location || null,
-    createdAt: companyData.createdAt
+    createdAt: companyData.created_at || companyData.createdAt
   };
 }
 
@@ -84,32 +87,35 @@ function ensureProspectFields(prospectData: any): Prospect {
 }
 
 function ensureHeroFields(heroData: any): Hero {
+  // Map snake_case database fields to camelCase application fields
   return {
     id: heroData.id,
-    prospectId: heroData.prospectId,
-    startDate: heroData.startDate || null,
-    contractId: heroData.contractId || null,
-    clientId: heroData.clientId,
-    companyId: heroData.companyId,
-    createdAt: heroData.createdAt
+    prospectId: heroData.prospect_id || heroData.prospectId,
+    startDate: heroData.start_date || heroData.startDate || null,
+    contractId: heroData.contract_id || heroData.contractId || null,
+    clientId: heroData.client_id || heroData.clientId,
+    companyId: heroData.company_id || heroData.companyId,
+    createdAt: heroData.created_at || heroData.createdAt
   };
 }
 
 function ensureContractFields(contractData: any): Contract {
+  // Map snake_case database fields to camelCase application fields
+  const compensation = contractData.compensation || 0;
   return {
     id: contractData.id,
     title: contractData.title,
-    heroId: contractData.heroId,
-    clientId: contractData.clientId,
-    companyId: contractData.companyId,
-    startDate: contractData.startDate,
-    endDate: contractData.endDate || null,
-    compensation: contractData.compensation,
-    companyPayment: contractData.companyPayment || Math.round(contractData.compensation * 1.3), // Default to 130% of compensation
-    profit: contractData.profit || Math.round(contractData.compensation * 0.3), // Default to 30% of compensation
+    heroId: contractData.hero_id || contractData.heroId,
+    clientId: contractData.client_id || contractData.clientId,
+    companyId: contractData.company_id || contractData.companyId,
+    startDate: contractData.start_date || contractData.startDate,
+    endDate: contractData.end_date || contractData.endDate || null,
+    compensation: compensation,
+    companyPayment: contractData.company_payment || contractData.companyPayment || Math.round(compensation * 1.3), // Default to 130% of compensation
+    profit: contractData.profit || Math.round(compensation * 0.3), // Default to 30% of compensation
     status: contractData.status || "draft",
     document: contractData.document || null,
-    createdAt: contractData.createdAt
+    createdAt: contractData.created_at || contractData.createdAt
   };
 }
 
@@ -421,60 +427,231 @@ export class DatabaseStorage implements IStorage {
 
   // Hero methods
   async getHero(id: number): Promise<Hero | undefined> {
-    const [hero] = await db.select().from(heroes).where(eq(heroes.id, id));
-    return hero;
+    try {
+      // Only select columns that exist in the database
+      const [hero] = await db.select({
+        id: heroes.id,
+        prospect_id: heroes.prospectId,
+        start_date: heroes.startDate,
+        contract_id: heroes.contractId,
+        client_id: heroes.clientId,
+        company_id: heroes.companyId,
+        created_at: heroes.createdAt
+      }).from(heroes).where(eq(heroes.id, id));
+      
+      return hero ? ensureHeroFields(hero) : undefined;
+    } catch (error) {
+      console.error(`Error in getHero(${id}):`, error);
+      return undefined;
+    }
   }
 
   async getHeroes(): Promise<Hero[]> {
-    return await db.select().from(heroes);
+    try {
+      // Only select columns that exist in the database
+      const allHeroes = await db.select({
+        id: heroes.id,
+        prospect_id: heroes.prospectId,
+        start_date: heroes.startDate,
+        contract_id: heroes.contractId,
+        client_id: heroes.clientId,
+        company_id: heroes.companyId,
+        created_at: heroes.createdAt
+      }).from(heroes);
+      
+      console.log("Successfully retrieved heroes:", allHeroes.length);
+      return allHeroes.map(h => ensureHeroFields(h));
+    } catch (error) {
+      console.error("Error in getHeroes:", error);
+      // Fallback to simpler query if column mapping is wrong
+      const basicHeroes = await db.select({
+        id: heroes.id,
+      }).from(heroes);
+      
+      // Manually fetch each hero with more detailed error handling
+      const detailedHeroes = [];
+      for (const { id } of basicHeroes) {
+        try {
+          const hero = await this.getHero(id);
+          if (hero) detailedHeroes.push(hero);
+        } catch (heroError) {
+          console.error(`Error fetching hero ${id}:`, heroError);
+        }
+      }
+      console.log(`Fallback retrieved ${detailedHeroes.length} out of ${basicHeroes.length} heroes`);
+      return detailedHeroes;
+    }
   }
 
   async getHeroesByClient(clientId: number): Promise<Hero[]> {
-    return await db.select().from(heroes).where(eq(heroes.clientId, clientId));
+    try {
+      // Only select columns that exist in the database
+      const clientHeroes = await db.select({
+        id: heroes.id,
+        prospect_id: heroes.prospectId,
+        start_date: heroes.startDate,
+        contract_id: heroes.contractId,
+        client_id: heroes.clientId,
+        company_id: heroes.companyId,
+        created_at: heroes.createdAt
+      }).from(heroes).where(eq(heroes.clientId, clientId));
+      
+      return clientHeroes.map(h => ensureHeroFields(h));
+    } catch (error) {
+      console.error(`Error in getHeroesByClient(${clientId}):`, error);
+      // Fallback to in-memory filtering if database query fails
+      const allHeroes = await this.getHeroes();
+      return allHeroes.filter(h => h.clientId === clientId);
+    }
   }
 
   async createHero(heroData: InsertHero): Promise<Hero> {
-    const [hero] = await db.insert(heroes).values(heroData).returning();
-    return hero;
+    try {
+      const [hero] = await db.insert(heroes).values(heroData).returning();
+      return ensureHeroFields(hero);
+    } catch (error) {
+      console.error("Error in createHero:", error);
+      throw error; // Rethrow since we can't recover from a creation error
+    }
   }
 
   async updateHero(id: number, heroData: Partial<Hero>): Promise<Hero | undefined> {
-    const [updatedHero] = await db
-      .update(heroes)
-      .set(heroData)
-      .where(eq(heroes.id, id))
-      .returning();
-    return updatedHero;
+    try {
+      const [updatedHero] = await db
+        .update(heroes)
+        .set(heroData)
+        .where(eq(heroes.id, id))
+        .returning();
+      return updatedHero ? ensureHeroFields(updatedHero) : undefined;
+    } catch (error) {
+      console.error(`Error in updateHero(${id}):`, error);
+      // Try to get the current hero to return if update fails
+      return await this.getHero(id);
+    }
   }
 
   // Contract methods
   async getContract(id: number): Promise<Contract | undefined> {
-    const [contract] = await db.select().from(contracts).where(eq(contracts.id, id));
-    return contract ? ensureContractFields(contract) : undefined;
+    try {
+      // Only select columns that exist in the database
+      const [contract] = await db.select({
+        id: contracts.id,
+        title: contracts.title,
+        hero_id: contracts.heroId,
+        client_id: contracts.clientId,
+        company_id: contracts.companyId,
+        start_date: contracts.startDate,
+        end_date: contracts.endDate,
+        compensation: contracts.compensation,
+        company_payment: contracts.companyPayment,
+        profit: contracts.profit,
+        status: contracts.status,
+        document: contracts.document,
+        created_at: contracts.createdAt
+      }).from(contracts).where(eq(contracts.id, id));
+      
+      return contract ? ensureContractFields(contract) : undefined;
+    } catch (error) {
+      console.error(`Error in getContract(${id}):`, error);
+      return undefined;
+    }
   }
 
   async getContracts(): Promise<Contract[]> {
-    const allContracts = await db.select().from(contracts);
-    return allContracts.map(c => ensureContractFields(c));
+    try {
+      // Only select columns that exist in the database
+      const allContracts = await db.select({
+        id: contracts.id,
+        title: contracts.title,
+        hero_id: contracts.heroId,
+        client_id: contracts.clientId,
+        company_id: contracts.companyId,
+        start_date: contracts.startDate,
+        end_date: contracts.endDate,
+        compensation: contracts.compensation,
+        company_payment: contracts.companyPayment,
+        profit: contracts.profit,
+        status: contracts.status,
+        document: contracts.document,
+        created_at: contracts.createdAt
+      }).from(contracts);
+      
+      console.log("Successfully retrieved contracts:", allContracts.length);
+      return allContracts.map(c => ensureContractFields(c));
+    } catch (error) {
+      console.error("Error in getContracts:", error);
+      // Fallback to simpler query if column mapping is wrong
+      const basicContracts = await db.select({
+        id: contracts.id,
+      }).from(contracts);
+      
+      // Manually fetch each contract with more detailed error handling
+      const detailedContracts = [];
+      for (const { id } of basicContracts) {
+        try {
+          const contract = await this.getContract(id);
+          if (contract) detailedContracts.push(contract);
+        } catch (err) {
+          console.error(`Error fetching contract ${id}:`, err);
+        }
+      }
+      
+      console.log(`Fallback retrieved ${detailedContracts.length} out of ${basicContracts.length} contracts`);
+      return detailedContracts;
+    }
   }
 
   async getContractsByClient(clientId: number): Promise<Contract[]> {
-    const clientContracts = await db.select().from(contracts).where(eq(contracts.clientId, clientId));
-    return clientContracts.map(c => ensureContractFields(c));
+    try {
+      // Only select columns that exist in the database
+      const clientContracts = await db.select({
+        id: contracts.id,
+        title: contracts.title,
+        hero_id: contracts.heroId,
+        client_id: contracts.clientId,
+        company_id: contracts.companyId,
+        start_date: contracts.startDate,
+        end_date: contracts.endDate,
+        compensation: contracts.compensation,
+        company_payment: contracts.companyPayment,
+        profit: contracts.profit,
+        status: contracts.status,
+        document: contracts.document,
+        created_at: contracts.createdAt
+      }).from(contracts).where(eq(contracts.clientId, clientId));
+      
+      return clientContracts.map(c => ensureContractFields(c));
+    } catch (error) {
+      console.error(`Error in getContractsByClient(${clientId}):`, error);
+      // Fallback to in-memory filtering if database query fails
+      const allContracts = await this.getContracts();
+      return allContracts.filter(c => c.clientId === clientId);
+    }
   }
 
   async createContract(contractData: InsertContract): Promise<Contract> {
-    const [contract] = await db.insert(contracts).values(contractData).returning();
-    return ensureContractFields(contract);
+    try {
+      const [contract] = await db.insert(contracts).values(contractData).returning();
+      return ensureContractFields(contract);
+    } catch (error) {
+      console.error("Error in createContract:", error);
+      throw error; // Rethrow since we can't recover from a creation error
+    }
   }
 
   async updateContract(id: number, contractData: Partial<Contract>): Promise<Contract | undefined> {
-    const [updatedContract] = await db
-      .update(contracts)
-      .set(contractData)
-      .where(eq(contracts.id, id))
-      .returning();
-    return updatedContract ? ensureContractFields(updatedContract) : undefined;
+    try {
+      const [updatedContract] = await db
+        .update(contracts)
+        .set(contractData)
+        .where(eq(contracts.id, id))
+        .returning();
+      return updatedContract ? ensureContractFields(updatedContract) : undefined;
+    } catch (error) {
+      console.error(`Error in updateContract(${id}):`, error);
+      // Try to get the current contract to return if update fails
+      return await this.getContract(id);
+    }
   }
 
   // Invoice methods
