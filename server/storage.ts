@@ -2359,6 +2359,16 @@ export class MemStorage implements IStorage {
   async getRole(id: number): Promise<Role | undefined> {
     return this.rolesMap.get(id);
   }
+  
+  async getRoleByName(name: string): Promise<Role | undefined> {
+    // Find role by name in memory
+    for (const role of this.rolesMap.values()) {
+      if (role.name === name) {
+        return role;
+      }
+    }
+    return undefined;
+  }
 
   async getRoles(): Promise<Role[]> {
     return Array.from(this.rolesMap.values());

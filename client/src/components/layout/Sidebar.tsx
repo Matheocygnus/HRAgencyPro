@@ -73,28 +73,37 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: {
   const [userData, setUserData] = useState<any>(null);
   const [userPermissions, setUserPermissions] = useState<string[]>([]);
   
-  // Fetch user data
+  // Fetch user data and permissions
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch('/api/user');
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data);
+        // Get user data
+        const userResponse = await fetch('/api/user');
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUserData(userData);
           
-          // Log permissions
-          if (data.role === 'Super Admin') {
-            // Super Admin has all permissions
-            const allPermissions = Object.values(MODULES);
-            setUserPermissions(allPermissions as string[]);
-            console.log("Super Admin permissions:", allPermissions);
+          // Now fetch permissions
+          const permissionsResponse = await fetch('/api/permissions');
+          if (permissionsResponse.ok) {
+            const permissionsData = await permissionsResponse.json();
+            setUserPermissions(permissionsData.permissions || []);
+            console.log(`${userData.role} permissions:`, permissionsData.permissions);
           } else {
-            // In a real app, you'd fetch user's permissions from the API
-            setUserPermissions([MODULES.DASHBOARD]);
+            // Fallback if permissions endpoint fails
+            if (userData.role === 'super_admin') {
+              // Super Admin has all permissions
+              const allPermissions = Object.values(MODULES);
+              setUserPermissions(allPermissions as string[]);
+              console.log("Super Admin permissions (fallback):", allPermissions);
+            } else {
+              // Provide limited permissions
+              setUserPermissions([MODULES.DASHBOARD]);
+            }
           }
         }
       } catch (error) {
-        console.error("Error fetching user data:", error);
+        console.error("Error fetching user data or permissions:", error);
       }
     };
     

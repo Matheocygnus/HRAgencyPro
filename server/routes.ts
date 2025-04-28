@@ -26,17 +26,85 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
 });
 
-// Temporary development middleware - allows all requests without authentication
+// Authentication middleware
 function isAuthenticated(req: Request, res: Response, next: NextFunction) {
-  // In development mode, always grant access
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
   return next();
 }
 
-// Temporary development middleware - allows all role access
+// Role-based access control middleware
 function hasRole(roles: string[]) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    // In development mode, always grant access regardless of role
-    return next();
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const user = req.user;
+    if (!user || !user.role) {
+      return res.status(403).json({ message: "User has no role assigned" });
+    }
+
+    // Check if the user's role is in the allowed roles list
+    if (roles.includes(user.role)) {
+      return next();
+    }
+
+    return res.status(403).json({ message: "Insufficient permissions" });
+  };
+}
+
+// Permission-based access control middleware
+function hasPermission(requiredPermissions: string[]) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const user = req.user;
+    if (!user || !user.role) {
+      return res.status(403).json({ message: "User has no role assigned" });
+    }
+
+    try {
+      // Get user's role from database
+      const role = await storage.getRoleByName(user.role);
+      
+      if (!role) {
+        return res.status(403).json({ message: "Role not found" });
+      }
+      
+      // Parse permissions if they're stored as a string
+      let permissionsArray = role.permissions;
+      if (typeof permissionsArray === 'string') {
+        try {
+          // If it's a JSON string, parse it
+          permissionsArray = JSON.parse(permissionsArray);
+        } catch (e) {
+          // If parsing fails, it's a comma-separated string
+          permissionsArray = permissionsArray.split(',');
+        }
+      }
+      
+      // Check if the user's permissions include all required permissions
+      const hasAllPermissions = requiredPermissions.every(permission => 
+        permissionsArray.includes(permission)
+      );
+      
+      if (hasAllPermissions) {
+        return next();
+      }
+      
+      return res.status(403).json({ 
+        message: "Insufficient permissions",
+        required: requiredPermissions,
+        available: permissionsArray
+      });
+    } catch (error) {
+      console.error("Error checking permissions:", error);
+      return res.status(500).json({ message: "Error checking permissions" });
+    }
   };
 }
 
@@ -71,9 +139,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Return the permissions for the role
+      // Handle both string and array formats for backwards compatibility
+      let permissionsArray = role.permissions;
+      if (typeof permissionsArray === 'string') {
+        try {
+          // If it's a JSON string, parse it
+          permissionsArray = JSON.parse(permissionsArray);
+        } catch (e) {
+          // If parsing fails, it's a comma-separated string
+          permissionsArray = permissionsArray.split(',');
+        }
+      }
+      
       res.json({
         role: role.name,
-        permissions: role.permissions
+        permissions: permissionsArray
       });
     } catch (error) {
       console.error("Error retrieving permissions:", error);
