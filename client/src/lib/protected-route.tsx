@@ -1,5 +1,4 @@
-import { useContext } from "react";
-import { AuthContext } from "@/hooks/use-auth";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
 
@@ -10,49 +9,66 @@ export function ProtectedRoute({
   path: string;
   component: () => React.JSX.Element;
 }) {
-  // Use try/catch to handle potential absence of AuthProvider
-  try {
-    const authContext = useContext(AuthContext);
-    if (!authContext) {
-      // If we're not in an AuthProvider context, redirect to auth page
-      return (
-        <Route path={path}>
-          <Redirect to="/auth" />
-        </Route>
-      );
-    }
+  const [authState, setAuthState] = useState<{ 
+    isLoading: boolean;
+    isAuthenticated: boolean;
+  }>({
+    isLoading: true,
+    isAuthenticated: false
+  });
+  
+  // Check authentication status directly with the API instead of using context
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          setAuthState({
+            isLoading: false,
+            isAuthenticated: true
+          });
+        } else {
+          setAuthState({
+            isLoading: false,
+            isAuthenticated: false
+          });
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        setAuthState({
+          isLoading: false,
+          isAuthenticated: false
+        });
+      }
+    };
     
-    const { user, isLoading } = authContext;
-
-    if (isLoading) {
-      return (
-        <Route path={path}>
-          <div className="flex items-center justify-center min-h-screen">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        </Route>
-      );
-    }
-
-    if (!user) {
-      return (
-        <Route path={path}>
-          <Redirect to="/auth" />
-        </Route>
-      );
-    }
-
+    checkAuth();
+  }, []);
+  
+  // Show loading state
+  if (authState.isLoading) {
     return (
       <Route path={path}>
-        <Component />
-      </Route>
-    );
-  } catch (error) {
-    // In case of any auth-related error, redirect to the auth page
-    return (
-      <Route path={path}>
-        <Redirect to="/auth" />
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       </Route>
     );
   }
+  
+  // Redirect to login if not authenticated
+  if (!authState.isAuthenticated) {
+    return (
+      <Route path={path}>
+        <Redirect to="/login" />
+      </Route>
+    );
+  }
+  
+  // Render the protected component if authenticated
+  return (
+    <Route path={path}>
+      <Component />
+    </Route>
+  );
 }

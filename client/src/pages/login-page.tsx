@@ -55,10 +55,14 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
           description: "Welcome back!",
         });
         
-        // Force a hard navigation to the dashboard
+        // Force a complete page reload and navigation to dashboard
+        console.log("Login successful, redirecting to dashboard...");
+        
+        // Give a bit more time for the toast to be visible
         setTimeout(() => {
-          window.location.href = "/";
-        }, 500); // Short delay to allow toast to be seen
+          // Force a complete browser refresh and navigate to the root URL
+          window.location.replace("/");
+        }, 1000);
       } else {
         const error = await response.json();
         throw new Error(error.message || "Invalid credentials");
