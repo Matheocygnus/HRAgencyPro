@@ -160,6 +160,7 @@ export interface IStorage {
   
   // Role methods
   getRole(id: number): Promise<Role | undefined>;
+  getRoleByName(name: string): Promise<Role | undefined>;
   getRoles(): Promise<Role[]>;
   createRole(roleData: InsertRole): Promise<Role>;
   updateRole(id: number, roleData: Partial<Role>): Promise<Role | undefined>;
@@ -368,6 +369,24 @@ export class DatabaseStorage implements IStorage {
       console.error(`Error in updateRole(${id}):`, error);
       // Try to get the current role to return if update fails
       return await this.getRole(id);
+    }
+  }
+
+  async getRoleByName(name: string): Promise<Role | undefined> {
+    try {
+      // Only select columns that exist in the database
+      const [role] = await db.select({
+        id: roles.id,
+        name: roles.name,
+        description: roles.description,
+        permissions: roles.permissions,
+        created_at: roles.createdAt
+      }).from(roles).where(eq(roles.name, name));
+      
+      return role ? ensureRoleFields(role) : undefined;
+    } catch (error) {
+      console.error(`Error in getRoleByName(${name}):`, error);
+      return undefined;
     }
   }
 

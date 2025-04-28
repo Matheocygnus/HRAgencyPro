@@ -50,6 +50,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   setupAuth(app);
   
+  // Get user's permissions based on their role
+  app.get("/api/permissions", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
+    try {
+      const user = req.user;
+      
+      if (!user || !user.role) {
+        return res.status(400).json({ message: "User has no role assigned" });
+      }
+      
+      // Get user's role from the database
+      const role = await storage.getRoleByName(user.role);
+      
+      if (!role) {
+        return res.status(404).json({ message: "Role not found" });
+      }
+      
+      // Return the permissions for the role
+      res.json({
+        role: role.name,
+        permissions: role.permissions
+      });
+    } catch (error) {
+      console.error("Error retrieving permissions:", error);
+      res.status(500).json({ message: "Failed to retrieve permissions" });
+    }
+  });
+  
   // Client routes
   app.get("/api/clients", isAuthenticated, async (req, res) => {
     try {
