@@ -118,12 +118,12 @@ function Router() {
         <ProspectDashboard />
       </Route>
       
-      {/* Login and auth pages redirect to dashboard in dev mode */}
+      {/* Login page */}
       <Route path="/login">
-        <Dashboard />
+        <LoginPage />
       </Route>
       <Route path="/auth">
-        <Dashboard />
+        <LoginPage />
       </Route>
       
       {/* Original dev page as fallback */}

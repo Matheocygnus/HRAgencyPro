@@ -43,7 +43,7 @@ export default function LoginPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: "brunov@catalystgrowthsystems.com",
-      password: "Rollo001",
+      password: "AAbb+1234",
     },
   });
 
