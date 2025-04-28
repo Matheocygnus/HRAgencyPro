@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
-import { useMockAuth, MODULES } from "@/hooks/use-mock-auth";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
   Building2, 
@@ -19,6 +20,26 @@ import {
   UserCircle,
   UserCog
 } from "lucide-react";
+
+// Define modules
+export const MODULES = {
+  DASHBOARD: "dashboard",
+  PROSPECTS: "prospects",
+  INTERVIEWS: "interviews",
+  HEROES: "heroes",
+  HERO_DETAIL: "hero_detail",
+  COMPANIES: "companies",
+  COMPANY_DETAIL: "company_detail",
+  CONTRACTS: "contracts",
+  INVOICES: "invoices",
+  USER_MANAGEMENT: "user_management",
+  JOB_MANAGEMENT: "job_management",
+  SYSTEM_SETTINGS: "settings",
+  ROLE_MANAGEMENT: "role_management",
+  CLIENT_DASHBOARD: "client_dashboard",
+  HERO_DASHBOARD: "hero_dashboard",
+  PROSPECT_DASHBOARD: "prospect_dashboard"
+};
 
 // Define sidebar navigation items with their corresponding permission modules
 const navigation = [
@@ -48,7 +69,42 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: {
   setMobileOpen: (open: boolean) => void;
 }) {
   const [location] = useLocation();
-  const { user, hasPermission } = useMockAuth();
+  const { toast } = useToast();
+  const [userData, setUserData] = useState<any>(null);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+          
+          // Log permissions
+          if (data.role === 'Super Admin') {
+            // Super Admin has all permissions
+            const allPermissions = Object.values(MODULES);
+            setUserPermissions(allPermissions as string[]);
+            console.log("Super Admin permissions:", allPermissions);
+          } else {
+            // In a real app, you'd fetch user's permissions from the API
+            setUserPermissions([MODULES.DASHBOARD]);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
+  
+  // Helper to check permissions
+  const hasPermission = (module: string) => {
+    return userPermissions.includes(module);
+  };
   
   // Filter navigation items based on user permissions
   const mainNavigation = navigation.filter(item => hasPermission(item.module));
@@ -107,7 +163,32 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: {
           <div className="border-t border-blue-800 my-4 mx-4"></div>
           <div className="px-3">
             <button 
-              onClick={handleNavClick}
+              onClick={async () => {
+                handleNavClick();
+                try {
+                  const response = await fetch('/api/logout', {
+                    method: 'POST',
+                  });
+                  
+                  if (response.ok) {
+                    toast({
+                      title: "Logged out successfully",
+                      description: "You have been signed out.",
+                    });
+                    
+                    // Force reload and redirect to login
+                    window.location.href = "/login";
+                  } else {
+                    throw new Error("Logout failed");
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Logout failed",
+                    description: "Please try again",
+                    variant: "destructive"
+                  });
+                }
+              }}
               className="flex items-center px-3 py-2.5 rounded-md text-sm font-medium text-blue-100 hover:text-white hover:bg-blue-700 w-full"
             >
               <LogOut className="w-5 h-5 mr-3" />

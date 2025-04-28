@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useRoute } from "wouter";
-import { useMockAuth } from "@/hooks/use-mock-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import { Bell, Search, User, Settings, LogOut, Menu } from "lucide-react";
 
 // Map of route to header title
@@ -24,20 +24,64 @@ export default function Header({
 }: { 
   setMobileOpen: (open: boolean) => void;
 }) {
-  const [location] = useLocation();
-  const { user, logoutMutation } = useMockAuth();
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [userData, setUserData] = useState<any>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pageTitle = routeTitles[location] || "Not Found";
   
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
+  
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Logged out successfully",
+          description: "You have been signed out.",
+        });
+        
+        // Force reload and redirect to login
+        window.location.href = "/login";
+      } else {
+        throw new Error("Logout failed");
+      }
+    } catch (error) {
+      toast({
+        title: "Logout failed",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
   
-  const userInitials = user ? 
-    `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : 
+  const userInitials = userData ? 
+    `${userData.firstName?.charAt(0) || ''}${userData.lastName?.charAt(0) || ''}` : 
     "?";
   
-  const userFullName = user ? 
-    `${user.firstName} ${user.lastName}` : 
+  const userFullName = userData ? 
+    `${userData.firstName || ''} ${userData.lastName || ''}` : 
     "User";
 
   return (
@@ -76,17 +120,17 @@ export default function Header({
             <DropdownMenuTrigger asChild>
               <button className="flex items-center">
                 <Avatar className="w-8 h-8 ring-2 ring-slate-100">
-                  <AvatarImage src={user?.avatar || undefined} />
+                  <AvatarImage src={userData?.avatar || undefined} />
                   <AvatarFallback className="bg-primary text-white font-medium">{userInitials}</AvatarFallback>
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <div className="px-3 py-2 text-sm font-medium">
-                {user && (
+                {userData && (
                   <div className="flex flex-col">
                     <span className="font-semibold">{userFullName}</span>
-                    <span className="text-xs text-slate-500 mt-0.5">{user.email}</span>
+                    <span className="text-xs text-slate-500 mt-0.5">{userData.email}</span>
                   </div>
                 )}
               </div>
@@ -103,7 +147,7 @@ export default function Header({
               <DropdownMenuItem 
                 className="cursor-pointer text-red-600" 
                 onClick={handleLogout}
-                disabled={logoutMutation.isPending}
+                disabled={isLoggingOut}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Sign out</span>
