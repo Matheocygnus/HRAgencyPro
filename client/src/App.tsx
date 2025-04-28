@@ -29,102 +29,60 @@ import RoleManagement from "@/pages/role-management";
 function Router() {
   return (
     <Switch>
-      {/* Main dashboard - accessible from / */}
-      <Route path="/">
-        <Dashboard />
-      </Route>
-      <Route path="/dashboard">
-        <Dashboard />
-      </Route>
-      
-      {/* Specialized pages with appropriate visualizations */}
-      <Route path="/prospects">
-        <Prospects />
-      </Route>
-      <Route path="/clients">
-        <Clients />
-      </Route>
-      <Route path="/heroes">
-        <Heroes />
-      </Route>
-      {/* Hero detail page */}
-      <Route path="/hero/:id">
-        <HeroDetail />
-      </Route>
-      {/* Company detail page */}
-      <Route path="/company/:id">
-        <CompanyDetail />
-      </Route>
-      <Route path="/contracts">
-        <Contracts />
-      </Route>
-      <Route path="/invoices">
-        <Invoices />
-      </Route>
-      <Route path="/interviews">
-        <Interviews />
-      </Route>
-      <Route path="/users">
-        <UserManagement />
-      </Route>
-      <Route path="/user-management">
-        <UserManagement />
-      </Route>
-      <Route path="/settings">
-        <Settings />
-      </Route>
-      
-      {/* Role management */}
-      <Route path="/roles">
-        <RoleManagement />
-      </Route>
-      
-      {/* Job management */}
-      <Route path="/jobs">
-        <JobManagement />
-      </Route>
-      <Route path="/job-management">
-        <JobManagement />
-      </Route>
-      
-      {/* Job requests */}
-      <Route path="/job-requests">
-        {typeof JobRequests === 'function' ? <JobRequests /> : <div>Loading...</div>}
-      </Route>
-      
-      {/* Job request management (admin) */}
-      <Route path="/job-request-management">
-        {typeof JobRequestManagement === 'function' ? <JobRequestManagement /> : <div>Loading...</div>}
-      </Route>
-      
-      {/* Job applications page */}
-      <Route path="/job-applications">
-        <JobApplications />
-      </Route>
-      
-      {/* Public careers page */}
-      <Route path="/careers">
-        <Careers />
-      </Route>
-      
-      {/* Role-specific dashboard pages */}
-      <Route path="/client-dashboard">
-        <ClientDashboard />
-      </Route>
-      <Route path="/hero-dashboard">
-        <HeroDashboard />
-      </Route>
-      <Route path="/prospect-dashboard">
-        <ProspectDashboard />
-      </Route>
-      
-      {/* Login page */}
+      {/* Authentication page */}
       <Route path="/login">
         <LoginPage />
       </Route>
       <Route path="/auth">
         <LoginPage />
       </Route>
+      
+      {/* Public careers page */}
+      <Route path="/careers">
+        <Careers />
+      </Route>
+
+      {/* Protected routes - require authentication */}
+      
+      {/* Main dashboard - accessible from / */}
+      <ProtectedRoute path="/" component={Dashboard} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      
+      {/* Specialized pages with appropriate visualizations */}
+      <ProtectedRoute path="/prospects" component={Prospects} />
+      <ProtectedRoute path="/clients" component={Clients} />
+      <ProtectedRoute path="/heroes" component={Heroes} />
+      <ProtectedRoute path="/hero/:id" component={HeroDetail} />
+      <ProtectedRoute path="/company/:id" component={CompanyDetail} />
+      <ProtectedRoute path="/contracts" component={Contracts} />
+      <ProtectedRoute path="/invoices" component={Invoices} />
+      <ProtectedRoute path="/interviews" component={Interviews} />
+      <ProtectedRoute path="/users" component={UserManagement} />
+      <ProtectedRoute path="/user-management" component={UserManagement} />
+      <ProtectedRoute path="/settings" component={Settings} />
+      
+      {/* Role management */}
+      <ProtectedRoute path="/roles" component={RoleManagement} />
+      
+      {/* Job management */}
+      <ProtectedRoute path="/jobs" component={JobManagement} />
+      <ProtectedRoute path="/job-management" component={JobManagement} />
+      
+      {/* Job requests */}
+      <ProtectedRoute path="/job-requests" component={JobRequests} />
+      
+      {/* Job request management (admin) */}
+      <ProtectedRoute path="/job-request-management" component={JobRequestManagement} />
+      
+      {/* Job applications page */}
+      <ProtectedRoute path="/job-applications" component={JobApplications} />
+      
+      {/* Role-specific dashboard pages */}
+      <ProtectedRoute path="/client-dashboard" component={ClientDashboard} />
+      <ProtectedRoute path="/hero-dashboard" component={HeroDashboard} />
+      <ProtectedRoute path="/prospect-dashboard" component={ProspectDashboard} />
+      
+      {/* Development page */}
       
       {/* Original dev page as fallback */}
       <Route path="/dev">

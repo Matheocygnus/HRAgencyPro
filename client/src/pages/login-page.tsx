@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 
 const formSchema = z.object({
   username: z.string().min(2, "Email must be at least 2 characters").email("Please enter a valid email"),
@@ -19,9 +19,9 @@ export default function LoginPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
 
-  // Check if the user is already logged in
+  // Check if user is already logged in
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -29,13 +29,11 @@ export default function LoginPage() {
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
-          // If already logged in, will redirect based on the state update
         }
       } catch (error) {
         console.error("Error checking auth status:", error);
       }
     };
-    
     checkAuth();
   }, []);
 
@@ -64,21 +62,20 @@ export default function LoginPage() {
         queryClient.setQueryData(["/api/user"], userData);
         
         toast({
-          title: "Logged in successfully",
+          title: "Login successful",
           description: "Welcome back!",
         });
         
-        // Set user and navigate
-        setUser(userData);
+        // Navigate to dashboard
         navigate("/");
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Invalid credentials");
+        const error = await response.json();
+        throw new Error(error.message || "Invalid credentials");
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid credentials",
+        description: error.message || "Invalid credentials",
         variant: "destructive",
       });
     } finally {

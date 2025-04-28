@@ -44,7 +44,7 @@ import { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, MoreHorizontal, Plus, Search, UserPlus } from "lucide-react";
-import { useMockAuth } from "@/hooks/use-mock-auth";
+import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -76,7 +76,7 @@ const userCreateSchema = z.object({
 
 export default function UserManagementPage() {
   const { toast } = useToast();
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState(false);
   const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
@@ -85,8 +85,8 @@ export default function UserManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
 
-  // Check if user has permission to manage users
-  const isSuperAdmin = useMockAuth().hasPermission("user_management");
+  // Check if user has permission to manage users based on role
+  const isSuperAdmin = user && user.role === "super_admin";
 
   // Fetch users
   const { data: users = [], isLoading, refetch } = useQuery<User[]>({

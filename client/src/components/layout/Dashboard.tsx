@@ -1,20 +1,20 @@
 import { ReactNode, useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { useMockAuth } from "@/hooks/use-mock-auth";
+import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard({ children }: { children: ReactNode }) {
   const [isMobileOpen, setMobileOpen] = useState(false);
-  const { user } = useMockAuth();
+  const { user } = useAuth();
   
   // Function to get role display
   const getRoleBadge = () => {
-    if (!user || !user.role) return null;
+    if (!user) return null;
     
     return (
       <Badge className="bg-primary hover:bg-primary font-medium px-3 py-1">
-        {user.role.name}
+        {user.role || 'User'}
       </Badge>
     );
   };
