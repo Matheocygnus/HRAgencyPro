@@ -71,12 +71,27 @@ export default function LoginPage() {
           description: "Welcome back!",
         });
         
-        // Force set the user and redirect directly
+        // Force set the user
         setUser(userData);
-        console.log("Navigating to dashboard...");
+        console.log("User logged in:", userData);
+        
+        // Determine which dashboard to send the user to based on their role
+        let dashboardPath = "/";
+        
+        if (userData.role === "super_admin" || userData.role === "admin") {
+          dashboardPath = "/"; // Admin dashboard
+        } else if (userData.role === "client") {
+          dashboardPath = "/client-dashboard";
+        } else if (userData.role === "hero") {
+          dashboardPath = "/hero-dashboard";
+        } else if (userData.role === "prospect") {
+          dashboardPath = "/prospect-dashboard";
+        }
+        
+        console.log("Redirecting to dashboard:", dashboardPath);
         
         // Use window.location for a hard redirect
-        window.location.href = "/";
+        window.location.href = dashboardPath;
       } else {
         let errorMessage = "Invalid credentials";
         try {
@@ -100,9 +115,22 @@ export default function LoginPage() {
     }
   }
 
-  // If already logged in, redirect to dashboard
+  // If already logged in, redirect to appropriate dashboard
   if (user) {
-    return <Redirect to="/" />;
+    // Determine which dashboard to send the user to based on their role
+    let dashboardPath = "/";
+    
+    if (user.role === "super_admin" || user.role === "admin") {
+      dashboardPath = "/"; // Admin dashboard
+    } else if (user.role === "client") {
+      dashboardPath = "/client-dashboard";
+    } else if (user.role === "hero") {
+      dashboardPath = "/hero-dashboard";
+    } else if (user.role === "prospect") {
+      dashboardPath = "/prospect-dashboard";
+    }
+    
+    return <Redirect to={dashboardPath} />;
   }
 
   return (

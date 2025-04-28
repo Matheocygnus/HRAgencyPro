@@ -50,6 +50,56 @@ export function ProtectedRoute({
       </Route>
     );
   }
+  
+  // Check if the user has the appropriate role for this route
+  // For role-specific dashboards, redirect based on user role
+  if (path === "/" && user.role !== "super_admin" && user.role !== "admin") {
+    // Redirect non-admins to their appropriate dashboards
+    if (user.role === "client") {
+      return (
+        <Route path={path}>
+          <Redirect to="/client-dashboard" />
+        </Route>
+      );
+    } else if (user.role === "hero") {
+      return (
+        <Route path={path}>
+          <Redirect to="/hero-dashboard" />
+        </Route>
+      );
+    } else if (user.role === "prospect") {
+      return (
+        <Route path={path}>
+          <Redirect to="/prospect-dashboard" />
+        </Route>
+      );
+    }
+  } 
+  
+  // For role-specific dashboards, check user role
+  if (path === "/client-dashboard" && user.role !== "client" && user.role !== "super_admin" && user.role !== "admin") {
+    return (
+      <Route path={path}>
+        <Redirect to="/" />
+      </Route>
+    );
+  }
+  
+  if (path === "/hero-dashboard" && user.role !== "hero" && user.role !== "super_admin" && user.role !== "admin") {
+    return (
+      <Route path={path}>
+        <Redirect to="/" />
+      </Route>
+    );
+  }
+  
+  if (path === "/prospect-dashboard" && user.role !== "prospect" && user.role !== "super_admin" && user.role !== "admin") {
+    return (
+      <Route path={path}>
+        <Redirect to="/" />
+      </Route>
+    );
+  }
 
   // If authenticated, render the protected component
   return (
