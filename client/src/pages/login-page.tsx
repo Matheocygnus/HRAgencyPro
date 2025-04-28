@@ -48,7 +48,6 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      console.log("Attempting login with:", values.username);
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
@@ -57,12 +56,8 @@ export default function LoginPage() {
         body: JSON.stringify(values),
       });
       
-      console.log("Login response status:", response.status);
-      
       if (response.ok) {
         const userData = await response.json();
-        console.log("Login successful, user data:", userData);
-        
         // Update cache for react-query
         queryClient.setQueryData(["/api/user"], userData);
         
@@ -71,40 +66,13 @@ export default function LoginPage() {
           description: "Welcome back!",
         });
         
-        // Force set the user
-        setUser(userData);
-        console.log("User logged in:", userData);
-        
-        // Determine which dashboard to send the user to based on their role
-        let dashboardPath = "/";
-        
-        if (userData.role === "super_admin" || userData.role === "admin") {
-          dashboardPath = "/dashboard"; // Admin dashboard
-        } else if (userData.role === "client") {
-          dashboardPath = "/client-dashboard";
-        } else if (userData.role === "hero") {
-          dashboardPath = "/hero-dashboard";
-        } else if (userData.role === "prospect") {
-          dashboardPath = "/prospect-dashboard";
-        }
-        
-        console.log("Redirecting to dashboard:", dashboardPath);
-        
-        // Use window.location for a hard redirect
-        window.location.href = dashboardPath;
+        // Navigate to dashboard
+        navigate("/");
       } else {
-        let errorMessage = "Invalid credentials";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          console.error("Failed to parse error response:", e);
-        }
-        
-        throw new Error(errorMessage);
+        const error = await response.json();
+        throw new Error(error.message || "Invalid credentials");
       }
     } catch (error: any) {
-      console.error("Login error:", error);
       toast({
         title: "Login failed",
         description: error.message || "Invalid credentials",
@@ -115,22 +83,9 @@ export default function LoginPage() {
     }
   }
 
-  // If already logged in, redirect to appropriate dashboard
+  // If already logged in, redirect to dashboard
   if (user) {
-    // Determine which dashboard to send the user to based on their role
-    let dashboardPath = "/";
-    
-    if (user.role === "super_admin" || user.role === "admin") {
-      dashboardPath = "/dashboard"; // Admin dashboard
-    } else if (user.role === "client") {
-      dashboardPath = "/client-dashboard";
-    } else if (user.role === "hero") {
-      dashboardPath = "/hero-dashboard";
-    } else if (user.role === "prospect") {
-      dashboardPath = "/prospect-dashboard";
-    }
-    
-    return <Redirect to={dashboardPath} />;
+    return <Redirect to="/" />;
   }
 
   return (

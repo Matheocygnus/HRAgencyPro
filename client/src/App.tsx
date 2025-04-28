@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { ProtectedRoute } from "./lib/protected-route";
 import NotFound from "@/pages/not-found";
@@ -29,7 +29,7 @@ import RoleManagement from "@/pages/role-management";
 function Router() {
   return (
     <Switch>
-      {/* Authentication page as first route */}
+      {/* Authentication page */}
       <Route path="/login">
         <LoginPage />
       </Route>
@@ -42,12 +42,10 @@ function Router() {
         <Careers />
       </Route>
 
-      {/* Root redirects to login */}
-      <Route path="/">
-        <Redirect to="/login" />
-      </Route>
-      
       {/* Protected routes - require authentication */}
+      
+      {/* Main dashboard - accessible from / */}
+      <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       
       {/* Specialized pages with appropriate visualizations */}

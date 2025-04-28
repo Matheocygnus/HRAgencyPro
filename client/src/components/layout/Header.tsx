@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useState } from "react";
+import { useLocation, useRoute } from "wouter";
+import { useMockAuth } from "@/hooks/use-mock-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Bell, Search, User, Settings, LogOut, Menu } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 
 // Map of route to header title
 const routeTitles: Record<string, string> = {
@@ -16,7 +16,6 @@ const routeTitles: Record<string, string> = {
   "/contracts": "Contracts",
   "/invoices": "Invoices",
   "/users": "User Management",
-  "/user-management": "User Management",
   "/settings": "System Settings",
 };
 
@@ -26,63 +25,19 @@ export default function Header({
   setMobileOpen: (open: boolean) => void;
 }) {
   const [location] = useLocation();
-  const { toast } = useToast();
-  const [user, setUser] = useState<any>(null);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { user, logoutMutation } = useMockAuth();
   const pageTitle = routeTitles[location] || "Not Found";
   
-  // Fetch user on component mount
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const response = await fetch('/api/user');
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    }
-    
-    fetchUser();
-  }, []);
-  
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      const response = await fetch('/api/logout', {
-        method: 'POST',
-      });
-      
-      if (response.ok) {
-        toast({
-          title: "Logged out successfully",
-          description: "You have been logged out of your account"
-        });
-        
-        // Hard redirect to login page
-        window.location.href = '/login';
-      } else {
-        throw new Error('Logout failed');
-      }
-    } catch (error) {
-      toast({
-        title: "Logout failed",
-        description: "There was a problem logging out. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoggingOut(false);
-    }
+  const handleLogout = () => {
+    logoutMutation.mutate();
   };
   
   const userInitials = user ? 
-    `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}` : 
+    `${user.firstName.charAt(0)}${user.lastName.charAt(0)}` : 
     "?";
   
   const userFullName = user ? 
-    `${user.firstName || ''} ${user.lastName || ''}` : 
+    `${user.firstName} ${user.lastName}` : 
     "User";
 
   return (
@@ -148,10 +103,10 @@ export default function Header({
               <DropdownMenuItem 
                 className="cursor-pointer text-red-600" 
                 onClick={handleLogout}
-                disabled={isLoggingOut}
+                disabled={logoutMutation.isPending}
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>{isLoggingOut ? "Signing out..." : "Sign out"}</span>
+                <span>Sign out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
