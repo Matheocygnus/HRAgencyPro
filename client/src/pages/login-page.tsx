@@ -48,6 +48,7 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
+      console.log("Attempting login with:", values.username);
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
@@ -56,8 +57,12 @@ export default function LoginPage() {
         body: JSON.stringify(values),
       });
       
+      console.log("Login response status:", response.status);
+      
       if (response.ok) {
         const userData = await response.json();
+        console.log("Login successful, user data:", userData);
+        
         // Update cache for react-query
         queryClient.setQueryData(["/api/user"], userData);
         
@@ -66,13 +71,25 @@ export default function LoginPage() {
           description: "Welcome back!",
         });
         
-        // Navigate to dashboard
-        navigate("/");
+        // Force set the user and redirect directly
+        setUser(userData);
+        console.log("Navigating to dashboard...");
+        
+        // Use window.location for a hard redirect
+        window.location.href = "/";
       } else {
-        const error = await response.json();
-        throw new Error(error.message || "Invalid credentials");
+        let errorMessage = "Invalid credentials";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          console.error("Failed to parse error response:", e);
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
         description: error.message || "Invalid credentials",
