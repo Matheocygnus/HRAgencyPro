@@ -40,7 +40,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { User } from "@shared/schema";
+import { User, Role } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, MoreHorizontal, Plus, Search, UserPlus } from "lucide-react";
@@ -59,19 +59,15 @@ const ROLE_BADGES: Record<string, { label: string, variant: "default" | "outline
   "recruiter": { label: "Recruiter", variant: "default" }
 };
 
-// Role update schema
-const roleUpdateSchema = z.object({
-  role: z.enum(["super_admin", "admin", "recruiter"])
-});
-
-// User creation schema
-const userCreateSchema = z.object({
+// Role update and user creation schemas will be defined after roles are fetched
+// to support dynamic role validation
+const baseUserCreateSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   username: z.string().min(1, "Username is required").email("Username must be a valid email"),
   email: z.string().min(1, "Email is required").email("Must be a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["super_admin", "admin", "recruiter"])
+  role: z.string().min(1, "Role is required")
 });
 
 export default function UserManagementPage() {
@@ -86,6 +82,14 @@ export default function UserManagementPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [hasPermission, setHasPermission] = useState(false);
   const [permissionsLoading, setPermissionsLoading] = useState(true);
+  
+  // Fetch all roles from the database
+  const { data: roles = [] } = useQuery<Role[]>({
+    queryKey: ["/api/roles"],
+  });
+  
+  // Create a default role value for the forms
+  const defaultRole = roles.length > 0 ? roles[0].name : "";
 
   // Fetch current user data
   useEffect(() => {
@@ -306,9 +310,11 @@ export default function UserManagementPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="super_admin">Super Admin</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="recruiter">Recruiter</SelectItem>
+                {roles.map((role) => (
+                  <SelectItem key={role.id} value={role.name}>
+                    {role.name.charAt(0).toUpperCase() + role.name.slice(1).replace(/_/g, ' ')}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -511,9 +517,11 @@ export default function UserManagementPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="super_admin">Super Admin</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="recruiter">Recruiter</SelectItem>
+                        {roles.map((role) => (
+                          <SelectItem key={role.id} value={role.name}>
+                            {role.name.charAt(0).toUpperCase() + role.name.slice(1).replace(/_/g, ' ')}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -611,9 +619,11 @@ export default function UserManagementPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="super_admin">Super Admin</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="recruiter">Recruiter</SelectItem>
+                          {roles.map((role) => (
+                            <SelectItem key={role.id} value={role.name}>
+                              {role.name.charAt(0).toUpperCase() + role.name.slice(1).replace(/_/g, ' ')}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
