@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import remoteheroLogo from "@/assets/remotehero_logo.jpg";
 import { 
   LayoutDashboard, 
   Building2, 
@@ -137,8 +138,8 @@ export default function Sidebar({ isMobileOpen, setMobileOpen }: {
       )}
       <aside className={sidebarClasses}>
         <div className="p-4 border-b border-blue-800 flex items-center">
-          <div className="bg-white rounded-lg p-1.5 mr-3 flex items-center justify-center w-10 h-10">
-            <span className="text-primary font-bold text-lg">RH</span>
+          <div className="bg-white rounded-lg p-1 mr-3 flex items-center justify-center w-10 h-10">
+            <img src={remoteheroLogo} alt="Remote Hero" className="w-8 h-8 object-contain" />
           </div>
           <div className="text-white font-semibold text-lg">Remote <span className="font-bold">Hero</span></div>
         </div>
