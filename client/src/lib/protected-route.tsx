@@ -50,56 +50,54 @@ export function ProtectedRoute({
         // Step 2: Get user data
         const userData = await userResponse.json();
         
-        // Step 3: If a permission is required, fetch permissions
-        if (requiredPermission) {
-          try {
-            const permissionsResponse = await fetch("/api/permissions");
+        // Step 3: Always fetch permissions for redirection and permission checks
+        try {
+          const permissionsResponse = await fetch("/api/permissions");
+          
+          if (permissionsResponse.ok) {
+            const permissionsData = await permissionsResponse.json();
+            const userPermissions = permissionsData.permissions || [];
             
-            if (permissionsResponse.ok) {
-              const permissionsData = await permissionsResponse.json();
-              const userPermissions = permissionsData.permissions || [];
+            // Check if user has the required permission (if any)
+            const hasRequiredPermission = !requiredPermission || 
+              userPermissions.includes(requiredPermission);
               
-              // Check if user has the required permission
-              const hasRequiredPermission = !requiredPermission || 
-                userPermissions.includes(requiredPermission);
-                
-              setAuthState({
-                isLoading: false,
-                isAuthenticated: true,
-                user: userData,
-                permissions: userPermissions,
-                hasPermission: hasRequiredPermission,
-              });
-            } else {
-              // Fallback to super_admin check if permissions endpoint fails
-              const hasPermission = userData.role === "super_admin" || false;
-              
-              setAuthState({
-                isLoading: false,
-                isAuthenticated: true,
-                user: userData,
-                permissions: [],
-                hasPermission,
-              });
-            }
-          } catch (error) {
-            console.error("Error fetching permissions:", error);
             setAuthState({
               isLoading: false,
               isAuthenticated: true,
               user: userData,
-              permissions: [],
-              hasPermission: false,
+              permissions: userPermissions,
+              hasPermission: hasRequiredPermission,
+            });
+          } else {
+            // Fallback to super_admin check if permissions endpoint fails
+            const hasPermission = userData.role === "super_admin" || !requiredPermission;
+            
+            // If super_admin, they have all permissions by default
+            const defaultPermissions = userData.role === "super_admin" ? 
+              ["dashboard", "client_dashboard", "hero_dashboard", "prospect_dashboard"] : [];
+            
+            setAuthState({
+              isLoading: false,
+              isAuthenticated: true,
+              user: userData,
+              permissions: defaultPermissions,
+              hasPermission,
             });
           }
-        } else {
-          // No permission required, just authenticate
+        } catch (error) {
+          console.error("Error fetching permissions:", error);
+          
+          // Fallback permissions for error case
+          const defaultPermissions = userData.role === "super_admin" ? 
+            ["dashboard", "client_dashboard", "hero_dashboard", "prospect_dashboard"] : [];
+            
           setAuthState({
             isLoading: false,
             isAuthenticated: true,
             user: userData,
-            permissions: [],
-            hasPermission: true,
+            permissions: defaultPermissions,
+            hasPermission: userData.role === "super_admin" || !requiredPermission,
           });
         }
       } catch (error) {
@@ -136,9 +134,57 @@ export function ProtectedRoute({
       </Route>
     );
   }
+  
+  // If this is the main path, check for role-specific dashboards
+  if (path === "/" && authState.user) {
+    // Get the user's role and permissions
+    const userRole = authState.user.role;
+    const permissions = authState.permissions || [];
+    
+    // Determine the correct dashboard based on permissions and role
+    let dashboardPath = "/dashboard"; // Default dashboard
+    
+    // Role-based dashboard mapping
+    if (userRole === "client" && permissions.includes("client_dashboard")) {
+      dashboardPath = "/client-dashboard";
+    } else if (userRole === "hero" && permissions.includes("hero_dashboard")) {
+      dashboardPath = "/hero-dashboard";
+    } else if (userRole === "prospect" && permissions.includes("prospect_dashboard")) {
+      dashboardPath = "/prospect-dashboard";
+    } else if (permissions.includes("dashboard")) {
+      // Use admin dashboard if they have permission
+      dashboardPath = "/dashboard";
+    }
+    
+    // Redirect to the appropriate dashboard
+    return (
+      <Route path={path}>
+        <Redirect to={dashboardPath} />
+      </Route>
+    );
+  }
 
   // Show permission denied screen if authenticated but lacks permission
   if (!authState.hasPermission) {
+    // Get user's role and permissions to suggest an appropriate redirection
+    const userRole = authState.user?.role || '';
+    const permissions = authState.permissions || [];
+    
+    // Determine which dashboard they should go to instead
+    let suggestedPath = "/";
+    let suggestedText = "Go to Dashboard";
+    
+    if (userRole === "client" && permissions.includes("client_dashboard")) {
+      suggestedPath = "/client-dashboard";
+      suggestedText = "Go to Client Dashboard";
+    } else if (userRole === "hero" && permissions.includes("hero_dashboard")) {
+      suggestedPath = "/hero-dashboard";
+      suggestedText = "Go to Hero Dashboard";
+    } else if (userRole === "prospect" && permissions.includes("prospect_dashboard")) {
+      suggestedPath = "/prospect-dashboard";
+      suggestedText = "Go to Prospect Dashboard";
+    }
+    
     return (
       <Route path={path}>
         <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -146,11 +192,13 @@ export function ProtectedRoute({
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Access Denied</AlertTitle>
             <AlertDescription>
-              You don't have permission to access this page. Please contact your administrator if you believe this is an error.
+              <p>You don't have permission to access {path}.</p>
+              <p className="mt-2">Your role is: <strong>{userRole}</strong></p>
+              <p className="mt-1">If you believe this is an error, please contact your administrator.</p>
             </AlertDescription>
           </Alert>
-          <Button onClick={() => window.location.href = "/"}>
-            Go to Dashboard
+          <Button onClick={() => window.location.href = suggestedPath}>
+            {suggestedText}
           </Button>
         </div>
       </Route>
