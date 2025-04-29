@@ -134,11 +134,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user's role from the database
       const role = await storage.getRoleByName(user.role);
       
+      // Define default permissions based on the user's role name (case-insensitive)
+      const userRoleLower = user.role.toLowerCase();
+      
+      // If role doesn't exist in the database, assign default permissions
       if (!role) {
-        return res.status(404).json({ message: "Role not found" });
+        console.log(`Role not found in database: ${user.role}, assigning default permissions`);
+        
+        let defaultPermissions: string[] = ["dashboard"]; // Base dashboard for unknown roles
+        
+        // Define role-specific default permissions
+        if (userRoleLower === "client") {
+          defaultPermissions = ["client_dashboard"];
+        } else if (userRoleLower === "recruiter") {
+          defaultPermissions = ["dashboard", "prospects", "interviews"];
+        } else if (userRoleLower === "hero") {
+          defaultPermissions = ["hero_dashboard"];
+        } else if (userRoleLower === "prospect") {
+          defaultPermissions = ["prospect_dashboard"];
+        }
+        
+        // Return default permissions
+        return res.json({
+          role: user.role,
+          permissions: defaultPermissions
+        });
       }
       
-      // Return the permissions for the role
+      // Return the permissions for the role from database
       // Handle both string and array formats for backwards compatibility
       let permissionsArray = role.permissions;
       if (typeof permissionsArray === 'string') {
@@ -157,7 +180,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error retrieving permissions:", error);
-      res.status(500).json({ message: "Failed to retrieve permissions" });
+      
+      // Return empty permissions array to avoid breaking the client
+      res.json({
+        role: req.user.role || "unknown",
+        permissions: ["dashboard"] // Provide a basic default permission
+      });
     }
   });
   
