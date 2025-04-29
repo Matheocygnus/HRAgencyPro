@@ -59,14 +59,18 @@ const ROLE_BADGES: Record<string, { label: string, variant: "default" | "outline
   "recruiter": { label: "Recruiter", variant: "default" }
 };
 
-// Role update and user creation schemas will be defined after roles are fetched
-// to support dynamic role validation
-const baseUserCreateSchema = z.object({
+// Simple schema for user creation and role updates
+const userCreateSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   username: z.string().min(1, "Username is required").email("Username must be a valid email"),
   email: z.string().min(1, "Email is required").email("Must be a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  role: z.string().min(1, "Role is required")
+});
+
+// Role update schema
+const roleUpdateSchema = z.object({
   role: z.string().min(1, "Role is required")
 });
 
@@ -169,7 +173,7 @@ export default function UserManagementPage() {
       username: "",
       email: "",
       password: "",
-      role: "recruiter",
+      role: defaultRole || "recruiter",
     },
   });
   
@@ -207,7 +211,7 @@ export default function UserManagementPage() {
   const roleForm = useForm<z.infer<typeof roleUpdateSchema>>({
     resolver: zodResolver(roleUpdateSchema),
     defaultValues: {
-      role: "recruiter",
+      role: defaultRole || "recruiter",
     },
   });
 
@@ -215,7 +219,7 @@ export default function UserManagementPage() {
   useEffect(() => {
     if (selectedUser) {
       roleForm.reset({
-        role: selectedUser.role as "super_admin" | "admin" | "recruiter",
+        role: selectedUser.role,
       });
     }
   }, [selectedUser, roleForm]);
@@ -419,7 +423,7 @@ export default function UserManagementPage() {
               username: "",
               email: "",
               password: "",
-              role: "recruiter",
+              role: defaultRole || "recruiter",
             });
           }
           setIsAddDialogOpen(open);
