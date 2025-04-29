@@ -138,21 +138,30 @@ export function ProtectedRoute({
   // If this is the main path, check for role-specific dashboards
   if (path === "/" && authState.user) {
     // Get the user's role and permissions
-    const userRole = authState.user.role;
+    const roleFromServer = authState.user.role || '';
     const permissions = authState.permissions || [];
+    
+    // Normalize the role to lowercase for consistent comparison
+    const userRole = roleFromServer.toLowerCase();
     
     // Determine the correct dashboard based on permissions and role
     let dashboardPath = "/dashboard"; // Default dashboard
     
-    // Role-based dashboard mapping
+    console.log("User role:", roleFromServer, "Normalized role:", userRole, "Permissions:", permissions);
+    
+    // Role-based dashboard mapping with normalized role comparison
     if (userRole === "client" && permissions.includes("client_dashboard")) {
+      console.log("Redirecting to client dashboard");
       dashboardPath = "/client-dashboard";
     } else if (userRole === "hero" && permissions.includes("hero_dashboard")) {
+      console.log("Redirecting to hero dashboard");
       dashboardPath = "/hero-dashboard";
     } else if (userRole === "prospect" && permissions.includes("prospect_dashboard")) {
+      console.log("Redirecting to prospect dashboard");
       dashboardPath = "/prospect-dashboard";
     } else if (permissions.includes("dashboard")) {
       // Use admin dashboard if they have permission
+      console.log("Redirecting to admin dashboard");
       dashboardPath = "/dashboard";
     }
     
@@ -167,8 +176,11 @@ export function ProtectedRoute({
   // Show permission denied screen if authenticated but lacks permission
   if (!authState.hasPermission) {
     // Get user's role and permissions to suggest an appropriate redirection
-    const userRole = authState.user?.role || '';
+    const roleFromServer = authState.user?.role || '';
     const permissions = authState.permissions || [];
+    
+    // Normalize the role to lowercase for consistent comparison
+    const userRole = roleFromServer.toLowerCase();
     
     // Determine which dashboard they should go to instead
     let suggestedPath = "/";
@@ -193,7 +205,7 @@ export function ProtectedRoute({
             <AlertTitle>Access Denied</AlertTitle>
             <AlertDescription>
               <p>You don't have permission to access {path}.</p>
-              <p className="mt-2">Your role is: <strong>{userRole}</strong></p>
+              <p className="mt-2">Your role is: <strong>{roleFromServer}</strong></p>
               <p className="mt-1">If you believe this is an error, please contact your administrator.</p>
             </AlertDescription>
           </Alert>
