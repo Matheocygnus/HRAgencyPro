@@ -65,6 +65,14 @@ const MODULE_GROUPS = [
       { id: MODULES.ROLE_MANAGEMENT, label: "Role Management", description: "Define user roles and permissions" },
       { id: MODULES.SYSTEM_SETTINGS, label: "System Settings", description: "Configure system parameters" }
     ]
+  },
+  {
+    name: "Specialized Dashboards",
+    modules: [
+      { id: MODULES.CLIENT_DASHBOARD, label: "Client Dashboard", description: "Access client-specific dashboard view" },
+      { id: MODULES.HERO_DASHBOARD, label: "Hero Dashboard", description: "Access talent-specific dashboard view" },
+      { id: MODULES.PROSPECT_DASHBOARD, label: "Prospect Dashboard", description: "Access prospect-specific dashboard view" }
+    ]
   }
 ];
 
