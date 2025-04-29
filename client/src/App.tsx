@@ -25,7 +25,6 @@ import ClientDashboard from "@/pages/client-dashboard";
 import HeroDashboard from "@/pages/hero-dashboard";
 import ProspectDashboard from "@/pages/prospect-dashboard";
 import RoleManagement from "@/pages/role-management";
-import AirtableImport from "@/pages/airtable-import";
 
 function Router() {
   return (
@@ -64,9 +63,6 @@ function Router() {
       
       {/* Role management */}
       <ProtectedRoute path="/roles" component={RoleManagement} requiredPermission="role_management" />
-      
-      {/* Airtable integration */}
-      <ProtectedRoute path="/airtable-import" component={AirtableImport} requiredPermission="user_management" />
       
       {/* Job management */}
       <ProtectedRoute path="/jobs" component={JobManagement} requiredPermission="job_management" />
