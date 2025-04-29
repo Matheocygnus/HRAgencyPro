@@ -53,11 +53,20 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 
 // Role badge configuration
-const ROLE_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | null }> = {
-  "super_admin": { label: "Super Admin", variant: "destructive" },
-  "admin": { label: "Admin", variant: "secondary" },
-  "recruiter": { label: "Recruiter", variant: "default" }
+const ROLE_BADGES: Record<string, { variant: "default" | "outline" | "secondary" | "destructive" | null }> = {
+  "super_admin": { variant: "destructive" },
+  "admin": { variant: "secondary" },
+  "recruiter": { variant: "default" },
+  "client": { variant: "outline" },
+  "hero": { variant: "outline" },
+  "prospect": { variant: "outline" }
 };
+
+// Format role name for display (capitalize, replace underscores with spaces)
+function formatRoleName(role: string): string {
+  // Handle case for role names that are already capitalized
+  return role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, ' ');
+}
 
 // Simple schema for user creation and role updates
 const userCreateSchema = z.object({
@@ -370,7 +379,7 @@ export default function UserManagementPage() {
                           <TableCell>{userData.username}</TableCell>
                           <TableCell>{userData.email}</TableCell>
                           <TableCell>
-                            <Badge variant={roleConfig.variant}>{roleConfig.label}</Badge>
+                            <Badge variant={roleConfig?.variant || "default"}>{formatRoleName(userData.role)}</Badge>
                           </TableCell>
                           <TableCell>
                             {new Date(userData.createdAt).toLocaleDateString()}
@@ -575,7 +584,7 @@ export default function UserManagementPage() {
                     </div>
                   </div>
                   <p><span className="font-semibold">Username:</span> {createdUser.username}</p>
-                  <p><span className="font-semibold">Role:</span> {createdUser.role}</p>
+                  <p><span className="font-semibold">Role:</span> {formatRoleName(createdUser.role)}</p>
                 </div>
               )}
             </AlertDialogDescription>
