@@ -241,7 +241,7 @@ export default function Prospects() {
           </div>
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="max-h-[calc(100vh-200px)]">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -251,7 +251,7 @@ export default function Prospects() {
               No prospects found. Add a new prospect to get started.
             </div>
           ) : (
-            <div className="overflow-x-auto pb-4">
+            <div className="overflow-x-auto pb-4 h-full">
               <DragDropContext onDragEnd={handleDragEnd}>
                 <div className="flex gap-4 min-w-[1200px]">
                   {COLUMNS.map(column => (
@@ -262,11 +262,11 @@ export default function Prospects() {
                           ref={provided.innerRef}
                           {...provided.droppableProps}
                         >
-                          <div className={`${column.color} p-2 rounded-t-md`}>
+                          <div className={`${column.color} p-2 rounded-t-md sticky top-0 z-10`}>
                             <h3 className="font-semibold text-sm">{column.title}</h3>
                           </div>
                           <div 
-                            className={`p-2 rounded-b-md min-h-[400px] ${
+                            className={`p-2 rounded-b-md h-[calc(100vh-280px)] overflow-y-auto ${
                               snapshot.isDraggingOver ? 'bg-blue-50' : column.color.replace('100', '50')
                             }`}
                           >
