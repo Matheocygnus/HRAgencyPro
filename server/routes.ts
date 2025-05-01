@@ -192,10 +192,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Client routes
   app.get("/api/clients", isAuthenticated, async (req, res) => {
     try {
-      const clients = await storage.getClients();
-      res.json(clients);
+      // If user has Client role, only return their own client
+      if (req.user.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        res.json(client ? [client] : []);
+      } else {
+        // For admin roles, return all clients
+        const clients = await storage.getClients();
+        res.json(clients);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve clients" });
+    }
+  });
+  
+  // Get current user's client data
+  app.get("/api/user/client", isAuthenticated, async (req, res) => {
+    try {
+      if (req.user.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (!client) {
+          return res.status(404).json({ message: "No client found for this user" });
+        }
+        res.json(client);
+      } else {
+        res.status(403).json({ message: "Only client users can access this endpoint" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve client information" });
     }
   });
   
@@ -243,6 +267,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Company routes
   app.get("/api/companies", isAuthenticated, async (req, res) => {
     try {
+      // If user has Client role, only return their companies
+      if (req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (client) {
+          const companies = await storage.getCompaniesByClient(client.id);
+          return res.json(companies);
+        }
+        return res.json([]);
+      }
+      // For admin roles, return all companies
       const companies = await storage.getCompanies();
       res.json(companies);
     } catch (error) {

@@ -2436,6 +2436,11 @@ export class MemStorage implements IStorage {
     return this.clientsMap.get(id);
   }
   
+  async getClientByEmail(email: string): Promise<Client | undefined> {
+    const allClients = Array.from(this.clientsMap.values());
+    return allClients.find(client => client.email === email);
+  }
+  
   async getClients(): Promise<Client[]> {
     return Array.from(this.clientsMap.values());
   }

@@ -44,17 +44,24 @@ export default function ClientDashboard() {
     );
   }
 
-  // Fetch all clients (in a real app, you'd fetch just the client assigned to this user)
+  // Fetch only the client associated with the current user
   const { data: clients = [], isLoading: isLoadingClients } = useQuery<Client[]>({
     queryKey: ['/api/clients'],
   });
 
-  // Set first client as default if none selected
+  // Get current user's client directly from API
+  const { data: userClient } = useQuery<Client>({
+    queryKey: ['/api/user/client'],
+  });
+
+  // Set client based on user's associated client or first client as fallback
   useEffect(() => {
-    if (clients.length > 0 && !selectedClient) {
+    if (userClient) {
+      setSelectedClient(userClient);
+    } else if (clients.length > 0 && !selectedClient) {
       setSelectedClient(clients[0]);
     }
-  }, [clients, selectedClient]);
+  }, [clients, userClient, selectedClient]);
 
   // Fetch companies for the selected client
   const { data: companies = [], isLoading: isLoadingCompanies } = useQuery<Company[]>({
@@ -117,24 +124,6 @@ export default function ClientDashboard() {
     <Dashboard>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Client Dashboard</h1>
-        {clients.length > 1 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Select Client:</span>
-            <select 
-              className="border rounded p-1 text-sm"
-              value={selectedClient?.id}
-              onChange={(e) => {
-                const clientId = parseInt(e.target.value);
-                const client = clients.find(c => c.id === clientId);
-                setSelectedClient(client || null);
-              }}
-            >
-              {clients.map(client => (
-                <option key={client.id} value={client.id}>{client.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
       </div>
 
       {selectedClient && (
