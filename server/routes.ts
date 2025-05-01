@@ -298,7 +298,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/clients/:clientId/companies", isAuthenticated, async (req, res) => {
     try {
-      const companies = await storage.getCompaniesByClient(parseInt(req.params.clientId));
+      const clientId = parseInt(req.params.clientId);
+      
+      // If user is a client, make sure they can only access their own companies
+      if (req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (!client || client.id !== clientId) {
+          return res.status(403).json({ message: "You do not have permission to access this client's companies" });
+        }
+      }
+      
+      const companies = await storage.getCompaniesByClient(clientId);
       res.json(companies);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve companies for client" });
@@ -338,6 +348,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/prospects", isAuthenticated, async (req, res) => {
     try {
       console.log("Getting prospects...");
+      
+      // If user has Client role, only return their prospects
+      if (req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (client) {
+          const prospects = await storage.getProspectsByClient(client.id);
+          console.log("Client prospects retrieved:", prospects.length);
+          return res.json(prospects);
+        }
+        return res.json([]);
+      }
+      
+      // For admin roles, return all prospects
       const prospects = await storage.getProspects();
       console.log("Prospects retrieved:", prospects ? "success" : "null or undefined");
       res.json(prospects);
@@ -400,6 +423,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Hero routes
   app.get("/api/heroes", isAuthenticated, async (req, res) => {
     try {
+      // If user has Client role, only return their heroes
+      if (req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (client) {
+          const heroes = await storage.getHeroesByClient(client.id);
+          return res.json(heroes);
+        }
+        return res.json([]);
+      }
+      
+      // For admin roles, return all heroes
       const heroes = await storage.getHeroes();
       res.json(heroes);
     } catch (error) {
@@ -409,10 +443,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/heroes/:id", isAuthenticated, async (req, res) => {
     try {
-      const hero = await storage.getHero(parseInt(req.params.id));
+      const heroId = parseInt(req.params.id);
+      const hero = await storage.getHero(heroId);
+      
       if (!hero) {
         return res.status(404).json({ message: "Hero not found" });
       }
+      
+      // If user is a client, make sure they can only access their own heroes
+      if (req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (!client || hero.clientId !== client.id) {
+          return res.status(403).json({ message: "You do not have permission to access this hero" });
+        }
+      }
+      
       res.json(hero);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve hero" });
@@ -422,7 +467,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all heroes for a specific client
   app.get("/api/clients/:clientId/heroes", isAuthenticated, async (req, res) => {
     try {
-      const heroes = await storage.getHeroesByClient(parseInt(req.params.clientId));
+      const clientId = parseInt(req.params.clientId);
+      
+      // If user is a client, make sure they can only access their own heroes
+      if (req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (!client || client.id !== clientId) {
+          return res.status(403).json({ message: "You do not have permission to access this client's heroes" });
+        }
+      }
+      
+      const heroes = await storage.getHeroesByClient(clientId);
       
       // Enhance heroes with prospect data
       const enhancedHeroes = await Promise.all(
@@ -469,6 +524,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Contract routes
   app.get("/api/contracts", isAuthenticated, async (req, res) => {
     try {
+      // If user has Client role, only return their contracts
+      if (req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (client) {
+          const contracts = await storage.getContractsByClient(client.id);
+          return res.json(contracts);
+        }
+        return res.json([]);
+      }
+      
+      // For admin roles, return all contracts
       const contracts = await storage.getContracts();
       res.json(contracts);
     } catch (error) {
@@ -478,10 +544,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/contracts/:id", isAuthenticated, async (req, res) => {
     try {
-      const contract = await storage.getContract(parseInt(req.params.id));
+      const contractId = parseInt(req.params.id);
+      const contract = await storage.getContract(contractId);
+      
       if (!contract) {
         return res.status(404).json({ message: "Contract not found" });
       }
+      
+      // If user is a client, make sure they can only access their own contracts
+      if (req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (!client || contract.clientId !== client.id) {
+          return res.status(403).json({ message: "You do not have permission to access this contract" });
+        }
+      }
+      
       res.json(contract);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve contract" });
@@ -491,7 +568,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all contracts for a specific client
   app.get("/api/clients/:clientId/contracts", isAuthenticated, async (req, res) => {
     try {
-      const contracts = await storage.getContractsByClient(parseInt(req.params.clientId));
+      const clientId = parseInt(req.params.clientId);
+      
+      // If user is a client, make sure they can only access their own contracts
+      if (req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (!client || client.id !== clientId) {
+          return res.status(403).json({ message: "You do not have permission to access this client's contracts" });
+        }
+      }
+      
+      const contracts = await storage.getContractsByClient(clientId);
       res.json(contracts);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve contracts for client" });
@@ -628,6 +715,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/invoices", isAuthenticated, async (req, res) => {
     try {
       console.log("Getting invoices...");
+      
+      // If user has Client role, only return their invoices
+      if (req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (client) {
+          const invoices = await storage.getInvoicesByClient(client.id);
+          console.log("Client invoices retrieved:", invoices.length);
+          return res.json(invoices);
+        }
+        return res.json([]);
+      }
+      
+      // For admin roles, return all invoices
       const invoices = await storage.getInvoices();
       console.log("Invoices retrieved:", invoices ? "success" : "null or undefined");
       res.json(invoices);
@@ -639,10 +739,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/invoices/:id", isAuthenticated, async (req, res) => {
     try {
-      const invoice = await storage.getInvoice(parseInt(req.params.id));
+      const invoiceId = parseInt(req.params.id);
+      const invoice = await storage.getInvoice(invoiceId);
+      
       if (!invoice) {
         return res.status(404).json({ message: "Invoice not found" });
       }
+      
+      // If user is a client, make sure they can only access their own invoices
+      if (req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (!client || invoice.clientId !== client.id) {
+          return res.status(403).json({ message: "You do not have permission to access this invoice" });
+        }
+      }
+      
       res.json(invoice);
     } catch (error) {
       res.status(500).json({ message: "Failed to retrieve invoice" });
