@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, hashPassword } from "./auth";
+import { setupAuth, hashPassword, comparePasswords } from "./auth";
 import { 
   insertClientSchema, 
   insertCompanySchema, 
@@ -882,6 +882,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userWithoutPassword);
     } catch (error) {
       res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+  
+  // User profile update - allows users to update their own profile
+  app.patch("/api/users/:id", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Ensure user can only update their own profile unless they're an admin
+      if (req.user!.id !== userId && !["super_admin", "admin"].includes(req.user!.role.toLowerCase())) {
+        return res.status(403).json({ message: "You are not authorized to update this user's profile" });
+      }
+      
+      // Only allow updating specific fields
+      const { firstName, lastName, avatar } = req.body;
+      const updateData: any = {};
+      
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (avatar !== undefined) updateData.avatar = avatar;
+      
+      const updatedUser = await storage.updateUser(userId, updateData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Remove sensitive data
+      const { password, ...userWithoutPassword } = updatedUser;
+      
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update user profile" });
+    }
+  });
+  
+  // Change password endpoint
+  app.post("/api/users/:id/change-password", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Ensure user can only change their own password
+      if (req.user!.id !== userId) {
+        return res.status(403).json({ message: "You are not authorized to change this user's password" });
+      }
+      
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current password and new password are required" });
+      }
+      
+      // Get the user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Validate current password
+      const isValid = await comparePasswords(currentPassword, user.password);
+      
+      if (!isValid) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+      
+      // Update with new hashed password
+      const hashedPassword = await hashPassword(newPassword);
+      const updatedUser = await storage.updateUser(userId, { password: hashedPassword });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ message: "Failed to change password" });
     }
   });
   
