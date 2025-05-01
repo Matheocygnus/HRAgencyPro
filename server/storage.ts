@@ -168,6 +168,7 @@ export interface IStorage {
   
   // Client methods
   getClient(id: number): Promise<Client | undefined>;
+  getClientByEmail(email: string): Promise<Client | undefined>;
   getClients(): Promise<Client[]>;
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: number, client: Partial<Client>): Promise<Client | undefined>;
@@ -422,6 +423,26 @@ export class DatabaseStorage implements IStorage {
       return client ? ensureClientFields(client) : undefined;
     } catch (error) {
       console.error(`Error in getClient(${id}):`, error);
+      return undefined;
+    }
+  }
+  
+  async getClientByEmail(email: string): Promise<Client | undefined> {
+    try {
+      // Select the client with matching email
+      const [client] = await db.select({
+        id: clients.id,
+        name: clients.name,
+        contact_person: clients.contactPerson,
+        email: clients.email,
+        phone: clients.phone,
+        status: clients.status,
+        created_at: clients.createdAt
+      }).from(clients).where(eq(clients.email, email));
+      
+      return client ? ensureClientFields(client) : undefined;
+    } catch (error) {
+      console.error(`Error in getClientByEmail(${email}):`, error);
       return undefined;
     }
   }
