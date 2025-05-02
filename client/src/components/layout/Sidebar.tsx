@@ -18,6 +18,7 @@ import {
   ClipboardCheck,
   Shield,
   Building,
+  Database,
   UserCircle,
   UserCog
 } from "lucide-react";
@@ -26,6 +27,7 @@ import {
 export const MODULES = {
   DASHBOARD: "dashboard",
   PROSPECTS: "prospects",
+  PROSPECT_DATABASE: "prospects", // Using same permission as prospects
   INTERVIEWS: "interviews",
   HEROES: "heroes",
   HERO_DETAIL: "hero_detail",
@@ -47,6 +49,7 @@ const navigation = [
   // Admin dashboards
   { name: "Admin Dashboard", path: "/", icon: LayoutDashboard, module: MODULES.DASHBOARD },
   { name: "Prospects", path: "/prospects", icon: UserRound, module: MODULES.PROSPECTS },
+  { name: "Prospect Database", path: "/prospect-database", icon: Database, module: MODULES.PROSPECT_DATABASE },
   { name: "Interviews", path: "/interviews", icon: FileCheck, module: MODULES.INTERVIEWS },
   { name: "Heroes", path: "/heroes", icon: Medal, module: MODULES.HEROES },
   { name: "Companies", path: "/clients", icon: Building2, module: MODULES.COMPANIES },
