@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Plus, Users, FileSignature, Briefcase } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Client, Company, Hero, Contract, JobRequest, Prospect } from "@shared/schema";
 
 // Extended Hero type with prospect data
@@ -33,6 +33,14 @@ export default function ClientDashboard() {
   const { hasPermission } = useMockAuth();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [location] = useLocation();
+  
+  // Extract client ID from URL query parameters
+  const getClientIdFromUrl = (): number | null => {
+    const searchParams = new URLSearchParams(location.split('?')[1] || '');
+    const id = searchParams.get('id');
+    return id ? parseInt(id, 10) : null;
+  };
 
   // Check if user has permission to access this page
   if (!hasPermission(MODULES.CLIENT_DASHBOARD)) {
@@ -64,14 +72,28 @@ export default function ClientDashboard() {
     queryKey: ['/api/user/client'],
   });
 
-  // Set client based on user's associated client or first client as fallback
+  // Set client based on URL query param, user's associated client, or first client as fallback
   useEffect(() => {
+    // First priority: Get client ID from URL if present (for super admin)
+    const urlClientId = getClientIdFromUrl();
+    
+    if (urlClientId && clients.length > 0) {
+      const clientFromUrl = clients.find(c => c.id === urlClientId);
+      if (clientFromUrl) {
+        setSelectedClient(clientFromUrl);
+        return;
+      }
+    }
+    
+    // Second priority: Use user's own client if available
     if (userClient) {
       setSelectedClient(userClient);
-    } else if (clients.length > 0 && !selectedClient) {
+    } 
+    // Fallback: Use first client in the list
+    else if (clients.length > 0 && !selectedClient) {
       setSelectedClient(clients[0]);
     }
-  }, [clients, userClient, selectedClient]);
+  }, [clients, userClient, location, getClientIdFromUrl]);
 
   // Fetch companies for the selected client
   const { data: companies = [], isLoading: isLoadingCompanies } = useQuery<Company[]>({
