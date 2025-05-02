@@ -236,7 +236,8 @@ export default function HeroesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem>View Details</DropdownMenuItem>
-                              {isAdmin && !hero.contractId && (
+                              {console.log("Hero contract status:", hero.id, hero.contractId, isAdmin)}
+                              {isAdmin && (
                                 <DropdownMenuItem onClick={() => handleCreateContract(hero)}>
                                   Create Contract
                                 </DropdownMenuItem>
