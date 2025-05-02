@@ -37,8 +37,17 @@ export default function ClientDashboard() {
   
   // Extract client ID from URL query parameters
   const getClientIdFromUrl = (): number | null => {
+    // Try URL from wouter location first
     const searchParams = new URLSearchParams(location.split('?')[1] || '');
-    const id = searchParams.get('id');
+    let id = searchParams.get('id');
+    
+    // If not found in wouter location, check window.location.search (for direct navigation)
+    if (!id && window.location.search) {
+      const windowParams = new URLSearchParams(window.location.search);
+      id = windowParams.get('id');
+    }
+    
+    console.log('URL Client ID:', id);
     return id ? parseInt(id, 10) : null;
   };
 
@@ -76,10 +85,15 @@ export default function ClientDashboard() {
   useEffect(() => {
     // First priority: Get client ID from URL if present (for super admin)
     const urlClientId = getClientIdFromUrl();
+    console.log('Clients available:', clients);
     
     if (urlClientId && clients.length > 0) {
+      console.log('Looking for client with ID:', urlClientId);
       const clientFromUrl = clients.find(c => c.id === urlClientId);
+      console.log('Found client from URL:', clientFromUrl);
+      
       if (clientFromUrl) {
+        console.log('Setting selected client from URL');
         setSelectedClient(clientFromUrl);
         return;
       }
@@ -87,13 +101,15 @@ export default function ClientDashboard() {
     
     // Second priority: Use user's own client if available
     if (userClient) {
+      console.log('Setting selected client from user client');
       setSelectedClient(userClient);
     } 
     // Fallback: Use first client in the list
     else if (clients.length > 0 && !selectedClient) {
+      console.log('Setting selected client from client list fallback');
       setSelectedClient(clients[0]);
     }
-  }, [clients, userClient, location, getClientIdFromUrl]);
+  }, [clients, userClient, location]);
 
   // Fetch companies for the selected client
   const { data: companies = [], isLoading: isLoadingCompanies } = useQuery<Company[]>({

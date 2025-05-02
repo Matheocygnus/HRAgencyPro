@@ -64,6 +64,16 @@ export default function Dashboard({ children }: { children: ReactNode }) {
           if (response.ok) {
             const data = await response.json();
             setClients(data);
+            
+            // Check if there's an id parameter in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const clientId = urlParams.get('id');
+            
+            // Set the selected client ID from URL if it's present
+            if (clientId) {
+              setSelectedClientId(clientId);
+              console.log('Preselected client ID from URL:', clientId);
+            }
           }
         } catch (error) {
           console.error("Error fetching clients:", error);
@@ -79,7 +89,11 @@ export default function Dashboard({ children }: { children: ReactNode }) {
   // Handle client selection change
   const handleClientChange = (clientId: string) => {
     setSelectedClientId(clientId);
-    setLocation(`/client-dashboard?id=${clientId}`);
+    console.log('Selected client ID:', clientId);
+    
+    // Use window.location.href for a full page navigation with query parameters
+    // This ensures the parameters are properly passed and the page fully reloads
+    window.location.href = `/client-dashboard?id=${clientId}`;
   };
   
   // Function to get role display
