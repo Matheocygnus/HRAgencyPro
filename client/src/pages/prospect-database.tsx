@@ -106,25 +106,20 @@ export default function ProspectDatabase() {
         heroes = await heroesResponse.json();
       }
       
-      // Create a set of hired prospect IDs
-      const hiredProspectIds = new Set(heroes.map(hero => hero.prospectId));
-      
-      // Filter out prospects that are hired (based on status or presence in heroes)
+      // Just manually filter out explicitly hired or terminated prospects
       const nonHiredProspects = data.filter((prospect: any) => {
-        // Check if this prospect is in the heroes table
-        if (hiredProspectIds.has(prospect.id)) {
-          return false;
-        }
+        // Check if status is defined
+        if (!prospect.status) return true;
         
         // Normalize status for comparison
-        const status = (prospect.status || '').toString().toLowerCase();
+        const status = prospect.status.toString().toLowerCase();
         
-        // Filter out any status that indicates hired or terminated
-        return !(
-          status.includes('hired') || 
-          status.includes('terminated') || 
-          status.includes('signing contract')
-        );
+        // Basic filtering - only remove prospects that say "hired" or "terminated"
+        const isExplicitlyHired = 
+          status === 'hired' || 
+          status === 'terminated';
+          
+        return !isExplicitlyHired;
       });
       
       // Process and enhance prospects with additional information
@@ -356,7 +351,7 @@ export default function ProspectDatabase() {
                               // Format status for display - capitalize words
                               const displayStatus = prospect.status
                                 ?.split(' ')
-                                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
                                 .join(' ') || "Unknown";
                                 
                               return (
