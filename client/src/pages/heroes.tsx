@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
 import { useMockAuth } from "@/hooks/use-mock-auth";
+import CreateContractDialog from "@/components/dialogs/CreateContractDialog";
 
 export default function HeroesPage() {
   const { toast } = useToast();
