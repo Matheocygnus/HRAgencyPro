@@ -51,6 +51,7 @@ function Router() {
       
       {/* Specialized pages with appropriate visualizations */}
       <ProtectedRoute path="/prospects" component={Prospects} requiredPermission="prospects" />
+      <ProtectedRoute path="/prospect-database" component={ProspectDatabase} requiredPermission="prospects" />
       <ProtectedRoute path="/clients" component={Clients} requiredPermission="companies" />
       <ProtectedRoute path="/heroes" component={Heroes} requiredPermission="heroes" />
       <ProtectedRoute path="/hero/:id" component={HeroDetail} requiredPermission="hero_detail" />

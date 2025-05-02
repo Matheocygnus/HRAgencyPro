@@ -46,15 +46,57 @@ export default function ProspectDatabase() {
         
         const data = await response.json();
         
-        // Filter out any prospect that has been hired (has a hero record)
-        const nonHiredProspects = data.filter((prospect: any) => 
-          !prospect.isHired && 
-          prospect.status !== 'hired' && 
-          prospect.status !== 'Hired'
-        );
+        // Check for heroes data to identify hired prospects
+        const heroesResponse = await fetch('/api/heroes');
+        let heroes: any[] = [];
+        if (heroesResponse.ok) {
+          heroes = await heroesResponse.json();
+        }
         
-        setProspects(nonHiredProspects);
-        setFilteredProspects(nonHiredProspects);
+        // Create a set of hired prospect IDs
+        const hiredProspectIds = new Set(heroes.map(hero => hero.prospectId));
+        
+        // Filter out prospects that are hired (based on status or presence in heroes)
+        const nonHiredProspects = data.filter((prospect: any) => {
+          // Check if this prospect is in the heroes table
+          if (hiredProspectIds.has(prospect.id)) {
+            return false;
+          }
+          
+          // Normalize status for comparison
+          const status = prospect.status?.toLowerCase() || '';
+          
+          // Filter out any status that indicates hired
+          return !(
+            status === 'hired' || 
+            status === 'terminated' || 
+            status.includes('hired') ||
+            status.includes('signing contract')
+          );
+        });
+        
+        // Add location field based on data in notes if available
+        const enhancedProspects = nonHiredProspects.map((prospect: any) => {
+          // Try to extract location from notes or existing location field
+          if (!prospect.location && prospect.notes) {
+            const notesLower = prospect.notes.toLowerCase();
+            
+            // Common countries/regions in the dataset
+            const locationKeywords = ['argentina', 'brasil', 'brazil', 'colombia', 'bolivia', 'gmt'];
+            for (const keyword of locationKeywords) {
+              if (notesLower.includes(keyword)) {
+                prospect.location = keyword.charAt(0).toUpperCase() + keyword.slice(1);
+                break;
+              }
+            }
+          }
+          
+          return prospect;
+        });
+        
+        console.log(`Found ${enhancedProspects.length} non-hired prospects out of ${data.length} total`);
+        setProspects(enhancedProspects);
+        setFilteredProspects(enhancedProspects);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching prospects:', error);
@@ -76,7 +118,11 @@ export default function ProspectDatabase() {
     
     // Apply status filter
     if (statusFilter !== 'all') {
-      result = result.filter(prospect => prospect.status === statusFilter);
+      result = result.filter(prospect => {
+        // Normalize status case for consistent filtering
+        const normalizedStatus = prospect.status?.toLowerCase() || '';
+        return normalizedStatus === statusFilter.toLowerCase();
+      });
     }
     
     // Apply search filter
@@ -87,7 +133,9 @@ export default function ProspectDatabase() {
         (prospect.lastName && prospect.lastName.toLowerCase().includes(term)) ||
         (prospect.email && prospect.email.toLowerCase().includes(term)) ||
         (prospect.position && prospect.position.toLowerCase().includes(term)) ||
-        (prospect.skills && prospect.skills.toLowerCase().includes(term))
+        (prospect.skills && prospect.skills.toLowerCase().includes(term)) ||
+        (prospect.location && prospect.location.toLowerCase().includes(term)) ||
+        (prospect.notes && prospect.notes.toLowerCase().includes(term))
       );
     }
     
@@ -140,11 +188,16 @@ export default function ProspectDatabase() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="screening">Screening</SelectItem>
+                  <SelectItem value="screen call done">Screen Call Done</SelectItem>
                   <SelectItem value="sourcing">Sourcing</SelectItem>
                   <SelectItem value="interviewing">Interviewing</SelectItem>
-                  <SelectItem value="offer">Offer</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                  <SelectItem value="not_interested">Not Interested</SelectItem>
+                  <SelectItem value="not selected">Not Selected</SelectItem>
+                  <SelectItem value="not interested">Not Interested</SelectItem>
+                  <SelectItem value="not screened">Not Screened</SelectItem>
+                  <SelectItem value="in database">In Database</SelectItem>
+                  <SelectItem value="sending to client">Sending to Client</SelectItem>
+                  <SelectItem value="others better">Others Better</SelectItem>
+                  <SelectItem value="no show">No Show</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -206,14 +259,36 @@ export default function ProspectDatabase() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={
-                            prospect.status === 'interviewing' ? 'default' :
-                            prospect.status === 'offer' ? 'secondary' :
-                            prospect.status === 'rejected' ? 'destructive' :
-                            'outline'
-                          }>
-                            {prospect.status?.charAt(0).toUpperCase() + prospect.status?.slice(1) || "Unknown"}
-                          </Badge>
+                          {(() => {
+                            // Normalize status for comparison
+                            const normalizedStatus = prospect.status?.toLowerCase() || '';
+                            
+                            // Determine badge variant based on status
+                            let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
+                            
+                            if (normalizedStatus.includes('screen') || normalizedStatus.includes('interviewing')) {
+                              variant = 'default'; // Blue
+                            } else if (normalizedStatus.includes('sending to client') || normalizedStatus.includes('database')) {
+                              variant = 'secondary'; // Gray
+                            } else if (normalizedStatus.includes('not selected') || 
+                                      normalizedStatus.includes('not interested') || 
+                                      normalizedStatus.includes('no show') ||
+                                      normalizedStatus.includes('others better')) {
+                              variant = 'destructive'; // Red
+                            }
+                            
+                            // Format status for display - capitalize words
+                            const displayStatus = prospect.status
+                              ?.split(' ')
+                              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                              .join(' ') || "Unknown";
+                              
+                            return (
+                              <Badge variant={variant}>
+                                {displayStatus}
+                              </Badge>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell>
                           {prospect.location || "Unknown"}
