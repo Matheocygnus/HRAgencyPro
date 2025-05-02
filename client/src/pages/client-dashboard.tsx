@@ -273,6 +273,7 @@ export default function ClientDashboard() {
                         <TableHeader>
                           <TableRow>
                             <TableHead>Hero</TableHead>
+                            <TableHead>Company</TableHead>
                             <TableHead>Start Date</TableHead>
                             <TableHead>Contract</TableHead>
                             <TableHead className="text-right">Action</TableHead>
@@ -281,6 +282,7 @@ export default function ClientDashboard() {
                         <TableBody>
                           {heroes.map(hero => {
                             const heroContract = contracts.find(c => c.heroId === hero.id);
+                            const heroCompany = companies.find(c => c.id === hero.companyId);
                             return (
                               <TableRow key={hero.id}>
                                 <TableCell>
@@ -291,6 +293,15 @@ export default function ClientDashboard() {
                                   </div>
                                   {hero.position && (
                                     <div className="text-sm text-muted-foreground">{hero.position}</div>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {heroCompany ? (
+                                    <div className="text-sm">
+                                      <Badge variant="outline">{heroCompany.name}</Badge>
+                                    </div>
+                                  ) : (
+                                    "No Company"
                                   )}
                                 </TableCell>
                                 <TableCell>

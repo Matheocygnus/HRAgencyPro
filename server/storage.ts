@@ -15,7 +15,7 @@ import {
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
-import { eq, and, desc, asc, isNull, gt } from "drizzle-orm";
+import { eq, and, desc, asc, isNull, gt, or, inArray } from "drizzle-orm";
 import { db, pool } from "./db";
 
 // Memory store for session
@@ -821,7 +821,28 @@ export class DatabaseStorage implements IStorage {
 
   async getHeroesByClient(clientId: number): Promise<Hero[]> {
     try {
-      // Only select columns that exist in the database
+      // First, get all companies associated with this client
+      const clientCompanies = await this.getCompaniesByClient(clientId);
+      const companyIds = clientCompanies.map(company => company.id);
+      
+      console.log(`Fetching heroes for client ${clientId} with companies:`, companyIds);
+      
+      if (companyIds.length === 0) {
+        // If no companies found, fall back to just client ID
+        const clientHeroes = await db.select({
+          id: heroes.id,
+          prospect_id: heroes.prospectId,
+          start_date: heroes.startDate,
+          contract_id: heroes.contractId,
+          client_id: heroes.clientId,
+          company_id: heroes.companyId,
+          created_at: heroes.createdAt
+        }).from(heroes).where(eq(heroes.clientId, clientId));
+        
+        return clientHeroes.map(h => ensureHeroFields(h));
+      }
+      
+      // Get heroes for all companies associated with this client
       const clientHeroes = await db.select({
         id: heroes.id,
         prospect_id: heroes.prospectId,
@@ -830,8 +851,14 @@ export class DatabaseStorage implements IStorage {
         client_id: heroes.clientId,
         company_id: heroes.companyId,
         created_at: heroes.createdAt
-      }).from(heroes).where(eq(heroes.clientId, clientId));
+      }).from(heroes).where(
+        or(
+          eq(heroes.clientId, clientId),
+          inArray(heroes.companyId, companyIds)
+        )
+      );
       
+      console.log(`Found ${clientHeroes.length} heroes for client ${clientId} across ${companyIds.length} companies`);
       return clientHeroes.map(h => ensureHeroFields(h));
     } catch (error) {
       console.error(`Error in getHeroesByClient(${clientId}):`, error);
