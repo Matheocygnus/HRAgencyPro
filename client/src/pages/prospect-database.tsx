@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import Dashboard from "@/components/layout/Dashboard";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Search, ExternalLink, Upload } from "lucide-react";
+import { Loader2, Search, ExternalLink, Upload, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -24,6 +24,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Define ProspectDatabase type based on the database schema
 type ProspectDatabase = {
@@ -46,6 +53,8 @@ const ProspectDatabasePage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   
   // Fetch prospects from database
   const { data: prospects, isLoading, error } = useQuery<ProspectDatabase[]>({
@@ -116,6 +125,33 @@ const ProspectDatabasePage = () => {
       })
     : [];
   
+  // Calculate pagination values  
+  const totalItems = filteredProspects.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  
+  // Ensure current page stays valid when filters change
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages, searchTerm]);
+  
+  // Get paginated data
+  const paginatedProspects = filteredProspects.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+  
+  // Pagination controls
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  
+  const handlePageSizeChange = (value: string) => {
+    setPageSize(Number(value));
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+  
   const handleMoveToSourcing = (prospectId: number) => {
     moveToSourcingMutation.mutate(prospectId);
   };
@@ -176,14 +212,14 @@ const ProspectDatabasePage = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredProspects.length === 0 ? (
+                    {paginatedProspects.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center h-24">
                           No prospects found.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredProspects.map((prospect) => (
+                      paginatedProspects.map((prospect) => (
                         <TableRow key={prospect.id}>
                           <TableCell className="font-medium">{prospect.name}</TableCell>
                           <TableCell>{prospect.rolePosition || 'Not specified'}</TableCell>
@@ -247,6 +283,73 @@ const ProspectDatabasePage = () => {
                 </Table>
               </ScrollArea>
             </CardContent>
+            <CardFooter className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                <div>
+                  <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder="10" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>per page</div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                  <span className="sr-only">First page</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="sr-only">Previous page</span>
+                </Button>
+                <div className="flex items-center gap-1 text-sm">
+                  <span>Page</span>
+                  <span className="font-medium">{currentPage}</span>
+                  <span>of</span>
+                  <span className="font-medium">{totalPages || 1}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  <span className="sr-only">Next page</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="h-8 w-8"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                  <span className="sr-only">Last page</span>
+                </Button>
+              </div>
+            </CardFooter>
           </Card>
         )}
       </div>
