@@ -21,15 +21,17 @@ import {
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Contract, Hero, Client, Company, Prospect } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Loader2, MoreHorizontal, Plus, Search, FileText } from "lucide-react";
+import { Loader2, MoreHorizontal, Plus, Search, FileText, Edit, ClipboardEdit } from "lucide-react";
 import { useMockAuth } from "@/hooks/use-mock-auth";
 import ContractFormDialog from "@/components/dialogs/ContractFormDialog";
+import QuickEditContractDialog from "@/components/dialogs/QuickEditContractDialog";
 
 // Contract status badge configuration
 const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | null }> = {
@@ -44,7 +46,9 @@ export default function ContractsPage() {
   const { toast } = useToast();
   const { user } = useMockAuth();
   const [isAddContractDialogOpen, setIsAddContractDialogOpen] = useState(false);
+  const [isQuickEditDialogOpen, setIsQuickEditDialogOpen] = useState(false);
   const [editContractId, setEditContractId] = useState<number | undefined>(undefined);
+  const [quickEditContractId, setQuickEditContractId] = useState<number | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -135,6 +139,12 @@ export default function ContractsPage() {
   const handleEditContract = (id: number) => {
     setEditContractId(id);
     setIsAddContractDialogOpen(true);
+  };
+  
+  // Handle quick edit contract
+  const handleQuickEditContract = (id: number) => {
+    setQuickEditContractId(id);
+    setIsQuickEditDialogOpen(true);
   };
 
   // Download contract document
@@ -241,6 +251,17 @@ export default function ContractsPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end space-x-2">
+                              {isAdmin && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleQuickEditContract(contract.id)}
+                                  className="hidden md:flex"
+                                >
+                                  <ClipboardEdit className="h-4 w-4 mr-2" />
+                                  Quick Edit
+                                </Button>
+                              )}
                               {contract.document && (
                                 <Button 
                                   variant="ghost" 
@@ -260,9 +281,15 @@ export default function ContractsPage() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleEditContract(contract.id)}>
-                                      Edit Contract
+                                    <DropdownMenuItem onClick={() => handleQuickEditContract(contract.id)} className="md:hidden">
+                                      <ClipboardEdit className="h-4 w-4 mr-2" />
+                                      Quick Edit
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleEditContract(contract.id)}>
+                                      <Edit className="h-4 w-4 mr-2" />
+                                      Full Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                       onClick={() => {
                                         // This would update the contract status
@@ -308,6 +335,20 @@ export default function ContractsPage() {
           setEditContractId(undefined);
         }}
         title={editContractId ? "Edit Contract" : "Create New Contract"}
+      />
+      
+      {/* Quick Edit Dialog */}
+      <QuickEditContractDialog
+        isOpen={isQuickEditDialogOpen}
+        onOpenChange={setIsQuickEditDialogOpen}
+        contractId={quickEditContractId}
+        onSuccess={() => {
+          toast({
+            title: "Success",
+            description: "Contract updated successfully",
+          });
+          setQuickEditContractId(undefined);
+        }}
       />
     </Dashboard>
   );
