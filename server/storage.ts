@@ -186,6 +186,12 @@ export interface IStorage {
   updateRole(id: number, roleData: Partial<Role>): Promise<Role | undefined>;
   deleteRole(id: number): Promise<boolean>;
   
+  // ProspectDatabase methods
+  getProspectDatabase(id: number): Promise<ProspectDatabase | undefined>;
+  getProspectsDatabase(): Promise<ProspectDatabase[]>;
+  createProspectDatabase(data: InsertProspectDatabase): Promise<ProspectDatabase>;
+  updateProspectDatabase(id: number, data: Partial<ProspectDatabase>): Promise<ProspectDatabase | undefined>;
+  
   // Client methods
   getClient(id: number): Promise<Client | undefined>;
   getClientByEmail(email: string): Promise<Client | undefined>;
@@ -2860,6 +2866,47 @@ export class MemStorage implements IStorage {
     return Array.from(this.jobRequestsMap.values());
   }
   
+  // ProspectDatabase methods
+  async getProspectDatabase(id: number): Promise<ProspectDatabase | undefined> {
+    return this.prospectsDatabaseMap.get(id);
+  }
+
+  async getProspectsDatabase(): Promise<ProspectDatabase[]> {
+    return Array.from(this.prospectsDatabaseMap.values());
+  }
+
+  async createProspectDatabase(data: InsertProspectDatabase): Promise<ProspectDatabase> {
+    const id = this.prospectsDatabaseIdCounter++;
+    const now = new Date();
+    const newProspectDatabase: ProspectDatabase = {
+      id,
+      name: data.name,
+      status: data.status || "",
+      rolePosition: data.rolePosition,
+      otherRoleOfInterest: data.otherRoleOfInterest || null,
+      vocarooRecord: data.vocarooRecord || null,
+      resume: data.resume || null,
+      country: data.country || null, 
+      email: data.email || null,
+      phone: data.phone || null,
+      programTools: data.programTools || null,
+      englishLevel: data.englishLevel || null,
+      createdAt: now.toISOString()
+    };
+    
+    this.prospectsDatabaseMap.set(id, newProspectDatabase);
+    return newProspectDatabase;
+  }
+
+  async updateProspectDatabase(id: number, data: Partial<ProspectDatabase>): Promise<ProspectDatabase | undefined> {
+    const existing = this.prospectsDatabaseMap.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...data };
+    this.prospectsDatabaseMap.set(id, updated);
+    return updated;
+  }
+  
   async getJobRequestsByClient(clientId: number): Promise<JobRequest[]> {
     return Array.from(this.jobRequestsMap.values()).filter(
       (request) => request.clientId === clientId
@@ -2960,52 +3007,7 @@ export class MemStorage implements IStorage {
     return jobOpening;
   }
   
-  // ProspectsDatabase methods
-  async getProspectDatabase(id: number): Promise<ProspectDatabase | undefined> {
-    try {
-      const [prospectData] = await db.select().from(prospectsDatabase).where(eq(prospectsDatabase.id, id));
-      return prospectData ? ensureProspectDatabaseFields(prospectData) : undefined;
-    } catch (error) {
-      console.error(`Error in getProspectDatabase(${id}):`, error);
-      return undefined;
-    }
-  }
 
-  async getProspectsDatabase(): Promise<ProspectDatabase[]> {
-    try {
-      const allProspects = await db.select().from(prospectsDatabase);
-      console.log(`Successfully retrieved ${allProspects.length} prospects from prospects_database table`);
-      return allProspects.map(p => ensureProspectDatabaseFields(p));
-    } catch (error) {
-      console.error("Error in getProspectsDatabase:", error);
-      return [];
-    }
-  }
-
-  async createProspectDatabase(prospectData: InsertProspectDatabase): Promise<ProspectDatabase> {
-    try {
-      const [prospect] = await db.insert(prospectsDatabase).values(prospectData).returning();
-      console.log(`Successfully added prospect '${prospectData.name}' to prospects_database`);
-      return ensureProspectDatabaseFields(prospect);
-    } catch (error) {
-      console.error("Error in createProspectDatabase:", error);
-      throw error;
-    }
-  }
-
-  async updateProspectDatabase(id: number, prospectData: Partial<ProspectDatabase>): Promise<ProspectDatabase | undefined> {
-    try {
-      const [updatedProspect] = await db
-        .update(prospectsDatabase)
-        .set(prospectData)
-        .where(eq(prospectsDatabase.id, id))
-        .returning();
-      return updatedProspect ? ensureProspectDatabaseFields(updatedProspect) : undefined;
-    } catch (error) {
-      console.error(`Error in updateProspectDatabase(${id}):`, error);
-      return await this.getProspectDatabase(id);
-    }
-  }
 }
 
 export const storage = new DatabaseStorage();
