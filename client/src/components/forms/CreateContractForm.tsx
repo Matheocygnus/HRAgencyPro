@@ -1,235 +1,226 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { insertContractSchema } from "@shared/schema";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { format } from "date-fns";
-import { CalendarIcon, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { insertContractSchema } from "@shared/schema";
+import { Loader2 } from "lucide-react";
 
-// Extend the contract schema with validation
-const createContractSchema = insertContractSchema.extend({
-  startDate: z.coerce.date({
-    required_error: "Start date is required",
-  }),
-  endDate: z.coerce.date().optional(),
-  compensation: z.coerce.number().min(0, {
-    message: "Compensation must be a non-negative number",
-  }),
-  companyPayment: z.coerce.number().min(0, {
-    message: "Company payment must be a non-negative number",
-  }),
-});
+// Form schema with default values and validation
+const formSchema = insertContractSchema.extend({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  compensation: z.coerce.number().min(0, "Compensation must be a positive number"),
+  companyPayment: z.coerce.number().min(0, "Company payment must be a positive number")
+}).transform(data => ({
+  ...data,
+  profit: data.companyPayment - data.compensation
+}));
 
 type CreateContractFormProps = {
   hero: {
     id: number;
-    name: string;
+    prospectId: number;
     clientId: number;
     companyId: number;
-    position?: string;
+    name: string;
+    position: string;
   };
-  onSuccess: () => void;
+  onSuccess?: () => void;
 };
 
 export default function CreateContractForm({ hero, onSuccess }: CreateContractFormProps) {
-  const [clients, setClients] = useState<any[]>([]);
-  const [companies, setCompanies] = useState<any[]>([]);
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Set up form with default values
-  const form = useForm<z.infer<typeof createContractSchema>>({
-    resolver: zodResolver(createContractSchema),
+  // Current date for default values
+  const today = new Date();
+  const startDate = today.toISOString().split('T')[0];
+  
+  // End date default (3 months from now)
+  const endDate = new Date(today);
+  endDate.setMonth(endDate.getMonth() + 3);
+  const defaultEndDate = endDate.toISOString().split('T')[0];
+  
+  // Create form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      title: `${hero.position || "Professional"} Services Agreement - ${hero.name}`,
+      title: `${hero.position} Contract - ${hero.name}`,
       heroId: hero.id,
       clientId: hero.clientId,
       companyId: hero.companyId,
-      startDate: new Date(),
+      startDate: startDate,
+      endDate: defaultEndDate,
       compensation: 0,
       companyPayment: 0,
+      profit: 0,
+      notes: "",
       status: "draft",
+      document: null,
     },
   });
-
-  const isPending = form.formState.isSubmitting;
-
-  useEffect(() => {
-    // Fetch clients and companies for the form
-    const fetchData = async () => {
-      try {
-        const clientsResponse = await fetch('/api/clients');
-        if (clientsResponse.ok) {
-          const clientsData = await clientsResponse.json();
-          setClients(clientsData);
-        }
-        
-        const companiesResponse = await fetch('/api/companies');
-        if (companiesResponse.ok) {
-          const companiesData = await companiesResponse.json();
-          setCompanies(companiesData);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    
-    fetchData();
-  }, []);
-
-  const onSubmit = async (data: z.infer<typeof createContractSchema>) => {
-    try {
-      // Calculate profit
-      data.profit = data.companyPayment - data.compensation;
-      
-      const response = await apiRequest("POST", "/api/contracts", data);
-      
-      if (response.ok) {
-        const result = await response.json();
-        toast({
-          title: "Contract created successfully",
-          description: `Contract for ${hero.name} has been created.`,
-        });
-        
-        // Invalidate relevant queries
-        queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/heroes'] });
-        
-        // Call success callback
-        onSuccess();
-      } else {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to create contract");
-      }
-    } catch (error: any) {
+  
+  // Create contract mutation
+  const createContractMutation = useMutation({
+    mutationFn: async (formData: z.infer<typeof formSchema>) => {
+      const response = await apiRequest("POST", "/api/contracts", formData);
+      return response.json();
+    },
+    onSuccess: () => {
       toast({
-        title: "Failed to create contract",
-        description: error.message,
+        title: "Contract created",
+        description: "Contract has been created successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/heroes"] });
+      if (onSuccess) onSuccess();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to create contract: ${error.message}`,
         variant: "destructive",
       });
+    },
+  });
+  
+  // Auto calculate profit when compensation or company payment changes
+  const updateProfit = () => {
+    const compensation = form.watch("compensation");
+    const companyPayment = form.watch("companyPayment");
+    const profit = companyPayment - compensation;
+    form.setValue("profit", profit);
+  };
+  
+  // Handle form submission
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
+    
+    try {
+      await createContractMutation.mutateAsync(values);
+    } catch (error) {
+      console.error("Error creating contract:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
-
+  
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Contract Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Contract title" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <FormField
             control={form.control}
-            name="startDate"
+            name="title"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Start Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date < new Date(new Date().setHours(0, 0, 0, 0))
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+              <FormItem>
+                <FormLabel>Contract Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter contract title" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
           
-          <FormField
-            control={form.control}
-            name="endDate"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>End Date (Optional)</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value as Date}
-                      onSelect={field.onChange}
-                      disabled={(date) => {
-                        const startDate = form.getValues("startDate");
-                        return startDate && date < startDate;
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="endDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="compensation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Hero Compensation</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      placeholder="0.00" 
+                      {...field} 
+                      onChange={(e) => {
+                        field.onChange(e);
+                        updateProfit();
                       }}
-                      initialFocus
                     />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="companyPayment"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Payment</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      placeholder="0.00" 
+                      {...field} 
+                      onChange={(e) => {
+                        field.onChange(e);
+                        updateProfit();
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          
           <FormField
             control={form.control}
-            name="compensation"
+            name="profit"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Hero Compensation ($)</FormLabel>
+                <FormLabel>Profit (Calculated)</FormLabel>
                 <FormControl>
-                  <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
+                  <Input type="number" readOnly {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -238,12 +229,41 @@ export default function CreateContractForm({ hero, onSuccess }: CreateContractFo
           
           <FormField
             control={form.control}
-            name="companyPayment"
+            name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Company Payment ($)</FormLabel>
+                <FormLabel>Status</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="signed">Signed</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="terminated">Terminated</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notes</FormLabel>
                 <FormControl>
-                  <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
+                  <Textarea 
+                    placeholder="Enter any additional notes here" 
+                    className="min-h-[100px]" 
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -251,18 +271,16 @@ export default function CreateContractForm({ hero, onSuccess }: CreateContractFo
           />
         </div>
         
-        <div className="pt-2">
-          <Button type="submit" disabled={isPending} className="w-full">
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating Contract...
-              </>
-            ) : (
-              "Create Contract"
-            )}
-          </Button>
-        </div>
+        <Button type="submit" className="w-full" disabled={isLoading || createContractMutation.isPending}>
+          {(isLoading || createContractMutation.isPending) ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            'Create Contract'
+          )}
+        </Button>
       </form>
     </Form>
   );

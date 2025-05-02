@@ -32,6 +32,7 @@ import { Loader2, MoreHorizontal, Plus, Search, FileText, Edit, ClipboardEdit } 
 import { useMockAuth } from "@/hooks/use-mock-auth";
 import ContractFormDialog from "@/components/dialogs/ContractFormDialog";
 import QuickEditContractDialog from "@/components/dialogs/QuickEditContractDialog";
+import HeroSelectContractDialog from "@/components/dialogs/HeroSelectContractDialog";
 
 // Contract status badge configuration
 const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | null }> = {
@@ -47,6 +48,7 @@ export default function ContractsPage() {
   const { user } = useMockAuth();
   const [isAddContractDialogOpen, setIsAddContractDialogOpen] = useState(false);
   const [isQuickEditDialogOpen, setIsQuickEditDialogOpen] = useState(false);
+  const [isHeroSelectDialogOpen, setIsHeroSelectDialogOpen] = useState(false);
   const [editContractId, setEditContractId] = useState<number | undefined>(undefined);
   const [quickEditContractId, setQuickEditContractId] = useState<number | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
@@ -159,13 +161,24 @@ export default function ContractsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Contracts</h1>
         {isAdmin && (
-          <Button onClick={() => {
-            setEditContractId(undefined);
-            setIsAddContractDialogOpen(true);
-          }}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Contract
-          </Button>
+          <div className="flex space-x-3">
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setIsHeroSelectDialogOpen(true);
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create Contract for Hero
+            </Button>
+            <Button onClick={() => {
+              setEditContractId(undefined);
+              setIsAddContractDialogOpen(true);
+            }}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Contract (Manual)
+            </Button>
+          </div>
         )}
       </div>
       
@@ -348,6 +361,18 @@ export default function ContractsPage() {
             description: "Contract updated successfully",
           });
           setQuickEditContractId(undefined);
+        }}
+      />
+      
+      {/* Hero Select Contract Dialog */}
+      <HeroSelectContractDialog
+        isOpen={isHeroSelectDialogOpen}
+        onOpenChange={(isOpen) => {
+          setIsHeroSelectDialogOpen(isOpen);
+          if (!isOpen) {
+            // Refresh contract list when dialog is closed
+            queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+          }
         }}
       />
     </Dashboard>
