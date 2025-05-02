@@ -14,7 +14,8 @@ import {
   insertJobApplicationSchema,
   insertJobRequestSchema,
   insertRoleSchema,
-  insertUserSchema
+  insertUserSchema,
+  insertProspectDatabaseSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -1488,6 +1489,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error listing video rooms:", error);
       res.status(500).json({ message: "Failed to list video rooms", error: error.message });
+    }
+  });
+  
+  // Prospects Database routes
+  app.get("/api/prospects-database", isAuthenticated, async (req, res) => {
+    try {
+      console.log("Getting prospects database...");
+      
+      // Get all prospects from the database
+      const prospectsData = await storage.getProspectsDatabase();
+      console.log("Prospects database records retrieved:", prospectsData.length);
+      res.json(prospectsData);
+    } catch (error) {
+      console.error("Error retrieving prospects database:", error);
+      res.status(500).json({ message: "Failed to retrieve prospects database", error: String(error) });
+    }
+  });
+  
+  app.get("/api/prospects-database/:id", isAuthenticated, async (req, res) => {
+    try {
+      const prospectData = await storage.getProspectDatabase(parseInt(req.params.id));
+      if (!prospectData) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+      res.json(prospectData);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve prospect" });
+    }
+  });
+  
+  app.post("/api/prospects-database", isAuthenticated, async (req, res) => {
+    try {
+      const prospectData = insertProspectDatabaseSchema.parse(req.body);
+      const prospect = await storage.createProspectDatabase(prospectData);
+      res.status(201).json(prospect);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to create prospect in database" });
+    }
+  });
+  
+  app.put("/api/prospects-database/:id", isAuthenticated, async (req, res) => {
+    try {
+      const prospectData = insertProspectDatabaseSchema.partial().parse(req.body);
+      const updatedProspect = await storage.updateProspectDatabase(parseInt(req.params.id), prospectData);
+      if (!updatedProspect) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+      res.json(updatedProspect);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ message: "Failed to update prospect in database" });
+    }
+  });
+  
+  // Add to sourcing endpoint - creates a new prospect from a prospect database entry
+  app.post("/api/prospects-database/:id/move-to-sourcing", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Get the prospect database entry
+      const prospectData = await storage.getProspectDatabase(id);
+      if (!prospectData) {
+        return res.status(404).json({ message: "Prospect not found in database" });
+      }
+      
+      // Create a new prospect based on the database entry
+      const newProspect = {
+        firstName: prospectData.name.split(' ')[0] || '',
+        lastName: prospectData.name.split(' ').slice(1).join(' ') || '',
+        email: prospectData.email || '',
+        phone: prospectData.phone || null,
+        position: prospectData.rolePosition || '',
+        skills: prospectData.programTools || null,
+        resume: prospectData.resume || null,
+        status: 'sourcing',
+        notes: `Imported from prospect database. 
+Country: ${prospectData.country || 'Not specified'}
+English level: ${prospectData.englishLevel || 'Not specified'}
+Other role of interest: ${prospectData.otherRoleOfInterest || 'Not specified'}`
+      };
+      
+      // Create the prospect
+      const createdProspect = await storage.createProspect(newProspect);
+      
+      // Update the prospect database entry to mark it as moved to sourcing
+      await storage.updateProspectDatabase(id, { status: 'moved to sourcing' });
+      
+      res.status(201).json({
+        message: "Prospect moved to sourcing successfully",
+        prospect: createdProspect
+      });
+    } catch (error) {
+      console.error("Error moving prospect to sourcing:", error);
+      res.status(500).json({ message: "Failed to move prospect to sourcing", error: String(error) });
     }
   });
   
