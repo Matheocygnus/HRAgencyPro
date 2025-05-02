@@ -279,3 +279,28 @@ export const insertJobRequestSchema = createInsertSchema(jobRequests).omit({
 
 export type InsertJobRequest = z.infer<typeof insertJobRequestSchema>;
 export type JobRequest = typeof jobRequests.$inferSelect;
+
+// Prospects Database table for the external sourced data
+export const prospectsDatabase = pgTable('prospects_database', {
+  id: serial('id').primaryKey(),
+  name: text('name'),
+  status: text('status'),
+  rolePosition: text('role_position'),
+  otherRoleOfInterest: text('other_role_of_interest'),
+  vocarooRecord: text('vocaroo_record'),
+  resume: text('resume'),
+  country: text('country'),
+  email: text('email'),
+  phone: text('phone'),
+  programTools: text('program_tools'),
+  englishLevel: text('english_level'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const insertProspectDatabaseSchema = createInsertSchema(prospectsDatabase).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertProspectDatabase = z.infer<typeof insertProspectDatabaseSchema>;
+export type ProspectDatabase = typeof prospectsDatabase.$inferSelect;

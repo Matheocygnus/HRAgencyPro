@@ -10,7 +10,8 @@ import {
   interviews, type Interview, type InsertInterview,
   jobOpenings, type JobOpening, type InsertJobOpening,
   jobApplications, type JobApplication, type InsertJobApplication,
-  jobRequests, type JobRequest, type InsertJobRequest
+  jobRequests, type JobRequest, type InsertJobRequest,
+  prospectsDatabase, type ProspectDatabase, type InsertProspectDatabase
 } from "@shared/schema";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
@@ -147,6 +148,25 @@ function ensureRoleFields(roleData: any): Role {
     description: roleData.description || null,
     permissions: roleData.permissions,
     createdAt: roleData.created_at || roleData.createdAt
+  };
+}
+
+function ensureProspectDatabaseFields(data: any): ProspectDatabase {
+  // Map snake_case database fields to camelCase application fields
+  return {
+    id: data.id,
+    name: data.name,
+    status: data.status,
+    rolePosition: data.role_position || data.rolePosition,
+    otherRoleOfInterest: data.other_role_of_interest || data.otherRoleOfInterest,
+    vocarooRecord: data.vocaroo_record || data.vocarooRecord,
+    resume: data.resume,
+    country: data.country,
+    email: data.email,
+    phone: data.phone,
+    programTools: data.program_tools || data.programTools,
+    englishLevel: data.english_level || data.englishLevel,
+    createdAt: data.created_at || data.createdAt
   };
 }
 
