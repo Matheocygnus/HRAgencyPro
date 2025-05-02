@@ -4,8 +4,7 @@ import {
   Card, 
   CardContent, 
   CardHeader, 
-  CardTitle,
-  CardDescription
+  CardTitle 
 } from "@/components/ui/card";
 import { 
   Table, 
@@ -28,10 +27,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Contract, Hero, Client, Company, Prospect } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Loader2, MoreHorizontal, Plus, Search, FileText, UserCircle, Edit, FileSignature } from "lucide-react";
+import { Loader2, MoreHorizontal, Plus, Search, FileText } from "lucide-react";
 import { useMockAuth } from "@/hooks/use-mock-auth";
 import ContractFormDialog from "@/components/dialogs/ContractFormDialog";
-import HeroEditDialog from "@/components/dialogs/HeroEditDialog";
 
 // Contract status badge configuration
 const STATUS_BADGES: Record<string, { label: string, variant: "default" | "outline" | "secondary" | "destructive" | null }> = {
@@ -49,8 +47,6 @@ export default function ContractsPage() {
   const [editContractId, setEditContractId] = useState<number | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [isHeroEditDialogOpen, setIsHeroEditDialogOpen] = useState(false);
-  const [editHeroId, setEditHeroId] = useState<number | undefined>(undefined);
 
   // Check if user has admin access
   const isAdmin = user && (user.role === "admin" || user.role === "super_admin");
@@ -299,109 +295,6 @@ export default function ContractsPage() {
         </CardContent>
       </Card>
 
-      {/* Heroes Without Contracts Section */}
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Heroes</CardTitle>
-          <CardDescription>
-            All available heroes including those without contracts
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>Contract Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {heroes.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      No heroes found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  heroes.map((hero) => {
-                    const heroContract = contracts.find(c => c.heroId === hero.id);
-                    const heroProspect = prospects.find(p => p.id === hero.prospectId);
-                    const heroName = heroProspect ? `${heroProspect.firstName} ${heroProspect.lastName}` : `Hero #${hero.id}`;
-                    const heroPosition = heroProspect?.position || 'Not specified';
-                    
-                    return (
-                      <TableRow key={hero.id}>
-                        <TableCell className="font-medium">{heroName}</TableCell>
-                        <TableCell>{heroPosition}</TableCell>
-                        <TableCell>{getClientName(hero.clientId)}</TableCell>
-                        <TableCell>{getCompanyName(hero.companyId)}</TableCell>
-                        <TableCell>{formatDate(hero.startDate)}</TableCell>
-                        <TableCell>
-                          {heroContract ? (
-                            <Badge variant={STATUS_BADGES[heroContract.status].variant}>
-                              {STATUS_BADGES[heroContract.status].label}
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline">No Contract</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end space-x-2">
-                            {isAdmin && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  title="Edit Hero"
-                                  onClick={() => {
-                                    setEditHeroId(hero.id);
-                                    setIsHeroEditDialogOpen(true);
-                                  }}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                
-                                {!heroContract && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    title="Create Contract"
-                                    onClick={() => {
-                                      // Setup a new contract for this hero
-                                      setEditContractId(undefined);
-                                      setIsAddContractDialogOpen(true);
-                                      
-                                      // We'll need to set the hero ID in the contract form
-                                      // This requires adding a heroIdToPreselect state and using it in the ContractForm
-                                      toast({
-                                        title: "Creating contract",
-                                        description: `Please select ${heroName} in the hero dropdown`,
-                                      });
-                                    }}
-                                  >
-                                    <FileSignature className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Contract Dialog */}
       <ContractFormDialog 
         isOpen={isAddContractDialogOpen}
@@ -413,28 +306,8 @@ export default function ContractsPage() {
             description: editContractId ? "Contract updated successfully" : "Contract created successfully",
           });
           setEditContractId(undefined);
-          
-          // Refresh contracts list
-          queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
         }}
         title={editContractId ? "Edit Contract" : "Create New Contract"}
-      />
-      
-      {/* Hero Edit Dialog */}
-      <HeroEditDialog
-        isOpen={isHeroEditDialogOpen}
-        onOpenChange={setIsHeroEditDialogOpen}
-        heroId={editHeroId}
-        onSuccess={() => {
-          toast({
-            title: "Success",
-            description: "Hero information updated successfully",
-          });
-          setEditHeroId(undefined);
-          
-          // Refresh heroes list
-          queryClient.invalidateQueries({ queryKey: ['/api/heroes'] });
-        }}
       />
     </Dashboard>
   );
