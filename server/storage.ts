@@ -286,6 +286,51 @@ export class DatabaseStorage implements IStorage {
       createTableIfMissing: true
     });
   }
+  
+  // ProspectDatabase methods
+  async getProspectDatabase(id: number): Promise<ProspectDatabase | undefined> {
+    try {
+      const [prospectData] = await db.select().from(prospectsDatabase).where(eq(prospectsDatabase.id, id));
+      return prospectData ? ensureProspectDatabaseFields(prospectData) : undefined;
+    } catch (error) {
+      console.error(`Error in getProspectDatabase(${id}):`, error);
+      return undefined;
+    }
+  }
+
+  async getProspectsDatabase(): Promise<ProspectDatabase[]> {
+    try {
+      const allData = await db.select().from(prospectsDatabase);
+      return allData.map(data => ensureProspectDatabaseFields(data));
+    } catch (error) {
+      console.error("Error in getProspectsDatabase:", error);
+      return [];
+    }
+  }
+
+  async createProspectDatabase(data: InsertProspectDatabase): Promise<ProspectDatabase> {
+    try {
+      const [prospectData] = await db.insert(prospectsDatabase).values(data).returning();
+      return ensureProspectDatabaseFields(prospectData);
+    } catch (error) {
+      console.error("Error in createProspectDatabase:", error);
+      throw error;
+    }
+  }
+
+  async updateProspectDatabase(id: number, data: Partial<ProspectDatabase>): Promise<ProspectDatabase | undefined> {
+    try {
+      const [updatedData] = await db
+        .update(prospectsDatabase)
+        .set(data)
+        .where(eq(prospectsDatabase.id, id))
+        .returning();
+      return updatedData ? ensureProspectDatabaseFields(updatedData) : undefined;
+    } catch (error) {
+      console.error(`Error in updateProspectDatabase(${id}):`, error);
+      return undefined;
+    }
+  }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
@@ -1434,6 +1479,7 @@ export class MemStorage implements IStorage {
   private jobApplicationsMap: Map<number, JobApplication>;
   private jobRequestsMap: Map<number, JobRequest>;
   private rolesMap: Map<number, Role>;
+  private prospectsDatabaseMap: Map<number, ProspectDatabase>;
   
   // Auto-increment counters
   private userIdCounter: number;
@@ -1449,6 +1495,7 @@ export class MemStorage implements IStorage {
   private jobApplicationIdCounter: number;
   private jobRequestIdCounter: number;
   private roleIdCounter: number;
+  private prospectsDatabaseIdCounter: number;
   
   // Session store
   sessionStore: any;
@@ -1467,6 +1514,7 @@ export class MemStorage implements IStorage {
     this.jobApplicationsMap = new Map();
     this.jobRequestsMap = new Map();
     this.rolesMap = new Map();
+    this.prospectsDatabaseMap = new Map();
     
     // Initialize counters
     this.userIdCounter = 1;
@@ -1482,6 +1530,7 @@ export class MemStorage implements IStorage {
     this.jobApplicationIdCounter = 1;
     this.jobRequestIdCounter = 1;
     this.roleIdCounter = 1;
+    this.prospectsDatabaseIdCounter = 1;
     
     // Initialize session store with memory store
     this.sessionStore = new MemoryStore({
