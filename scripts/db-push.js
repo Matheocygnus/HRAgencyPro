@@ -1,8 +1,8 @@
 // This script creates the prospects_database table
 
-const { db, pool } = require('../server/db');
-const { prospectsDatabase } = require('../shared/schema');
-const { eq } = require('drizzle-orm');
+import { db, pool } from '../server/db.js';
+import { prospectsDatabase } from '../shared/schema.js';
+import { eq } from 'drizzle-orm';
 
 async function createProspectsDatabaseTable() {
   try {
