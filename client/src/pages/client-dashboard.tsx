@@ -15,6 +15,8 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Building2, Plus, Users, FileSignature, Briefcase } from "lucide-react";
+import { Link } from "wouter";
 import { Client, Company, Hero, Contract, JobRequest, Prospect } from "@shared/schema";
 
 // Extended Hero type with prospect data
@@ -26,8 +28,6 @@ interface EnhancedHero extends Hero {
   skills?: string[];
   position?: string;
 }
-import { Building2, Plus, Users, FileSignature, Briefcase } from "lucide-react";
-import { Link } from "wouter";
 
 export default function ClientDashboard() {
   const { hasPermission } = useMockAuth();
