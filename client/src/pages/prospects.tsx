@@ -153,12 +153,64 @@ export default function Prospects() {
     return company ? company.name : `Company #${companyId}`;
   };
 
+  // Add mutation for adding prospects to database
+  const addToProspectDatabaseMutation = useMutation({
+    mutationFn: async (prospectId: number) => {
+      const res = await apiRequest("POST", `/api/prospects/${prospectId}/move-to-database`, {});
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Prospect moved to database successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects-database"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to move prospect to database",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleStatusChange = (prospectId: number, newStatus: string) => {
     // Make sure newStatus is a valid status value
     const validStatus = ["sourcing", "contacted", "interview", "client_review", "budget", "contract", "hired", "rejected"].includes(newStatus) 
       ? newStatus as "sourcing" | "contacted" | "interview" | "client_review" | "budget" | "contract" | "hired" | "rejected"
       : "sourcing";
+
+    // If status is changing to "rejected", first move to rejected, then to database
+    if (validStatus === "rejected") {
+      // Find the prospect to get its data
+      const prospect = prospects.find(p => p.id === prospectId);
+      if (!prospect) return;
       
+      // First update the status to rejected
+      updateProspectMutation.mutate(
+        { id: prospectId, status: validStatus },
+        {
+          onSuccess: () => {
+            // After marking as rejected, move to database
+            addToProspectDatabaseMutation.mutate(prospectId);
+          }
+        }
+      );
+      
+      // Optimistic UI update - update local state immediately
+      const updatedProspects = prospects.map(p => 
+        p.id === prospectId 
+          ? { ...p, status: validStatus }
+          : p
+      );
+      setProspects(updatedProspects);
+      
+      return; // Exit early since we've handled this specific case
+    }
+      
+    // For other status changes, proceed normally
     // Optimistic UI update - update local state immediately
     const updatedProspects = prospects.map(prospect => 
       prospect.id === prospectId 
