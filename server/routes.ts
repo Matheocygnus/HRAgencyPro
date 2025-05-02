@@ -17,7 +17,7 @@ import {
   insertUserSchema,
   insertProspectDatabaseSchema
 } from "@shared/schema";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import Stripe from "stripe";
 import { generateVideoToken, createVideoRoom, endVideoRoom, listVideoRooms } from './twilio';
@@ -1548,6 +1548,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Add PATCH endpoint for partial updates (client/company association)
+  app.patch("/api/prospects-database/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Create a schema for validating only the fields we want to update
+      const updateSchema = z.object({
+        clientId: z.number().nullable().optional(),
+        companyId: z.number().nullable().optional(),
+      });
+      
+      const validatedData = updateSchema.parse(req.body);
+      
+      // If updating company, verify it belongs to the client if clientId is provided
+      if (validatedData.companyId && validatedData.clientId) {
+        const company = await storage.getCompany(validatedData.companyId);
+        if (!company) {
+          return res.status(404).json({ message: "Company not found" });
+        }
+        
+        if (company.clientId !== validatedData.clientId) {
+          return res.status(400).json({ 
+            message: "Invalid company selection. The company must belong to the selected client." 
+          });
+        }
+      } else if (validatedData.companyId && !validatedData.clientId) {
+        // If updating only company, get the company and set the clientId accordingly
+        const company = await storage.getCompany(validatedData.companyId);
+        if (!company) {
+          return res.status(404).json({ message: "Company not found" });
+        }
+        
+        // Set the clientId to match the company's client
+        validatedData.clientId = company.clientId;
+      }
+      
+      // Update the prospect in the database
+      const updatedProspect = await storage.updateProspectDatabase(id, validatedData);
+      if (!updatedProspect) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+      
+      res.json(updatedProspect);
+    } catch (error) {
+      console.error("Error updating prospect:", error);
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      res.status(500).json({ 
+        message: "Failed to update prospect", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+  
   // Add to sourcing endpoint - creates a new prospect from a prospect database entry
   app.post("/api/prospects-database/:id/move-to-sourcing", isAuthenticated, async (req, res) => {
     try {
@@ -1559,16 +1614,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Prospect not found in database" });
       }
       
+      // Split name into first and last names safely (handling null values)
+      const nameParts = prospectData.name?.split(' ') || ['', ''];
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
       // Create a new prospect based on the database entry
       const newProspect = {
-        firstName: prospectData.name.split(' ')[0] || '',
-        lastName: prospectData.name.split(' ').slice(1).join(' ') || '',
-        email: prospectData.email || '',
+        firstName,
+        lastName,
+        email: prospectData.email || '', 
         phone: prospectData.phone || null,
         position: prospectData.rolePosition || '',
         skills: prospectData.programTools || null,
         resume: prospectData.resume || null,
-        status: 'sourcing',
+        status: "sourcing" as const, // Use type assertion to match the expected type
+        // Pass client and company IDs if they exist
+        clientId: prospectData.clientId || null,
+        companyId: prospectData.companyId || null,
         notes: `Imported from prospect database. 
 Country: ${prospectData.country || 'Not specified'}
 English level: ${prospectData.englishLevel || 'Not specified'}
