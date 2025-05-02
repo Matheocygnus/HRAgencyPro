@@ -119,6 +119,8 @@ const ProspectDatabasePage = () => {
   // Mutation for updating a prospect's client or company
   const updateProspectMutation = useMutation({
     mutationFn: async (data: { id: number, clientId?: number | null, companyId?: number | null }) => {
+      console.log("Updating prospect with data:", data);
+      
       const response = await fetch(`/api/prospects-database/${data.id}`, {
         method: "PATCH",
         headers: {
@@ -128,13 +130,17 @@ const ProspectDatabasePage = () => {
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update prospect");
+        const errorData = await response.json();
+        console.error("Failed to update prospect:", errorData);
+        throw new Error(errorData.message || "Failed to update prospect");
       }
       
-      return response.json();
+      const result = await response.json();
+      console.log("Prospect updated successfully:", result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (updatedProspect) => {
+      console.log("Mutation succeeded with data:", updatedProspect);
       toast({
         title: "Success",
         description: "Prospect updated successfully.",
@@ -144,6 +150,7 @@ const ProspectDatabasePage = () => {
       queryClient.invalidateQueries({ queryKey: ["/api/prospects-database"] });
     },
     onError: (error: Error) => {
+      console.error("Mutation error:", error);
       toast({
         title: "Error",
         description: error.message,
