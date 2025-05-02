@@ -702,6 +702,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // PATCH endpoint for quick updates to specific contract fields
+  app.patch("/api/contracts/:id", hasRole(["super_admin", "admin"]), async (req, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const contractData = insertContractSchema.partial().parse(req.body);
+      
+      // Calculate profit if both compensation and company payment are provided
+      if (contractData.compensation !== undefined && contractData.companyPayment !== undefined) {
+        contractData.profit = contractData.companyPayment - contractData.compensation;
+      }
+      
+      const updatedContract = await storage.updateContract(contractId, contractData);
+      if (!updatedContract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      res.json(updatedContract);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      console.error("Error updating contract:", error);
+      res.status(500).json({ message: "Failed to update contract" });
+    }
+  });
+  
   // Function to create a Stripe invoice
   async function createStripeInvoice(invoiceData: any, customer: any = null) {
     try {
