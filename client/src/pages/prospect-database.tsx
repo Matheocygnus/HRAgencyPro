@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Database, Search, UserRound } from "lucide-react";
+import { Database, Search, UserRound, MoveRight, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProspectDatabase() {
@@ -37,78 +37,147 @@ export default function ProspectDatabase() {
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
 
-  // Fetch all prospects on component mount
-  useEffect(() => {
-    const fetchProspects = async () => {
-      try {
-        const response = await fetch('/api/prospects');
-        if (!response.ok) throw new Error('Failed to fetch prospects');
-        
-        const data = await response.json();
-        
-        // Check for heroes data to identify hired prospects
-        const heroesResponse = await fetch('/api/heroes');
-        let heroes: any[] = [];
-        if (heroesResponse.ok) {
-          heroes = await heroesResponse.json();
+  // Move prospect to sourcing status
+  const moveToSourcing = async (prospectId: number) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/prospects/${prospectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'sourcing' }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update prospect status');
+      }
+      
+      toast({
+        title: "Status Updated",
+        description: "Prospect has been moved to sourcing status",
+      });
+      
+      // Refresh the prospects list
+      fetchProspects();
+    } catch (error) {
+      console.error('Error updating prospect status:', error);
+      toast({
+        title: "Update Failed",
+        description: "Could not move prospect to sourcing",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
+  // Fetch all prospects from API
+  const fetchProspects = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch clients and companies for additional context
+      const [clientsResponse, companiesResponse] = await Promise.all([
+        fetch('/api/clients'),
+        fetch('/api/companies')
+      ]);
+      
+      let clients: any[] = [];
+      let companies: any[] = [];
+      
+      if (clientsResponse.ok) {
+        clients = await clientsResponse.json();
+      }
+      
+      if (companiesResponse.ok) {
+        companies = await companiesResponse.json();
+      }
+      
+      // Fetch prospects data
+      const response = await fetch('/api/prospects');
+      if (!response.ok) throw new Error('Failed to fetch prospects');
+      
+      const data = await response.json();
+      
+      // Check for heroes data to identify hired prospects
+      const heroesResponse = await fetch('/api/heroes');
+      let heroes: any[] = [];
+      if (heroesResponse.ok) {
+        heroes = await heroesResponse.json();
+      }
+      
+      // Create a set of hired prospect IDs
+      const hiredProspectIds = new Set(heroes.map(hero => hero.prospectId));
+      
+      // Filter out prospects that are hired (based on status or presence in heroes)
+      const nonHiredProspects = data.filter((prospect: any) => {
+        // Check if this prospect is in the heroes table
+        if (hiredProspectIds.has(prospect.id)) {
+          return false;
         }
         
-        // Create a set of hired prospect IDs
-        const hiredProspectIds = new Set(heroes.map(hero => hero.prospectId));
+        // Normalize status for comparison
+        const status = (prospect.status || '').toString().toLowerCase();
         
-        // Filter out prospects that are hired (based on status or presence in heroes)
-        const nonHiredProspects = data.filter((prospect: any) => {
-          // Check if this prospect is in the heroes table
-          if (hiredProspectIds.has(prospect.id)) {
-            return false;
-          }
+        // Filter out any status that indicates hired or terminated
+        return !(
+          status.includes('hired') || 
+          status.includes('terminated') || 
+          status.includes('signing contract')
+        );
+      });
+      
+      // Process and enhance prospects with additional information
+      const enhancedProspects = nonHiredProspects.map((prospect: any) => {
+        // Try to extract location from notes or existing location field
+        if (!prospect.location && prospect.notes) {
+          const notesLower = prospect.notes.toLowerCase();
           
-          // Normalize status for comparison
-          const status = prospect.status?.toLowerCase() || '';
-          
-          // Filter out any status that indicates hired
-          return !(
-            status === 'hired' || 
-            status === 'terminated' || 
-            status.includes('hired') ||
-            status.includes('signing contract')
-          );
-        });
-        
-        // Add location field based on data in notes if available
-        const enhancedProspects = nonHiredProspects.map((prospect: any) => {
-          // Try to extract location from notes or existing location field
-          if (!prospect.location && prospect.notes) {
-            const notesLower = prospect.notes.toLowerCase();
-            
-            // Common countries/regions in the dataset
-            const locationKeywords = ['argentina', 'brasil', 'brazil', 'colombia', 'bolivia', 'gmt'];
-            for (const keyword of locationKeywords) {
-              if (notesLower.includes(keyword)) {
-                prospect.location = keyword.charAt(0).toUpperCase() + keyword.slice(1);
-                break;
-              }
+          // Common countries/regions in the dataset
+          const locationKeywords = ['argentina', 'brasil', 'brazil', 'colombia', 'bolivia', 'gmt'];
+          for (const keyword of locationKeywords) {
+            if (notesLower.includes(keyword)) {
+              prospect.location = keyword.charAt(0).toUpperCase() + keyword.slice(1);
+              break;
             }
           }
-          
-          return prospect;
-        });
+        }
         
-        console.log(`Found ${enhancedProspects.length} non-hired prospects out of ${data.length} total`);
-        setProspects(enhancedProspects);
-        setFilteredProspects(enhancedProspects);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching prospects:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load prospects. Please try again.",
-          variant: "destructive",
-        });
-        setLoading(false);
-      }
-    };
+        // Add client and company names if available
+        if (prospect.clientId) {
+          const client = clients.find(c => c.id === prospect.clientId);
+          if (client) {
+            prospect.clientName = client.name;
+          }
+        }
+        
+        if (prospect.companyId) {
+          const company = companies.find(c => c.id === prospect.companyId);
+          if (company) {
+            prospect.companyName = company.name;
+          }
+        }
+        
+        return prospect;
+      });
+      
+      console.log(`Found ${enhancedProspects.length} non-hired prospects out of ${data.length} total`);
+      setProspects(enhancedProspects);
+      setFilteredProspects(enhancedProspects);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching prospects:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load prospects. Please try again.",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
 
+  // Fetch prospects on component mount
+  useEffect(() => {
     fetchProspects();
   }, [toast]);
 
@@ -244,65 +313,93 @@ export default function ProspectDatabase() {
                       <TableHead>Status</TableHead>
                       <TableHead>Location</TableHead>
                       <TableHead>Contact</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredProspects.map((prospect) => (
-                      <TableRow key={prospect.id}>
-                        <TableCell className="font-medium">
-                          {prospect.firstName} {prospect.lastName}
-                        </TableCell>
-                        <TableCell>{prospect.position || "N/A"}</TableCell>
-                        <TableCell>
-                          <div className="max-w-[200px] truncate">
-                            {prospect.skills || "Not specified"}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {(() => {
-                            // Normalize status for comparison
-                            const normalizedStatus = prospect.status?.toLowerCase() || '';
-                            
-                            // Determine badge variant based on status
-                            let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
-                            
-                            if (normalizedStatus.includes('screen') || normalizedStatus.includes('interviewing')) {
-                              variant = 'default'; // Blue
-                            } else if (normalizedStatus.includes('sending to client') || normalizedStatus.includes('database')) {
-                              variant = 'secondary'; // Gray
-                            } else if (normalizedStatus.includes('not selected') || 
-                                      normalizedStatus.includes('not interested') || 
-                                      normalizedStatus.includes('no show') ||
-                                      normalizedStatus.includes('others better')) {
-                              variant = 'destructive'; // Red
-                            }
-                            
-                            // Format status for display - capitalize words
-                            const displayStatus = prospect.status
-                              ?.split(' ')
-                              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                              .join(' ') || "Unknown";
+                    {filteredProspects.map((prospect) => {
+                      // Normalize status for comparison
+                      const normalizedStatus = (prospect.status || '').toString().toLowerCase();
+                      
+                      // Check if already in sourcing
+                      const isAlreadySourcing = normalizedStatus === 'sourcing';
+                    
+                      return (
+                        <TableRow key={prospect.id}>
+                          <TableCell className="font-medium">
+                            {prospect.firstName} {prospect.lastName}
+                          </TableCell>
+                          <TableCell>{prospect.position || "N/A"}</TableCell>
+                          <TableCell>
+                            <div className="max-w-[200px] truncate">
+                              {prospect.skills || "Not specified"}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              // Determine badge variant based on status
+                              let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
                               
-                            return (
-                              <Badge variant={variant}>
-                                {displayStatus}
-                              </Badge>
-                            );
-                          })()}
-                        </TableCell>
-                        <TableCell>
-                          {prospect.location || "Unknown"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm text-muted-foreground">
-                            {prospect.email}
-                            {prospect.phone && (
-                              <div>{prospect.phone}</div>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                              if (normalizedStatus.includes('screen') || normalizedStatus.includes('interviewing')) {
+                                variant = 'default'; // Blue
+                              } else if (normalizedStatus.includes('sending to client') || 
+                                        normalizedStatus.includes('database') ||
+                                        normalizedStatus === 'sourcing') {
+                                variant = 'secondary'; // Gray
+                              } else if (normalizedStatus.includes('not selected') || 
+                                        normalizedStatus.includes('not interested') || 
+                                        normalizedStatus.includes('no show') ||
+                                        normalizedStatus.includes('others better')) {
+                                variant = 'destructive'; // Red
+                              }
+                              
+                              // Format status for display - capitalize words
+                              const displayStatus = prospect.status
+                                ?.split(' ')
+                                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                .join(' ') || "Unknown";
+                                
+                              return (
+                                <Badge variant={variant}>
+                                  {displayStatus}
+                                </Badge>
+                              );
+                            })()}
+                          </TableCell>
+                          <TableCell>
+                            {prospect.location || "Unknown"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm text-muted-foreground">
+                              {prospect.email}
+                              {prospect.phone && (
+                                <div>{prospect.phone}</div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant={isAlreadySourcing ? "outline" : "default"} 
+                              size="sm"
+                              disabled={isAlreadySourcing}
+                              onClick={() => moveToSourcing(prospect.id)}
+                            >
+                              {isAlreadySourcing ? (
+                                <>
+                                  <Check className="mr-1 h-4 w-4" />
+                                  In Sourcing
+                                </>
+                              ) : (
+                                <>
+                                  <MoveRight className="mr-1 h-4 w-4" />
+                                  Move to Sourcing
+                                </>
+                              )}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>

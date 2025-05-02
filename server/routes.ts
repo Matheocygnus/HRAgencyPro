@@ -420,6 +420,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // PATCH endpoint for prospects to allow partial updates (like status changes)
+  app.patch("/api/prospects/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      // Validate the prospect exists
+      const existingProspect = await storage.getProspect(id);
+      if (!existingProspect) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+      
+      // Validate the data
+      const prospectData = insertProspectSchema.partial().parse(req.body);
+      
+      // Update the prospect
+      const updatedProspect = await storage.updateProspect(id, prospectData);
+      
+      console.log(`Updated prospect ${id} status to ${prospectData.status || 'unchanged'}`);
+      res.json(updatedProspect);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return handleZodError(error, res);
+      }
+      console.error("Error updating prospect:", error);
+      res.status(500).json({ message: "Failed to update prospect" });
+    }
+  });
+  
   // Hero routes
   app.get("/api/heroes", isAuthenticated, async (req, res) => {
     try {
