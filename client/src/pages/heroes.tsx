@@ -27,14 +27,16 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Hero, Prospect, Client, Company, Contract } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
+import { FileText, Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
 import { useMockAuth } from "@/hooks/use-mock-auth";
 import CreateContractDialog from "@/components/dialogs/CreateContractDialog";
+import HeroSelectContractDialog from "@/components/dialogs/HeroSelectContractDialog";
 
 export default function HeroesPage() {
   const { toast } = useToast();
   const { user } = useMockAuth();
   const [isCreateHeroDialogOpen, setIsCreateHeroDialogOpen] = useState(false);
+  const [isHeroSelectContractDialogOpen, setIsHeroSelectContractDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedHero, setSelectedHero] = useState<any>(null);
   const [isCreateContractDialogOpen, setIsCreateContractDialogOpen] = useState(false);
@@ -164,11 +166,25 @@ export default function HeroesPage() {
     <Dashboard>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Heroes</h1>
-        {isAdmin && availableProspects.length > 0 && (
-          <Button onClick={() => setIsCreateHeroDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Hero
-          </Button>
+        {isAdmin && (
+          <div className="flex space-x-3">
+            {/* Contract Creation Button with Hero Selection */}
+            <Button 
+              variant="outline" 
+              onClick={() => setIsHeroSelectContractDialogOpen(true)}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Create Contract
+            </Button>
+            
+            {/* Create Hero Button */}
+            {availableProspects.length > 0 && (
+              <Button onClick={() => setIsCreateHeroDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Hero
+              </Button>
+            )}
+          </div>
         )}
       </div>
       
@@ -337,6 +353,19 @@ export default function HeroesPage() {
           hero={selectedHero}
         />
       )}
+      
+      {/* Hero Select Contract Dialog */}
+      <HeroSelectContractDialog
+        isOpen={isHeroSelectContractDialogOpen}
+        onOpenChange={(isOpen) => {
+          setIsHeroSelectContractDialogOpen(isOpen);
+          if (!isOpen) {
+            // Refresh contract and hero lists when dialog is closed
+            queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/heroes"] });
+          }
+        }}
+      />
     </Dashboard>
   );
 }
