@@ -166,6 +166,8 @@ function ensureProspectDatabaseFields(data: any): ProspectDatabase {
     phone: data.phone,
     programTools: data.program_tools || data.programTools,
     englishLevel: data.english_level || data.englishLevel,
+    clientId: data.client_id || data.clientId,
+    companyId: data.company_id || data.companyId,
     createdAt: data.created_at || data.createdAt
   };
 }
