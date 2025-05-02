@@ -49,8 +49,19 @@ export default function DashboardPage() {
   const activeClientsCount = clients.filter(c => c.status === "active").length;
   const pendingInvoicesCount = invoices.filter(i => i.status === "pending").length;
   
-  // Get most recent prospects for activity feed
+  // Get most recent prospects from careers (excluding database entries)
   const recentProspects = [...prospects]
+    // Exclude any prospects created from our database imports
+    .filter(prospect => {
+      // We know it's from DB if it has notes mentioning database import
+      const notesHaveDatabase = prospect.notes && 
+        (prospect.notes.includes('database') || 
+         prospect.notes.includes('import') || 
+         prospect.notes.includes('Database'));
+      
+      // We use explicit null check to avoid filtering out prospects without notes
+      return notesHaveDatabase !== true;
+    })
     .filter(p => p.createdAt) // Ensure we have a createdAt date
     .sort((a, b) => {
       return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
@@ -113,12 +124,12 @@ export default function DashboardPage() {
         <div className="mb-8">
           <Card className="border border-slate-200 shadow-sm">
             <div className="px-6 py-4 border-b border-slate-200">
-              <h2 className="text-lg font-semibold">Recent Activity</h2>
+              <h2 className="text-lg font-semibold">Recent Career Applications</h2>
             </div>
             <div className="p-6">
               {recentProspects.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  No recent prospect activity found.
+                  No recent career applications found. Applications from the careers page will appear here.
                 </div>
               ) : (
                 recentProspects.map((prospect) => (
