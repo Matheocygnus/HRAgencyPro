@@ -15,7 +15,17 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Client, Company, Hero, Contract, JobRequest } from "@shared/schema";
+import { Client, Company, Hero, Contract, JobRequest, Prospect } from "@shared/schema";
+
+// Extended Hero type with prospect data
+interface EnhancedHero extends Hero {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  skills?: string[];
+  position?: string;
+}
 import { Building2, Plus, Users, FileSignature, Briefcase } from "lucide-react";
 import { Link } from "wouter";
 
@@ -70,7 +80,7 @@ export default function ClientDashboard() {
   });
 
   // Fetch heroes for the selected client
-  const { data: heroes = [], isLoading: isLoadingHeroes } = useQuery<Hero[]>({
+  const { data: heroes = [], isLoading: isLoadingHeroes } = useQuery<EnhancedHero[]>({
     queryKey: [`/api/clients/${selectedClient?.id}/heroes`],
     enabled: !!selectedClient,
   });
@@ -275,9 +285,13 @@ export default function ClientDashboard() {
                               <TableRow key={hero.id}>
                                 <TableCell>
                                   <div className="font-medium">
-                                    {/* In a real app, fetch the prospect info too */}
-                                    Hero #{hero.id}
+                                    {hero.firstName && hero.lastName 
+                                      ? `${hero.firstName} ${hero.lastName}`
+                                      : `Hero #${hero.id}`}
                                   </div>
+                                  {hero.position && (
+                                    <div className="text-sm text-muted-foreground">{hero.position}</div>
+                                  )}
                                 </TableCell>
                                 <TableCell>
                                   {hero.startDate ? new Date(hero.startDate).toLocaleDateString() : "N/A"}

@@ -483,6 +483,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const enhancedHeroes = await Promise.all(
         heroes.map(async (hero) => {
           const prospect = await storage.getProspect(hero.prospectId);
+          console.log(`Found prospect for hero ${hero.id}:`, prospect ? `${prospect.firstName} ${prospect.lastName}` : "No prospect found");
+          
           return {
             ...hero,
             firstName: prospect?.firstName,
@@ -494,6 +496,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         })
       );
+      
+      console.log("Enhanced heroes:", enhancedHeroes.map(h => ({ 
+        id: h.id, 
+        name: h.firstName && h.lastName ? `${h.firstName} ${h.lastName}` : `Hero #${h.id}`,
+        position: h.position
+      })));
       
       res.json(enhancedHeroes);
     } catch (error) {
