@@ -129,12 +129,21 @@ const ProspectDatabasePage = () => {
   const totalItems = filteredProspects.length;
   const totalPages = Math.ceil(totalItems / pageSize);
   
-  // Ensure current page stays valid when filters change
+  // Log current pagination state for debugging
+  console.log("Pagination state:", { 
+    currentPage, 
+    pageSize, 
+    totalItems, 
+    totalPages, 
+    filteredCount: filteredProspects.length 
+  });
+  
+  // Ensure current page stays valid when filters change or data updates
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
     }
-  }, [currentPage, totalPages, searchTerm]);
+  }, [totalPages, searchTerm]);
   
   // Get paginated data
   const paginatedProspects = filteredProspects.slice(
@@ -144,11 +153,14 @@ const ProspectDatabasePage = () => {
   
   // Pagination controls
   const handlePageChange = (page: number) => {
+    console.log("Changing page to:", page);
     setCurrentPage(page);
   };
   
   const handlePageSizeChange = (value: string) => {
-    setPageSize(Number(value));
+    const newSize = Number(value);
+    console.log("Changing page size to:", newSize);
+    setPageSize(newSize);
     setCurrentPage(1); // Reset to first page when changing page size
   };
   
@@ -199,16 +211,16 @@ const ProspectDatabasePage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[600px]">
+              <ScrollArea className="h-[400px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Role Position</TableHead>
-                      <TableHead>Country</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>English Level</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead className="sticky top-0 bg-background z-10">Name</TableHead>
+                      <TableHead className="sticky top-0 bg-background z-10">Role Position</TableHead>
+                      <TableHead className="sticky top-0 bg-background z-10">Country</TableHead>
+                      <TableHead className="sticky top-0 bg-background z-10">Contact</TableHead>
+                      <TableHead className="sticky top-0 bg-background z-10">English Level</TableHead>
+                      <TableHead className="sticky top-0 bg-background z-10">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -286,7 +298,14 @@ const ProspectDatabasePage = () => {
             <CardFooter className="flex items-center justify-between">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <div>
-                  <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                  <Select 
+                    value={pageSize.toString()} 
+                    onValueChange={(value) => {
+                      console.log("Changing page size to:", value);
+                      setPageSize(Number(value));
+                      setCurrentPage(1); // Reset to first page when page size changes
+                    }}
+                  >
                     <SelectTrigger className="h-8 w-[70px]">
                       <SelectValue placeholder="10" />
                     </SelectTrigger>
@@ -305,7 +324,10 @@ const ProspectDatabasePage = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => handlePageChange(1)}
+                  onClick={() => {
+                    console.log("First page click");
+                    setCurrentPage(1); // Direct state update
+                  }}
                   disabled={currentPage === 1}
                   className="h-8 w-8"
                 >
@@ -315,7 +337,10 @@ const ProspectDatabasePage = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => handlePageChange(currentPage - 1)}
+                  onClick={() => {
+                    console.log("Previous page click", currentPage - 1);
+                    setCurrentPage(prev => Math.max(1, prev - 1)); // Functional update
+                  }}
                   disabled={currentPage === 1}
                   className="h-8 w-8"
                 >
@@ -331,7 +356,10 @@ const ProspectDatabasePage = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => handlePageChange(currentPage + 1)}
+                  onClick={() => {
+                    console.log("Next page click", currentPage + 1);
+                    setCurrentPage(prev => Math.min(totalPages, prev + 1)); // Functional update
+                  }}
                   disabled={currentPage === totalPages || totalPages === 0}
                   className="h-8 w-8"
                 >
@@ -341,7 +369,10 @@ const ProspectDatabasePage = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => handlePageChange(totalPages)}
+                  onClick={() => {
+                    console.log("Last page click", totalPages);
+                    setCurrentPage(totalPages || 1); // Direct state update with fallback
+                  }}
                   disabled={currentPage === totalPages || totalPages === 0}
                   className="h-8 w-8"
                 >
