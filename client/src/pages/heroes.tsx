@@ -36,6 +36,8 @@ export default function HeroesPage() {
   const { user } = useMockAuth();
   const [isCreateHeroDialogOpen, setIsCreateHeroDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedHero, setSelectedHero] = useState<any>(null);
+  const [isCreateContractDialogOpen, setIsCreateContractDialogOpen] = useState(false);
 
   // Check if user has admin access
   const isAdmin = user && (user.role === "admin" || user.role === "super_admin");
@@ -141,6 +143,22 @@ export default function HeroesPage() {
   const availableProspects = prospects.filter(
     prospect => prospect.status === "contract" && !heroes.some(hero => hero.prospectId === prospect.id)
   );
+  
+  // Handle creating a contract for a hero
+  const handleCreateContract = (hero: any) => {
+    // Get the prospect information
+    const prospect = prospects.find(p => p.id === hero.prospectId);
+    
+    // Prepare hero data with name from prospect
+    const heroData = {
+      ...hero,
+      name: prospect ? `${prospect.firstName} ${prospect.lastName}` : `Hero #${hero.id}`,
+      position: prospect?.position || 'Professional',
+    };
+    
+    setSelectedHero(heroData);
+    setIsCreateContractDialogOpen(true);
+  };
 
   return (
     <Dashboard>
@@ -219,7 +237,9 @@ export default function HeroesPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem>View Details</DropdownMenuItem>
                               {isAdmin && !hero.contractId && (
-                                <DropdownMenuItem>Create Contract</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleCreateContract(hero)}>
+                                  Create Contract
+                                </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -307,6 +327,15 @@ export default function HeroesPage() {
           )}
         </DialogContent>
       </Dialog>
+      
+      {/* Create Contract Dialog */}
+      {selectedHero && (
+        <CreateContractDialog
+          isOpen={isCreateContractDialogOpen}
+          onOpenChange={setIsCreateContractDialogOpen}
+          hero={selectedHero}
+        />
+      )}
     </Dashboard>
   );
 }
