@@ -448,6 +448,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Endpoint to move a prospect to the prospects database (used when rejecting prospects)
+  app.post("/api/prospects/:id/move-to-database", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Get the prospect
+      const prospect = await storage.getProspect(id);
+      if (!prospect) {
+        return res.status(404).json({ message: "Prospect not found" });
+      }
+      
+      // Format data for prospects database
+      const prospectDbData = {
+        name: `${prospect.firstName} ${prospect.lastName}`,
+        status: 'rejected',
+        rolePosition: prospect.position || null,
+        otherRoleOfInterest: null,
+        vocarooRecord: prospect.voiceMessageUrl || null,
+        resume: prospect.resume || null,
+        country: null,
+        email: prospect.email,
+        phone: prospect.phone || null,
+        programTools: prospect.skills || null,
+        englishLevel: null,
+        clientId: prospect.clientId,
+        companyId: prospect.companyId,
+      };
+      
+      // Add to prospects database
+      const newDbEntry = await storage.createProspectDatabase(prospectDbData);
+      
+      // Don't remove the prospect from the pipeline - just mark it as rejected
+      // The UI will handle showing/hiding it in the appropriate view
+      
+      // Respond with success and the new database entry
+      res.status(201).json({
+        message: "Prospect successfully moved to database",
+        prospectDb: newDbEntry
+      });
+    } catch (error) {
+      console.error("Error moving prospect to database:", error);
+      res.status(500).json({ 
+        message: "Failed to move prospect to database", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
   // Hero routes
   app.get("/api/heroes", isAuthenticated, async (req, res) => {
     try {
