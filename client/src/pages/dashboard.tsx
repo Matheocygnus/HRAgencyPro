@@ -9,6 +9,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, Target, UserRound, Building2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format, formatDistance } from "date-fns";
+
+// Helper function to format time as "X days ago", "X hours ago", etc.
+const formatTimeAgo = (date: Date): string => {
+  try {
+    return formatDistance(date, new Date(), { addSuffix: true });
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "recently";
+  }
+};
 
 export default function DashboardPage() {
   // Fetch stats data
@@ -28,16 +39,23 @@ export default function DashboardPage() {
     queryKey: ["/api/invoices"],
   });
   
-  // Calculate counts
-  const upcomingInterviewsCount = 12; // Demo data - would come from actual interviews
-  const matchedProspectsCount = 24;   // Demo data - would come from actual matches
-  const pendingTasksCount = 9;        // Demo data - would come from actual tasks
+  // Calculate all counts from actual data
+  const upcomingInterviewsCount = prospects.filter(p => p.status === "interview").length;
+  const matchedProspectsCount = prospects.filter(p => p.status === "client_review").length;
+  const pendingTasksCount = prospects.filter(p => ["sourcing", "contacted"].includes(p.status || "")).length;
   
-  // Calculate actual data
+  // Calculate additional stats
   const activeProspectsCount = prospects.filter(p => p.status !== "hired" && p.status !== "rejected").length;
-  const heroesCount = heroes.length;
   const activeClientsCount = clients.filter(c => c.status === "active").length;
   const pendingInvoicesCount = invoices.filter(i => i.status === "pending").length;
+  
+  // Get most recent prospects for activity feed
+  const recentProspects = [...prospects]
+    .filter(p => p.createdAt) // Ensure we have a createdAt date
+    .sort((a, b) => {
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    })
+    .slice(0, 5);
   
   return (
     <Dashboard>
@@ -98,38 +116,53 @@ export default function DashboardPage() {
               <h2 className="text-lg font-semibold">Recent Activity</h2>
             </div>
             <div className="p-6">
-              {/* Mock entries - would be replaced with actual data */}
-              <div className="border-b border-slate-100 pb-4 mb-4">
-                <div className="flex justify-between">
-                  <div>
-                    <h3 className="font-medium">Michael Johnson</h3>
-                    <p className="text-sm text-slate-500">Applied for Full-stack Developer position</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm text-slate-500">Added 2 days ago</span>
-                    <div className="flex space-x-2 mt-2">
-                      <Button size="sm" variant="default" className="bg-primary">Match</Button>
-                      <Button size="sm" variant="outline">View Profile</Button>
+              {recentProspects.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No recent prospect activity found.
+                </div>
+              ) : (
+                recentProspects.map((prospect) => (
+                  <div key={prospect.id} className="border-b border-slate-100 pb-4 mb-4 last:mb-0 last:border-0">
+                    <div className="flex justify-between">
+                      <div>
+                        <h3 className="font-medium">{prospect.firstName} {prospect.lastName}</h3>
+                        <p className="text-sm text-slate-500">
+                          {prospect.position ? 
+                            `Applied for ${prospect.position} position` : 
+                            'Applied for a position'}
+                          {prospect.clientId && clients.length > 0 && (
+                            <span> at {clients.find(c => c.id === prospect.clientId)?.name || "Unknown client"}</span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm text-slate-500">
+                          {prospect.createdAt ? 
+                            `Added ${formatTimeAgo(new Date(prospect.createdAt))}` : 
+                            'Recently added'}
+                        </span>
+                        <div className="flex space-x-2 mt-2">
+                          <Button 
+                            size="sm" 
+                            variant="default" 
+                            className="bg-primary"
+                            onClick={() => window.location.href = `/prospects?select=${prospect.id}`}
+                          >
+                            Match
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => window.location.href = `/prospects?view=${prospect.id}`}
+                          >
+                            View Profile
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-              
-              <div className="border-b border-slate-100 pb-4 mb-4">
-                <div className="flex justify-between">
-                  <div>
-                    <h3 className="font-medium">Sarah Williams</h3>
-                    <p className="text-sm text-slate-500">Applied for UX Designer position</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm text-slate-500">Added 3 days ago</span>
-                    <div className="flex space-x-2 mt-2">
-                      <Button size="sm" variant="default" className="bg-primary">Match</Button>
-                      <Button size="sm" variant="outline">View Profile</Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                ))
+              )}
             </div>
           </Card>
         </div>
@@ -155,7 +188,7 @@ export default function DashboardPage() {
           <StatCard 
             title="Pending Invoices" 
             value={pendingInvoicesCount}
-            subtitle="3 new this week"
+            subtitle="Awaiting payment"
             icon={FileText}
             iconColor="text-emerald-600"
           />
