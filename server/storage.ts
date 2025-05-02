@@ -263,6 +263,12 @@ export interface IStorage {
   rejectJobRequest(id: number, notes?: string): Promise<JobRequest | undefined>;
   publishJobRequest(id: number): Promise<JobOpening | undefined>;
   
+  // ProspectsDatabase methods
+  getProspectDatabase(id: number): Promise<ProspectDatabase | undefined>;
+  getProspectsDatabase(): Promise<ProspectDatabase[]>;
+  createProspectDatabase(prospectData: InsertProspectDatabase): Promise<ProspectDatabase>;
+  updateProspectDatabase(id: number, prospectData: Partial<ProspectDatabase>): Promise<ProspectDatabase | undefined>;
+  
   // Session store
   sessionStore: any; // Using 'any' temporarily to resolve type issues
 }
@@ -2903,6 +2909,53 @@ export class MemStorage implements IStorage {
     });
     
     return jobOpening;
+  }
+  
+  // ProspectsDatabase methods
+  async getProspectDatabase(id: number): Promise<ProspectDatabase | undefined> {
+    try {
+      const [prospectData] = await db.select().from(prospectsDatabase).where(eq(prospectsDatabase.id, id));
+      return prospectData ? ensureProspectDatabaseFields(prospectData) : undefined;
+    } catch (error) {
+      console.error(`Error in getProspectDatabase(${id}):`, error);
+      return undefined;
+    }
+  }
+
+  async getProspectsDatabase(): Promise<ProspectDatabase[]> {
+    try {
+      const allProspects = await db.select().from(prospectsDatabase);
+      console.log(`Successfully retrieved ${allProspects.length} prospects from prospects_database table`);
+      return allProspects.map(p => ensureProspectDatabaseFields(p));
+    } catch (error) {
+      console.error("Error in getProspectsDatabase:", error);
+      return [];
+    }
+  }
+
+  async createProspectDatabase(prospectData: InsertProspectDatabase): Promise<ProspectDatabase> {
+    try {
+      const [prospect] = await db.insert(prospectsDatabase).values(prospectData).returning();
+      console.log(`Successfully added prospect '${prospectData.name}' to prospects_database`);
+      return ensureProspectDatabaseFields(prospect);
+    } catch (error) {
+      console.error("Error in createProspectDatabase:", error);
+      throw error;
+    }
+  }
+
+  async updateProspectDatabase(id: number, prospectData: Partial<ProspectDatabase>): Promise<ProspectDatabase | undefined> {
+    try {
+      const [updatedProspect] = await db
+        .update(prospectsDatabase)
+        .set(prospectData)
+        .where(eq(prospectsDatabase.id, id))
+        .returning();
+      return updatedProspect ? ensureProspectDatabaseFields(updatedProspect) : undefined;
+    } catch (error) {
+      console.error(`Error in updateProspectDatabase(${id}):`, error);
+      return await this.getProspectDatabase(id);
+    }
   }
 }
 
