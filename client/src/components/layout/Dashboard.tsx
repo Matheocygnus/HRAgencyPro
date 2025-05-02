@@ -2,24 +2,11 @@ import { ReactNode, useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Select, 
-  SelectContent, 
-  SelectGroup, 
-  SelectItem, 
-  SelectLabel, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { useLocation } from "wouter";
 
 export default function Dashboard({ children }: { children: ReactNode }) {
   const [isMobileOpen, setMobileOpen] = useState(false);
   const [userData, setUserData] = useState<any>(null);
-  const [clients, setClients] = useState<any[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [permissions, setPermissions] = useState<string[]>([]);
-  const [, setLocation] = useLocation();
   
   // Fetch user data directly
   useEffect(() => {
@@ -55,47 +42,6 @@ export default function Dashboard({ children }: { children: ReactNode }) {
     fetchPermissions();
   }, []);
   
-  // Fetch clients for super admin
-  useEffect(() => {
-    const fetchClients = async () => {
-      if (userData?.role === 'super_admin') {
-        try {
-          const response = await fetch('/api/clients');
-          if (response.ok) {
-            const data = await response.json();
-            setClients(data);
-            
-            // Check if there's an id parameter in the URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const clientId = urlParams.get('id');
-            
-            // Set the selected client ID from URL if it's present
-            if (clientId) {
-              setSelectedClientId(clientId);
-              console.log('Preselected client ID from URL:', clientId);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching clients:", error);
-        }
-      }
-    };
-    
-    if (userData) {
-      fetchClients();
-    }
-  }, [userData]);
-  
-  // Handle client selection change
-  const handleClientChange = (clientId: string) => {
-    setSelectedClientId(clientId);
-    console.log('Selected client ID:', clientId);
-    
-    // Use window.location.href for a full page navigation with query parameters
-    // This ensures the parameters are properly passed and the page fully reloads
-    window.location.href = `/client-dashboard?id=${clientId}`;
-  };
-  
   // Function to get role display
   const getRoleBadge = () => {
     if (!userData) return null;
@@ -115,33 +61,10 @@ export default function Dashboard({ children }: { children: ReactNode }) {
         <Header setMobileOpen={setMobileOpen} />
         
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {/* Role indicator and super admin controls */}
+          {/* Role indicator */}
           {userData && (
-            <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              {/* Super Admin Client Selector */}
-              {userData.role === 'super_admin' && permissions.includes('client_dashboard') && (
-                <div className="w-full md:w-64">
-                  <Select value={selectedClientId} onValueChange={handleClientChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a client to view" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Clients</SelectLabel>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={String(client.id)}>
-                            {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              
-              <div className="flex justify-end">
-                {getRoleBadge()}
-              </div>
+            <div className="mb-4 flex justify-end">
+              {getRoleBadge()}
             </div>
           )}
           
