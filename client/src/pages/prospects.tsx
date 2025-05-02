@@ -543,7 +543,18 @@ export default function Prospects() {
                             const clientId = value === "null" ? null : parseInt(value);
                             updateProspectMutation.mutate({ 
                               id: selectedProspect.id, 
-                              clientId 
+                              clientId,
+                              // Clear company if client changes
+                              ...(clientId !== selectedProspect.clientId && { companyId: null })
+                            }, {
+                              onSuccess: (updatedProspect) => {
+                                // Update local state with the server response
+                                setSelectedProspect({
+                                  ...selectedProspect,
+                                  clientId: updatedProspect.clientId,
+                                  companyId: updatedProspect.companyId // Will be null if client changed
+                                });
+                              }
                             });
                           }}
                         >
@@ -569,6 +580,15 @@ export default function Prospects() {
                             updateProspectMutation.mutate({ 
                               id: selectedProspect.id, 
                               companyId 
+                            }, {
+                              onSuccess: (updatedProspect) => {
+                                // Update local state with the server response
+                                setSelectedProspect({
+                                  ...selectedProspect,
+                                  companyId: updatedProspect.companyId,
+                                  clientId: updatedProspect.clientId // In case server updated clientId based on companyId
+                                });
+                              }
                             });
                           }}
                         >
@@ -630,6 +650,14 @@ export default function Prospects() {
                             updateProspectMutation.mutate({ 
                               id: selectedProspect.id, 
                               isBudgetAgreed: checked 
+                            }, {
+                              onSuccess: (updatedProspect) => {
+                                // Update local state with the server response
+                                setSelectedProspect({
+                                  ...selectedProspect,
+                                  isBudgetAgreed: updatedProspect.isBudgetAgreed
+                                });
+                              }
                             });
                           }}
                         />
