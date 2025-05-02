@@ -294,6 +294,8 @@ export const prospectsDatabase = pgTable('prospects_database', {
   phone: text('phone'),
   programTools: text('program_tools'),
   englishLevel: text('english_level'),
+  clientId: integer('client_id'),
+  companyId: integer('company_id'),
   createdAt: timestamp('created_at').defaultNow(),
 });
 

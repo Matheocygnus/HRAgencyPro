@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import Dashboard from "@/components/layout/Dashboard";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Search, ExternalLink, Upload, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
+import { Loader2, Search, ExternalLink, Upload, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Building, Briefcase } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -31,6 +31,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+
+// Define Types based on the database schema
+type Client = {
+  id: number;
+  name: string;
+  contactPerson: string;
+  email: string;
+  phone: string | null;
+  status: string;
+  createdAt: string;
+};
+
+type Company = {
+  id: number;
+  name: string;
+  clientId: number;
+  industry: string | null;
+  size: string | null;
+  location: string | null;
+  createdAt: string;
+};
 
 // Define ProspectDatabase type based on the database schema
 type ProspectDatabase = {
@@ -46,6 +68,8 @@ type ProspectDatabase = {
   phone: string | null;
   programTools: string | null;
   englishLevel: string | null;
+  clientId: number | null;
+  companyId: number | null;
   createdAt: string;
 };
 
@@ -65,6 +89,66 @@ const ProspectDatabasePage = () => {
         throw new Error("Failed to fetch prospects database");
       }
       return response.json();
+    },
+  });
+  
+  // Fetch clients for dropdown
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ["/api/clients"],
+    queryFn: async () => {
+      const response = await fetch("/api/clients");
+      if (!response.ok) {
+        throw new Error("Failed to fetch clients");
+      }
+      return response.json();
+    },
+  });
+  
+  // Fetch companies for dropdown
+  const { data: companies = [] } = useQuery<Company[]>({
+    queryKey: ["/api/companies"],
+    queryFn: async () => {
+      const response = await fetch("/api/companies");
+      if (!response.ok) {
+        throw new Error("Failed to fetch companies");
+      }
+      return response.json();
+    },
+  });
+  
+  // Mutation for updating a prospect's client or company
+  const updateProspectMutation = useMutation({
+    mutationFn: async (data: { id: number, clientId?: number | null, companyId?: number | null }) => {
+      const response = await fetch(`/api/prospects-database/${data.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update prospect");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Prospect updated successfully.",
+      });
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/prospects-database"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
   
@@ -219,6 +303,8 @@ const ProspectDatabasePage = () => {
                       <TableHead className="sticky top-0 bg-background z-10">Role Position</TableHead>
                       <TableHead className="sticky top-0 bg-background z-10">Country</TableHead>
                       <TableHead className="sticky top-0 bg-background z-10">Contact</TableHead>
+                      <TableHead className="sticky top-0 bg-background z-10">Client</TableHead>
+                      <TableHead className="sticky top-0 bg-background z-10">Company</TableHead>
                       <TableHead className="sticky top-0 bg-background z-10">English Level</TableHead>
                       <TableHead className="sticky top-0 bg-background z-10">Actions</TableHead>
                     </TableRow>
@@ -226,7 +312,7 @@ const ProspectDatabasePage = () => {
                   <TableBody>
                     {paginatedProspects.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center h-24">
+                        <TableCell colSpan={8} className="text-center h-24">
                           No prospects found.
                         </TableCell>
                       </TableRow>
@@ -251,6 +337,66 @@ const ProspectDatabasePage = () => {
                                 </a>
                               </div>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={prospect.clientId?.toString() || "null"}
+                              onValueChange={(value) => {
+                                const clientId = value === "null" ? null : parseInt(value);
+                                updateProspectMutation.mutate({ 
+                                  id: prospect.id, 
+                                  clientId,
+                                  // Clear company if client changes
+                                  ...(clientId !== prospect.clientId && { companyId: null })
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="w-full max-w-[180px]">
+                                <div className="truncate flex items-center gap-1">
+                                  <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <SelectValue placeholder="Select client" />
+                                </div>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="null">None</SelectItem>
+                                {clients.map((client) => (
+                                  <SelectItem key={client.id} value={client.id.toString()}>
+                                    {client.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={prospect.companyId?.toString() || "null"}
+                              onValueChange={(value) => {
+                                const companyId = value === "null" ? null : parseInt(value);
+                                updateProspectMutation.mutate({ 
+                                  id: prospect.id, 
+                                  companyId 
+                                });
+                              }}
+                              disabled={!prospect.clientId}
+                            >
+                              <SelectTrigger className="w-full max-w-[180px]">
+                                <div className="truncate flex items-center gap-1">
+                                  <Building className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <SelectValue placeholder="Select company" />
+                                </div>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="null">None</SelectItem>
+                                {companies
+                                  .filter(company => !prospect.clientId || company.clientId === prospect.clientId)
+                                  .map((company) => (
+                                    <SelectItem key={company.id} value={company.id.toString()}>
+                                      {company.name}
+                                    </SelectItem>
+                                  ))
+                                }
+                              </SelectContent>
+                            </Select>
                           </TableCell>
                           <TableCell>
                             {prospect.englishLevel ? (
