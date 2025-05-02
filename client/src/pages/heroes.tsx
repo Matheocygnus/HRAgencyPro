@@ -192,14 +192,25 @@ export default function HeroesPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <CardTitle>Hired Heroes</CardTitle>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search heroes..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex items-center gap-3">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search heroes..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              {isAdmin && (
+                <Button 
+                  size="sm" 
+                  onClick={() => setIsHeroSelectContractDialogOpen(true)}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Create Contract
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
