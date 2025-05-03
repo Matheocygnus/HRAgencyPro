@@ -407,8 +407,21 @@ export default function HeroesPage() {
       {selectedHero && (
         <Dialog open={isHeroDetailsDialogOpen} onOpenChange={setIsHeroDetailsDialogOpen}>
           <DialogContent className="sm:max-w-xl">
-            <DialogHeader>
+            <DialogHeader className="flex flex-row items-center justify-between">
               <DialogTitle>Hero Details</DialogTitle>
+              {isAdmin && (
+                <Button 
+                  style={{ backgroundColor: '#2563eb', color: 'white' }}
+                  className="font-bold text-sm"
+                  onClick={() => {
+                    setIsHeroDetailsDialogOpen(false);
+                    handleCreateContract(selectedHero);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  NEW CONTRACT
+                </Button>
+              )}
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
