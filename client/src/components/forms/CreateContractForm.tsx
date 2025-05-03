@@ -36,12 +36,7 @@ const formSchema = z.object({
   notes: z.string().optional(),
   status: z.enum(["draft", "signed", "active", "completed", "terminated"]).default("draft"),
   document: z.string().nullable().optional(),
-}).transform(data => ({
-  ...data,
-  profit: data.companyPayment - data.compensation,
-  // If indefinite contract, set endDate to null
-  endDate: data.isIndefinite ? null : data.endDate
-}));
+});
 
 type CreateContractFormProps = {
   hero: {
@@ -91,7 +86,18 @@ export default function CreateContractForm({ hero, onSuccess }: CreateContractFo
   // Create contract mutation
   const createContractMutation = useMutation({
     mutationFn: async (formData: z.infer<typeof formSchema>) => {
-      const response = await apiRequest("POST", "/api/contracts", formData);
+      // Convert string dates to Date objects before sending to API
+      const { isIndefinite, ...rest } = formData;
+      
+      // Prepare data for API request
+      const apiData = {
+        ...rest,
+        startDate: new Date(formData.startDate),
+        endDate: isIndefinite ? null : (formData.endDate ? new Date(formData.endDate) : null),
+        profit: formData.companyPayment - formData.compensation
+      };
+      
+      const response = await apiRequest("POST", "/api/contracts", apiData);
       return response.json();
     },
     onSuccess: () => {
@@ -125,18 +131,14 @@ export default function CreateContractForm({ hero, onSuccess }: CreateContractFo
     setIsLoading(true);
     
     try {
-      // Convert string dates to ISO date format for the server
-      const formattedValues = {
-        ...values,
-        // Convert start date to ISO string format
-        startDate: new Date(values.startDate).toISOString(),
-        // Handle end date based on isIndefinite flag
-        endDate: values.isIndefinite || !values.endDate ? null : new Date(values.endDate).toISOString()
-      };
-      
-      await createContractMutation.mutateAsync(formattedValues);
+      await createContractMutation.mutateAsync(values);
     } catch (error) {
       console.error("Error creating contract:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create contract. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
