@@ -183,10 +183,11 @@ export default function ContractsPage() {
                 setEditContractId(undefined);
                 setIsAddContractDialogOpen(true);
               }}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              style={{ backgroundColor: '#2563eb', color: 'white' }}
+              className="font-bold"
             >
               <Plus className="mr-2 h-4 w-4" />
-              New Contract
+              NEW CONTRACT
             </Button>
           </div>
         )}
