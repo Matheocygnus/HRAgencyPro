@@ -184,7 +184,21 @@ export default function ContractsPage() {
       
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Manage Contracts</CardTitle>
+          <div className="flex flex-col sm:flex-row justify-between items-center">
+            <CardTitle>Manage Contracts</CardTitle>
+            {isAdmin && (
+              <Button 
+                size="sm" 
+                onClick={() => {
+                  setEditContractId(undefined);
+                  setIsAddContractDialogOpen(true);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Contract
+              </Button>
+            )}
+          </div>
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
