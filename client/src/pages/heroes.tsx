@@ -428,8 +428,12 @@ export default function HeroesPage() {
                 <Button 
                   style={{ backgroundColor: '#2563eb', color: 'white' }}
                   className="font-bold"
+                  onClick={() => {
+                    setIsHeroDetailsDialogOpen(false);
+                    handleCreateContract(selectedHero);
+                  }}
                 >
-                  NEW
+                  New Contract
                 </Button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
