@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   DropdownMenu, 
@@ -27,7 +28,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Hero, Prospect, Client, Company, Contract } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { FileText, Loader2, MoreHorizontal, Plus, Search } from "lucide-react";
+import { FileText, Loader2, MoreHorizontal, Plus, Search, Mail, Phone } from "lucide-react";
 import { useMockAuth } from "@/hooks/use-mock-auth";
 import CreateContractDialog from "@/components/dialogs/CreateContractDialog";
 import HeroSelectContractDialog from "@/components/dialogs/HeroSelectContractDialog";
@@ -40,6 +41,7 @@ export default function HeroesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedHero, setSelectedHero] = useState<any>(null);
   const [isCreateContractDialogOpen, setIsCreateContractDialogOpen] = useState(false);
+  const [isHeroDetailsDialogOpen, setIsHeroDetailsDialogOpen] = useState(false);
 
   // Check if user has admin access
   const isAdmin = user && (user.role === "admin" || user.role === "super_admin");
@@ -161,6 +163,28 @@ export default function HeroesPage() {
     setSelectedHero(heroData);
     setIsCreateContractDialogOpen(true);
   };
+  
+  // Handle viewing hero details
+  const handleViewHeroDetails = (hero: any) => {
+    // Get the prospect information
+    const prospect = prospects.find(p => p.id === hero.prospectId);
+    
+    // Prepare hero data with name and additional info from prospect
+    const heroData = {
+      ...hero,
+      name: prospect ? `${prospect.firstName} ${prospect.lastName}` : `Hero #${hero.id}`,
+      position: prospect?.position || 'Professional',
+      email: prospect?.email || '',
+      phone: prospect?.phone || '',
+      skills: prospect?.skills || [],
+      status: getContractStatus(hero.contractId),
+      clientName: getClientName(hero.clientId),
+      companyName: getCompanyName(hero.companyId),
+    };
+    
+    setSelectedHero(heroData);
+    setIsHeroDetailsDialogOpen(true);
+  };
 
   return (
     <Dashboard>
@@ -262,8 +286,9 @@ export default function HeroesPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>View Details</DropdownMenuItem>
-                              {console.log("Hero contract status:", hero.id, hero.contractId, isAdmin)}
+                              <DropdownMenuItem onClick={() => handleViewHeroDetails(hero)}>
+                                View Details
+                              </DropdownMenuItem>
                               {isAdmin && (
                                 <DropdownMenuItem onClick={() => handleCreateContract(hero)}>
                                   Create Contract
@@ -377,6 +402,85 @@ export default function HeroesPage() {
           }
         }}
       />
+      
+      {/* Hero Details Dialog */}
+      {selectedHero && (
+        <Dialog open={isHeroDetailsDialogOpen} onOpenChange={setIsHeroDetailsDialogOpen}>
+          <DialogContent className="sm:max-w-xl">
+            <DialogHeader>
+              <DialogTitle>Hero Details</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-lg font-medium">{selectedHero.name}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedHero.position}</p>
+                  
+                  <div className="mt-4 space-y-2">
+                    <div className="flex gap-2">
+                      <Mail className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <p>{selectedHero.email || "No email available"}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Phone className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <p>{selectedHero.phone || "No phone available"}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium mb-1">Start Date</h4>
+                    <p>{selectedHero.startDate ? 
+                      new Date(selectedHero.startDate).toLocaleDateString() : 
+                      "Not set"}
+                    </p>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-md">
+                    <h4 className="text-sm font-medium mb-1">Client</h4>
+                    <p className="font-medium">{selectedHero.clientName}</p>
+                    
+                    <h4 className="text-sm font-medium mt-3 mb-1">Company</h4>
+                    <p className="font-medium">{selectedHero.companyName}</p>
+                    
+                    <h4 className="text-sm font-medium mt-3 mb-1">Contract Status</h4>
+                    <Badge
+                      variant={selectedHero.status === "No Contract" ? "outline" : "default"}
+                    >
+                      {selectedHero.status}
+                    </Badge>
+                    
+                    {isAdmin && selectedHero.status === "No Contract" && (
+                      <Button 
+                        className="mt-3 w-full"
+                        onClick={() => {
+                          setIsHeroDetailsDialogOpen(false);
+                          handleCreateContract(selectedHero);
+                        }}
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        Create Contract
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {selectedHero.skills && selectedHero.skills.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium mb-2">Skills</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedHero.skills.map((skill: string, index: number) => (
+                      <Badge key={index} variant="secondary">{skill}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dashboard>
   );
 }
