@@ -17,17 +17,30 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { insertContractSchema } from "@shared/schema";
 import { Loader2 } from "lucide-react";
 
 // Form schema with default values and validation
-const formSchema = insertContractSchema.extend({
+const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
+  heroId: z.number(),
+  clientId: z.number(),
+  companyId: z.number(),
+  startDate: z.string(),
+  endDate: z.string().optional().nullable(),
+  isIndefinite: z.boolean().default(false),
   compensation: z.coerce.number().min(0, "Compensation must be a positive number"),
-  companyPayment: z.coerce.number().min(0, "Company payment must be a positive number")
+  companyPayment: z.coerce.number().min(0, "Company payment must be a positive number"),
+  profit: z.number(),
+  notes: z.string().optional(),
+  status: z.enum(["draft", "signed", "active", "completed", "terminated"]).default("draft"),
+  document: z.string().nullable().optional(),
 }).transform(data => ({
   ...data,
-  profit: data.companyPayment - data.compensation
+  profit: data.companyPayment - data.compensation,
+  // If indefinite contract, set endDate to null
+  endDate: data.isIndefinite ? null : data.endDate
 }));
 
 type CreateContractFormProps = {
@@ -71,6 +84,7 @@ export default function CreateContractForm({ hero, onSuccess }: CreateContractFo
       notes: "",
       status: "draft",
       document: null,
+      isIndefinite: false,
     },
   });
   
@@ -152,19 +166,46 @@ export default function CreateContractForm({ hero, onSuccess }: CreateContractFo
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="endDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>End Date</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Date</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="date" 
+                        {...field} 
+                        disabled={form.watch("isIndefinite")}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="isIndefinite"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-2 space-y-0 mt-1">
+                    <FormControl>
+                      <Checkbox 
+                        checked={field.value} 
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          if (checked) {
+                            form.setValue("endDate", "");
+                          }
+                        }} 
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal">Indefinite contract (no end date)</FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
