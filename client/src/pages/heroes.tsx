@@ -424,6 +424,14 @@ export default function HeroesPage() {
               )}
             </DialogHeader>
             <div className="space-y-4 py-2">
+              <div className="flex justify-end mb-2">
+                <Button 
+                  style={{ backgroundColor: '#2563eb', color: 'white' }}
+                  className="font-bold"
+                >
+                  NEW
+                </Button>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-lg font-medium">{selectedHero.name}</h3>
