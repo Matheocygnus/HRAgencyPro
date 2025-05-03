@@ -125,7 +125,16 @@ export default function CreateContractForm({ hero, onSuccess }: CreateContractFo
     setIsLoading(true);
     
     try {
-      await createContractMutation.mutateAsync(values);
+      // Convert string dates to ISO date format for the server
+      const formattedValues = {
+        ...values,
+        // Convert start date to ISO string format
+        startDate: new Date(values.startDate).toISOString(),
+        // Handle end date based on isIndefinite flag
+        endDate: values.isIndefinite || !values.endDate ? null : new Date(values.endDate).toISOString()
+      };
+      
+      await createContractMutation.mutateAsync(formattedValues);
     } catch (error) {
       console.error("Error creating contract:", error);
     } finally {
