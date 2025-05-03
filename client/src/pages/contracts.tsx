@@ -178,6 +178,16 @@ export default function ContractsPage() {
               <Plus className="mr-2 h-4 w-4" />
               Create Contract (Manual)
             </Button>
+            <Button 
+              onClick={() => {
+                setEditContractId(undefined);
+                setIsAddContractDialogOpen(true);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Contract
+            </Button>
           </div>
         )}
       </div>
