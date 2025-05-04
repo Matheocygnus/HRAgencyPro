@@ -89,13 +89,27 @@ export default function CreateContractForm({ hero, onSuccess }: CreateContractFo
       // Convert string dates to Date objects before sending to API
       const { isIndefinite, ...rest } = formData;
       
+      // Format dates as ISO strings which will be properly parsed as dates by the server
+      const startDateObj = new Date(formData.startDate);
+      // Add time part to ensure proper date parsing
+      startDateObj.setHours(12, 0, 0, 0);
+      
+      // Calculate end date (or null if indefinite)
+      let endDateObj = null;
+      if (!isIndefinite && formData.endDate) {
+        endDateObj = new Date(formData.endDate);
+        endDateObj.setHours(12, 0, 0, 0);
+      }
+      
       // Prepare data for API request
       const apiData = {
         ...rest,
-        startDate: new Date(formData.startDate),
-        endDate: isIndefinite ? null : (formData.endDate ? new Date(formData.endDate) : null),
+        startDate: startDateObj,
+        endDate: endDateObj,
         profit: formData.companyPayment - formData.compensation
       };
+      
+      console.log("Sending contract data:", JSON.stringify(apiData));
       
       const response = await apiRequest("POST", "/api/contracts", apiData);
       return response.json();
