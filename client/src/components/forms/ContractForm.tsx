@@ -211,6 +211,15 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
     },
   });
 
+  // Helper function to get hero name
+  const getHeroName = (heroId?: number) => {
+    if (!heroId) return "Select a hero";
+    const hero = heroes?.find(h => h.id === heroId);
+    if (!hero) return "Select a hero";
+    const prospect = prospects?.find((p: any) => p.id === hero.prospectId);
+    return prospect ? `${prospect.firstName} ${prospect.lastName}` : `Hero ${hero.id}`;
+  };
+
   // Handle hero selection to auto-fill related fields
   const handleHeroChange = (heroId: number) => {
     const selectedHero = heroes?.find(h => h.id === heroId);
@@ -231,7 +240,7 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
         startDate: new Date(contractData.startDate),
         endDate: contractData.endDate ? new Date(contractData.endDate) : undefined,
         compensation: contractData.compensation,
-        companyPayment: contractData.companyPayment,
+        companyPayment: contractData.companyPayment || undefined,
         profit: contractData.profit || (contractData.companyPayment ? contractData.companyPayment - contractData.compensation : undefined),
         status: contractData.status,
         document: contractData.document || '',
@@ -292,19 +301,20 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a hero" />
+                      <SelectValue 
+                        placeholder="Select a hero" 
+                        {...field.value && {
+                          children: getHeroName(field.value)
+                        }}
+                      />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {heroes?.map((hero) => {
-                      const prospect = prospects?.find((p: any) => p.id === hero.prospectId);
-                      const heroName = prospect ? `${prospect.firstName} ${prospect.lastName}` : `Hero ${hero.id}`;
-                      return (
-                        <SelectItem key={hero.id} value={hero.id.toString()}>
-                          {heroName}
-                        </SelectItem>
-                      );
-                    })}
+                    {heroes?.map((hero) => (
+                      <SelectItem key={hero.id} value={hero.id.toString()}>
+                        {getHeroName(hero.id)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
