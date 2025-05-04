@@ -464,6 +464,12 @@ export default function ContractsPage() {
         onOpenChange={setIsAddContractDialogOpen}
         contractId={editContractId}
         onSuccess={() => {
+          // Invalidate contracts query to force refresh
+          queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+          if (editContractId) {
+            queryClient.invalidateQueries({ queryKey: ["/api/contracts", editContractId] });
+          }
+          
           toast({
             title: "Success",
             description: editContractId ? "Contract updated successfully" : "Contract created successfully",
@@ -479,6 +485,12 @@ export default function ContractsPage() {
         onOpenChange={setIsQuickEditDialogOpen}
         contractId={quickEditContractId}
         onSuccess={() => {
+          // Invalidate contracts query to force refresh
+          queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+          if (quickEditContractId) {
+            queryClient.invalidateQueries({ queryKey: ["/api/contracts", quickEditContractId] });
+          }
+          
           toast({
             title: "Success",
             description: "Contract updated successfully",
