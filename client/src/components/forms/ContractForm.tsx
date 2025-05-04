@@ -165,43 +165,63 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
   // Mutation to update contract
   const updateContractMutation = useMutation({
     mutationFn: async (data: z.infer<typeof contractFormSchema>) => {
-      const formData = new FormData();
-      
       console.log("Updating contract with data:", data);
+
+      // Prepare data for JSON submission
+      const jsonData: any = {};
       
-      // Add all form fields to formData
       Object.entries(data).forEach(([key, value]) => {
         if (value instanceof Date) {
-          formData.append(key, value.toISOString());
+          jsonData[key] = value.toISOString();
         } else if (value !== null && value !== undefined) {
-          formData.append(key, String(value));
+          jsonData[key] = value;
         }
       });
-      
-      // Add document file if provided
-      if (documentFile) {
-        formData.append('documentFile', documentFile);
-      }
       
       if (!contractId) {
         throw new Error('Contract ID is missing for update operation');
       }
       
-      console.log(`Sending PUT request to /api/contracts/${contractId}`);
-      const res = await fetch(`/api/contracts/${contractId}`, {
+      console.log(`Sending PUT request to /api/contracts/${contractId}`, jsonData);
+      
+      // First update the contract data via JSON
+      const updateRes = await fetch(`/api/contracts/${contractId}`, {
         method: 'PUT',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(jsonData),
       });
       
-      if (!res.ok) {
-        const errorText = await res.text();
+      if (!updateRes.ok) {
+        const errorText = await updateRes.text();
         console.error("Contract update error:", errorText);
         throw new Error(`Failed to update contract: ${errorText}`);
       }
       
-      const result = await res.json();
-      console.log("Contract update successful:", result);
-      return result;
+      const updatedContract = await updateRes.json();
+      console.log("Contract update successful:", updatedContract);
+      
+      // If we have a document file, upload it separately
+      if (documentFile) {
+        console.log("Uploading document for contract:", contractId);
+        const formData = new FormData();
+        formData.append('documentFile', documentFile);
+        
+        const documentRes = await fetch(`/api/contracts/${contractId}/document`, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!documentRes.ok) {
+          console.error("Document upload failed, but contract was updated");
+          // We don't throw here since the contract update was successful
+        } else {
+          console.log("Document upload successful");
+        }
+      }
+      
+      return updatedContract;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });

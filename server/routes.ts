@@ -20,7 +20,29 @@ import {
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import Stripe from "stripe";
+import * as multer from "multer";
+import path from "path";
+import fs from "fs";
 import { generateVideoToken, createVideoRoom, endVideoRoom, listVideoRooms } from './twilio';
+
+// Configure multer for file uploads
+const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+// Ensure the upload directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage2 = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniquePrefix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniquePrefix + '-' + file.originalname);
+  }
+});
+
+const upload = multer.default({ storage: storage2 });
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -709,44 +731,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contractId = parseInt(req.params.id);
       console.log(`Updating contract ${contractId} with body:`, req.body);
       
-      // Check if we're receiving multipart form data
-      const contentType = req.headers['content-type'] || '';
-      if (contentType.includes('multipart/form-data')) {
-        // This is handled by multer middleware which populates req.body with form fields
-        console.log("Received multipart form data for contract update");
-      }
-      
-      // Parse numeric fields that might come as strings
-      const parsedBody: any = { ...req.body };
-      
-      if (parsedBody.heroId && typeof parsedBody.heroId === 'string') {
-        parsedBody.heroId = parseInt(parsedBody.heroId);
-      }
-      
-      if (parsedBody.clientId && typeof parsedBody.clientId === 'string') {
-        parsedBody.clientId = parseInt(parsedBody.clientId);
-      }
-      
-      if (parsedBody.companyId && typeof parsedBody.companyId === 'string') {
-        parsedBody.companyId = parseInt(parsedBody.companyId);
-      }
-      
-      if (parsedBody.compensation && typeof parsedBody.compensation === 'string') {
-        parsedBody.compensation = parseFloat(parsedBody.compensation);
-      }
-      
-      if (parsedBody.companyPayment && typeof parsedBody.companyPayment === 'string') {
-        parsedBody.companyPayment = parseFloat(parsedBody.companyPayment);
-      }
-      
-      if (parsedBody.profit && typeof parsedBody.profit === 'string') {
-        parsedBody.profit = parseFloat(parsedBody.profit);
-      }
-      
-      console.log("Parsed body for validation:", parsedBody);
-      
+      // With JSON, the data structure should already be in the correct format
       // Validate with our more flexible schema
-      const rawContractData = insertContractSchema.partial().parse(parsedBody);
+      const rawContractData = insertContractSchema.partial().parse(req.body);
       
       // Convert string dates to Date objects if present
       const contractData: any = { ...rawContractData };
@@ -777,6 +764,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to update contract", 
         error: String(error),
         stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
+      });
+    }
+  });
+  
+  // Separate endpoint for document upload
+  app.post("/api/contracts/:id/document", hasRole(["super_admin", "admin"]), upload.single('documentFile'), async (req: any, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ message: "No document file provided" });
+      }
+      
+      console.log(`Uploading document for contract ${contractId}:`, file.originalname);
+      
+      // Update the contract with the document file path
+      const updatedContract = await storage.updateContract(contractId, {
+        document: file.path.replace('public/', '/'),
+      });
+      
+      if (!updatedContract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      
+      console.log("Contract document updated successfully:", updatedContract.document);
+      res.json(updatedContract);
+    } catch (error) {
+      console.error("Contract document update error:", error);
+      res.status(500).json({ 
+        message: "Failed to update contract document", 
+        error: String(error) 
       });
     }
   });
