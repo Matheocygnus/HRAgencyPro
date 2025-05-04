@@ -380,14 +380,13 @@ export default function ContractsPage() {
                             <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
                           </TableCell>
                           <TableCell className="text-center">
-                            {isAdmin && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-8 w-8 p-0 mx-auto">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0 mx-auto">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     {/* Editing options */}
                                     <DropdownMenuItem onClick={() => handleQuickEditContract(contract.id)} className="md:hidden">
@@ -447,7 +446,6 @@ export default function ContractsPage() {
                                     )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
-                              )}
                           </TableCell>
                         </TableRow>
                       );
