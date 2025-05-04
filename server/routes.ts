@@ -706,8 +706,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.put("/api/contracts/:id", hasRole(["super_admin", "admin"]), async (req, res) => {
     try {
-      // First validate with our more flexible schema
-      const rawContractData = insertContractSchema.partial().parse(req.body);
+      const contractId = parseInt(req.params.id);
+      console.log(`Updating contract ${contractId} with body:`, req.body);
+      
+      // Check if we're receiving multipart form data
+      const contentType = req.headers['content-type'] || '';
+      if (contentType.includes('multipart/form-data')) {
+        // This is handled by multer middleware which populates req.body with form fields
+        console.log("Received multipart form data for contract update");
+      }
+      
+      // Parse numeric fields that might come as strings
+      const parsedBody: any = { ...req.body };
+      
+      if (parsedBody.heroId && typeof parsedBody.heroId === 'string') {
+        parsedBody.heroId = parseInt(parsedBody.heroId);
+      }
+      
+      if (parsedBody.clientId && typeof parsedBody.clientId === 'string') {
+        parsedBody.clientId = parseInt(parsedBody.clientId);
+      }
+      
+      if (parsedBody.companyId && typeof parsedBody.companyId === 'string') {
+        parsedBody.companyId = parseInt(parsedBody.companyId);
+      }
+      
+      if (parsedBody.compensation && typeof parsedBody.compensation === 'string') {
+        parsedBody.compensation = parseFloat(parsedBody.compensation);
+      }
+      
+      if (parsedBody.companyPayment && typeof parsedBody.companyPayment === 'string') {
+        parsedBody.companyPayment = parseFloat(parsedBody.companyPayment);
+      }
+      
+      if (parsedBody.profit && typeof parsedBody.profit === 'string') {
+        parsedBody.profit = parseFloat(parsedBody.profit);
+      }
+      
+      console.log("Parsed body for validation:", parsedBody);
+      
+      // Validate with our more flexible schema
+      const rawContractData = insertContractSchema.partial().parse(parsedBody);
       
       // Convert string dates to Date objects if present
       const contractData: any = { ...rawContractData };
@@ -722,17 +761,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Processed contract update data:", contractData);
       
-      const updatedContract = await storage.updateContract(parseInt(req.params.id), contractData);
+      const updatedContract = await storage.updateContract(contractId, contractData);
       if (!updatedContract) {
         return res.status(404).json({ message: "Contract not found" });
       }
+      
+      console.log("Contract updated successfully:", updatedContract);
       res.json(updatedContract);
     } catch (error) {
       console.error("Contract update error:", error);
       if (error instanceof ZodError) {
         return handleZodError(error, res);
       }
-      res.status(500).json({ message: "Failed to update contract" });
+      res.status(500).json({ 
+        message: "Failed to update contract", 
+        error: String(error),
+        stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
+      });
     }
   });
   

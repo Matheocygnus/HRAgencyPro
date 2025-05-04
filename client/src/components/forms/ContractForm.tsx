@@ -167,6 +167,8 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
     mutationFn: async (data: z.infer<typeof contractFormSchema>) => {
       const formData = new FormData();
       
+      console.log("Updating contract with data:", data);
+      
       // Add all form fields to formData
       Object.entries(data).forEach(([key, value]) => {
         if (value instanceof Date) {
@@ -181,16 +183,25 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
         formData.append('documentFile', documentFile);
       }
       
+      if (!contractId) {
+        throw new Error('Contract ID is missing for update operation');
+      }
+      
+      console.log(`Sending PUT request to /api/contracts/${contractId}`);
       const res = await fetch(`/api/contracts/${contractId}`, {
         method: 'PUT',
         body: formData,
       });
       
       if (!res.ok) {
-        throw new Error('Failed to update contract');
+        const errorText = await res.text();
+        console.error("Contract update error:", errorText);
+        throw new Error(`Failed to update contract: ${errorText}`);
       }
       
-      return await res.json();
+      const result = await res.json();
+      console.log("Contract update successful:", result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
@@ -260,8 +271,10 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
     setIsLoading(true);
     
     if (contractId) {
+      console.log("Updating contract", contractId, data);
       updateContractMutation.mutate(data);
     } else {
+      console.log("Creating new contract", data);
       createContractMutation.mutate(data);
     }
   };
