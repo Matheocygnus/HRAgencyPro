@@ -379,11 +379,11 @@ export default function ContractsPage() {
                           <TableCell>
                             <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-center">
                             {isAdmin && (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <Button variant="ghost" className="h-8 w-8 p-0 mx-auto">
                                     <span className="sr-only">Open menu</span>
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
