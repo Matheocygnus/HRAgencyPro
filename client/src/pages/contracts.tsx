@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Dashboard from "@/components/layout/Dashboard";
 import { 
   Card, 
@@ -28,7 +28,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Contract, Hero, Client, Company, Prospect } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Loader2, MoreHorizontal, Plus, Search, FileText, Edit, ClipboardEdit } from "lucide-react";
+import { Loader2, MoreHorizontal, Plus, Search, FileText, Edit, ClipboardEdit, Upload, FileUp, PenLine, CheckCircle, CircleAlert } from "lucide-react";
 import { useMockAuth } from "@/hooks/use-mock-auth";
 import ContractFormDialog from "@/components/dialogs/ContractFormDialog";
 import QuickEditContractDialog from "@/components/dialogs/QuickEditContractDialog";
@@ -66,6 +66,32 @@ export default function ContractsPage() {
   const { data: heroes = [] } = useQuery<Hero[]>({
     queryKey: ["/api/heroes"],
   });
+  
+  // Mutation for updating contract status
+  const updateContractStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const response = await apiRequest("PATCH", `/api/contracts/${id}`, { status });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      toast({
+        title: "Status updated",
+        description: "Contract status has been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update status: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // File upload state and refs
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Fetch clients
   const { data: clients = [] } = useQuery<Client[]>({
@@ -147,6 +173,72 @@ export default function ContractsPage() {
   const handleQuickEditContract = (id: number) => {
     setQuickEditContractId(id);
     setIsQuickEditDialogOpen(true);
+  };
+
+  // Upload document handler
+  const handleFileUpload = async (contractId: number, file: File) => {
+    if (!isAdmin) return;
+    
+    setIsUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      
+      const response = await fetch(`/api/contracts/${contractId}/document`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload document');
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      
+      toast({
+        title: "Document uploaded",
+        description: "Contract document has been uploaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  // Trigger document upload via file input
+  const handleUploadClick = (contractId: number) => {
+    // Create a hidden file input if it doesn't exist
+    if (!fileInputRef.current) return;
+    
+    // Set up a one-time event handler for the file selection
+    const handleFileSelect = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files.length > 0) {
+        handleFileUpload(contractId, target.files[0]);
+      }
+      // Remove the event listener after file selection
+      fileInputRef.current?.removeEventListener('change', handleFileSelect);
+    };
+    
+    // Add the event listener
+    fileInputRef.current.addEventListener('change', handleFileSelect);
+    
+    // Reset the file input to allow selecting the same file multiple times
+    fileInputRef.current.value = '';
+    
+    // Trigger file browser
+    fileInputRef.current.click();
+  };
+  
+  // Handle contract status update
+  const handleStatusUpdate = (contractId: number, newStatus: string) => {
+    updateContractStatusMutation.mutate({ id: contractId, status: newStatus });
   };
 
   // Download contract document
@@ -319,6 +411,7 @@ export default function ContractsPage() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
+                                    {/* Editing options */}
                                     <DropdownMenuItem onClick={() => handleQuickEditContract(contract.id)} className="md:hidden">
                                       <ClipboardEdit className="h-4 w-4 mr-2" />
                                       Quick Edit
@@ -327,23 +420,53 @@ export default function ContractsPage() {
                                       <Edit className="h-4 w-4 mr-2" />
                                       Full Edit
                                     </DropdownMenuItem>
+                                    
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onClick={() => {
-                                        // This would update the contract status
-                                        // based on the current status
-                                        const newStatus = contract.status === 'draft' ? 'signed' :
-                                                         contract.status === 'signed' ? 'active' :
-                                                         contract.status === 'active' ? 'completed' : 'draft';
-                                        
-                                        toast({
-                                          title: "Status update",
-                                          description: `Contract status would be updated to ${newStatus}.`,
-                                        });
-                                      }}
+                                    
+                                    {/* Status change options */}
+                                    <DropdownMenuItem 
+                                      onClick={() => handleStatusUpdate(contract.id, 'draft')}
+                                      disabled={contract.status === 'draft'}
                                     >
-                                      Update Status
+                                      <PenLine className="h-4 w-4 mr-2" />
+                                      Set as Draft
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleStatusUpdate(contract.id, 'signed')}
+                                      disabled={contract.status === 'signed'}
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Mark as Signed
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleStatusUpdate(contract.id, 'active')}
+                                      disabled={contract.status === 'active'}
+                                    >
+                                      <CircleAlert className="h-4 w-4 mr-2" />
+                                      Set as Active
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleStatusUpdate(contract.id, 'completed')}
+                                      disabled={contract.status === 'completed'}
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Mark as Completed
+                                    </DropdownMenuItem>
+                                    
+                                    <DropdownMenuSeparator />
+                                    
+                                    {/* Document options */}
+                                    <DropdownMenuItem onClick={() => handleUploadClick(contract.id)}>
+                                      <FileUp className="h-4 w-4 mr-2" />
+                                      Upload Contract
+                                    </DropdownMenuItem>
+                                    
+                                    {contract.document && (
+                                      <DropdownMenuItem onClick={() => handleDownloadDocument(contract.id)}>
+                                        <FileText className="h-4 w-4 mr-2" />
+                                        View Contract
+                                      </DropdownMenuItem>
+                                    )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               )}
@@ -399,6 +522,14 @@ export default function ContractsPage() {
             queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
           }
         }}
+      />
+      
+      {/* Hidden file input for document upload */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden" 
+        accept=".pdf,.doc,.docx,.txt" 
       />
     </Dashboard>
   );
