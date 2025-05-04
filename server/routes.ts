@@ -671,7 +671,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/contracts", hasRole(["super_admin", "admin"]), async (req, res) => {
     try {
-      const contractData = insertContractSchema.parse(req.body);
+      // First validate with our more flexible schema
+      const rawContractData = insertContractSchema.parse(req.body);
+      
+      // Then convert string dates to Date objects for the database
+      const contractData = {
+        ...rawContractData,
+        startDate: typeof rawContractData.startDate === 'string' 
+          ? new Date(rawContractData.startDate) 
+          : rawContractData.startDate,
+        endDate: rawContractData.endDate 
+          ? (typeof rawContractData.endDate === 'string'
+              ? new Date(rawContractData.endDate)
+              : rawContractData.endDate)
+          : null
+      };
+      
+      console.log("Processed contract data:", contractData);
+      
       const contract = await storage.createContract(contractData);
       
       // Update hero with contract id
@@ -679,22 +696,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json(contract);
     } catch (error) {
+      console.error("Contract creation error:", error);
       if (error instanceof ZodError) {
         return handleZodError(error, res);
       }
-      res.status(500).json({ message: "Failed to create contract" });
+      res.status(500).json({ message: "Failed to create contract: " + (error as Error).message });
     }
   });
   
   app.put("/api/contracts/:id", hasRole(["super_admin", "admin"]), async (req, res) => {
     try {
-      const contractData = insertContractSchema.partial().parse(req.body);
+      // First validate with our more flexible schema
+      const rawContractData = insertContractSchema.partial().parse(req.body);
+      
+      // Convert string dates to Date objects if present
+      const contractData: any = { ...rawContractData };
+      
+      if (typeof contractData.startDate === 'string') {
+        contractData.startDate = new Date(contractData.startDate);
+      }
+      
+      if (typeof contractData.endDate === 'string') {
+        contractData.endDate = new Date(contractData.endDate);
+      }
+      
+      console.log("Processed contract update data:", contractData);
+      
       const updatedContract = await storage.updateContract(parseInt(req.params.id), contractData);
       if (!updatedContract) {
         return res.status(404).json({ message: "Contract not found" });
       }
       res.json(updatedContract);
     } catch (error) {
+      console.error("Contract update error:", error);
       if (error instanceof ZodError) {
         return handleZodError(error, res);
       }
@@ -706,12 +740,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/contracts/:id", hasRole(["super_admin", "admin"]), async (req, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      const contractData = insertContractSchema.partial().parse(req.body);
+      
+      // First validate with our more flexible schema
+      const rawContractData = insertContractSchema.partial().parse(req.body);
+      
+      // Convert string dates to Date objects if present
+      const contractData: any = { ...rawContractData };
+      
+      if (typeof contractData.startDate === 'string') {
+        contractData.startDate = new Date(contractData.startDate);
+      }
+      
+      if (typeof contractData.endDate === 'string') {
+        contractData.endDate = new Date(contractData.endDate);
+      }
       
       // Calculate profit if both compensation and company payment are provided
       if (contractData.compensation !== undefined && contractData.companyPayment !== undefined) {
         contractData.profit = contractData.companyPayment - contractData.compensation;
       }
+      
+      console.log("Processed contract patch data:", contractData);
       
       const updatedContract = await storage.updateContract(contractId, contractData);
       if (!updatedContract) {

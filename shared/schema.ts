@@ -130,9 +130,20 @@ export const contracts = pgTable("contracts", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertContractSchema = createInsertSchema(contracts).omit({
-  id: true,
-  createdAt: true,
+// Custom schema for contract creation that allows string dates
+export const insertContractSchema = z.object({
+  title: z.string(),
+  heroId: z.number(),
+  clientId: z.number(),
+  companyId: z.number(),
+  startDate: z.string().or(z.date()),
+  endDate: z.string().or(z.date()).nullable().optional(),
+  compensation: z.number(),
+  companyPayment: z.number().optional(),
+  profit: z.number().optional(),
+  status: z.enum(["draft", "signed", "active", "completed", "terminated"]).default("draft"),
+  document: z.string().nullable().optional(),
+  notes: z.string().optional(),
 });
 
 // Invoice models

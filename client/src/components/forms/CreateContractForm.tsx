@@ -86,26 +86,16 @@ export default function CreateContractForm({ hero, onSuccess }: CreateContractFo
   // Create contract mutation
   const createContractMutation = useMutation({
     mutationFn: async (formData: z.infer<typeof formSchema>) => {
-      // Convert string dates to Date objects before sending to API
+      // Process form data for sending to API
       const { isIndefinite, ...rest } = formData;
       
-      // Format dates as ISO strings which will be properly parsed as dates by the server
-      const startDateObj = new Date(formData.startDate);
-      // Add time part to ensure proper date parsing
-      startDateObj.setHours(12, 0, 0, 0);
-      
-      // Calculate end date (or null if indefinite)
-      let endDateObj = null;
-      if (!isIndefinite && formData.endDate) {
-        endDateObj = new Date(formData.endDate);
-        endDateObj.setHours(12, 0, 0, 0);
-      }
-      
-      // Prepare data for API request
+      // Prepare data for API request - keep dates as strings
       const apiData = {
         ...rest,
-        startDate: startDateObj,
-        endDate: endDateObj,
+        // Keep startDate as string
+        // Handle endDate based on isIndefinite
+        endDate: isIndefinite ? null : formData.endDate,
+        // Calculate profit
         profit: formData.companyPayment - formData.compensation
       };
       
@@ -202,6 +192,7 @@ export default function CreateContractForm({ hero, onSuccess }: CreateContractFo
                       <Input 
                         type="date" 
                         {...field} 
+                        value={field.value || ''} 
                         disabled={form.watch("isIndefinite")}
                       />
                     </FormControl>
