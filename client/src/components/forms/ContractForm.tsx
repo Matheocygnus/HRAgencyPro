@@ -86,6 +86,10 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
     queryKey: ['/api/heroes'],
   });
 
+  const { data: prospects } = useQuery<any[]>({
+    queryKey: ['/api/prospects'],
+  });
+
   const { data: clients } = useQuery<Client[]>({
     queryKey: ['/api/clients'],
   });
@@ -225,7 +229,7 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
         clientId: contractData.clientId,
         companyId: contractData.companyId,
         startDate: new Date(contractData.startDate),
-        endDate: contractData.endDate ? new Date(contractData.endDate) : null,
+        endDate: contractData.endDate ? new Date(contractData.endDate) : undefined,
         compensation: contractData.compensation,
         companyPayment: contractData.companyPayment,
         profit: contractData.profit || (contractData.companyPayment ? contractData.companyPayment - contractData.compensation : undefined),
@@ -292,11 +296,15 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {heroes?.map((hero) => (
-                      <SelectItem key={hero.id} value={hero.id.toString()}>
-                        Hero ID: {hero.id} (Prospect ID: {hero.prospectId})
-                      </SelectItem>
-                    ))}
+                    {heroes?.map((hero) => {
+                      const prospect = prospects?.find((p: any) => p.id === hero.prospectId);
+                      const heroName = prospect ? `${prospect.firstName} ${prospect.lastName}` : `Hero ${hero.id}`;
+                      return (
+                        <SelectItem key={hero.id} value={hero.id.toString()}>
+                          {heroName}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -345,7 +353,7 @@ export default function ContractForm({ contractId, onSuccess, onCancel }: Contra
                   onValueChange={(value) => {
                     field.onChange(parseInt(value));
                     // Reset company when client changes
-                    form.setValue('companyId', undefined);
+                    form.setValue('companyId', 0);
                   }}
                   defaultValue={field.value?.toString()}
                   value={field.value?.toString()}
