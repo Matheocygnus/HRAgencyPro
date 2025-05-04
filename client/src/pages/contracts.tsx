@@ -380,37 +380,15 @@ export default function ContractsPage() {
                             <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex justify-end space-x-2">
-                              {isAdmin && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleQuickEditContract(contract.id)}
-                                  className="hidden md:flex"
-                                >
-                                  <ClipboardEdit className="h-4 w-4 mr-2" />
-                                  Quick Edit
-                                </Button>
-                              )}
-                              {contract.document && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  title="View Document"
-                                  onClick={() => handleDownloadDocument(contract.id)}
-                                >
-                                  <FileText className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {isAdmin && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                      <span className="sr-only">Open menu</span>
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
+                            {isAdmin && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
                                     {/* Editing options */}
                                     <DropdownMenuItem onClick={() => handleQuickEditContract(contract.id)} className="md:hidden">
                                       <ClipboardEdit className="h-4 w-4 mr-2" />
@@ -470,7 +448,6 @@ export default function ContractsPage() {
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               )}
-                            </div>
                           </TableCell>
                         </TableRow>
                       );
