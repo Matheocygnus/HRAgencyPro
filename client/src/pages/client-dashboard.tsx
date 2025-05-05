@@ -129,14 +129,23 @@ export default function ClientDashboard() {
     enabled: !!selectedClient,
   });
 
-  // Fetch job requests for the selected client
-  const { data: jobRequests = [], isLoading: isLoadingRequests } = useQuery<JobRequest[]>({
+  // Fetch job requests for the selected client with automatic refresh
+  const { data: jobRequests = [], isLoading: isLoadingRequests, refetch: refetchJobRequests } = useQuery<JobRequest[]>({
     queryKey: ['/api/job-requests'],
     enabled: !!selectedClient,
+    refetchOnWindowFocus: true,
+    staleTime: 0 // Consider data stale immediately to ensure fresh data
   });
 
   // Filter job requests for current client
   const clientJobRequests = jobRequests.filter(req => req.clientId === selectedClient?.id);
+  
+  // Refetch job requests whenever the tab changes to "requests"
+  useEffect(() => {
+    if (activeTab === "requests") {
+      refetchJobRequests();
+    }
+  }, [activeTab, refetchJobRequests]);
 
   // Loading state
   if (isLoadingClients) {
@@ -386,11 +395,17 @@ export default function ClientDashboard() {
                       Manage your job requests
                     </CardDescription>
                   </div>
-                  <Button size="sm" asChild>
-                    <Link href="/job-requests">
-                      <Plus className="h-4 w-4 mr-1" />
-                      New Request
-                    </Link>
+                  <Button 
+                    size="sm"
+                    onClick={() => {
+                      // Force refresh before navigation to ensure we have fresh data when coming back
+                      refetchJobRequests();
+                      // Navigate to job requests page
+                      window.location.href = "/job-requests";
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    New Request
                   </Button>
                 </CardHeader>
                 <CardContent>
@@ -400,11 +415,16 @@ export default function ClientDashboard() {
                       <p className="text-sm text-muted-foreground mb-4">
                         Create a new job request to find the perfect talent for your needs
                       </p>
-                      <Button asChild>
-                        <Link href="/job-requests">
-                          <Plus className="h-4 w-4 mr-1" />
-                          New Job Request
-                        </Link>
+                      <Button 
+                        onClick={() => {
+                          // Force refresh before navigation to ensure we have fresh data when coming back
+                          refetchJobRequests();
+                          // Navigate to job requests page
+                          window.location.href = "/job-requests";
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        New Job Request
                       </Button>
                     </div>
                   ) : (
@@ -438,8 +458,17 @@ export default function ClientDashboard() {
                                 {new Date(request.createdAt).toLocaleDateString()}
                               </TableCell>
                               <TableCell className="text-right">
-                                <Button variant="outline" size="sm" asChild>
-                                  <Link href={`/job-requests?id=${request.id}`}>View Details</Link>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    // Force refresh before navigation to ensure we have fresh data when coming back
+                                    refetchJobRequests();
+                                    // Navigate to job requests page with ID parameter
+                                    window.location.href = `/job-requests?id=${request.id}`;
+                                  }}
+                                >
+                                  View Details
                                 </Button>
                               </TableCell>
                             </TableRow>

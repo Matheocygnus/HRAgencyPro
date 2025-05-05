@@ -119,10 +119,12 @@ export default function JobRequestsPage() {
     enabled: !!clientData?.id
   });
 
-  // Fetch client's job requests
-  const { data: jobRequests, isLoading: isLoadingRequests } = useQuery<JobRequest[]>({
+  // Fetch client's job requests with automatic refresh
+  const { data: jobRequests, isLoading: isLoadingRequests, refetch } = useQuery<JobRequest[]>({
     queryKey: ['/api/job-requests'],
-    enabled: true
+    enabled: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0 // Consider data stale immediately to ensure fresh data
   });
 
   // Mutation to create a new job request
@@ -131,14 +133,20 @@ export default function JobRequestsPage() {
       const res = await apiRequest('POST', '/api/job-requests', data);
       return await res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
+    onSuccess: async (data) => {
+      // Immediately refetch data before showing the toast
+      await refetch();
+      
+      // Then update the UI and show notification
       toast({
         title: 'Request Submitted',
         description: 'Your job request has been successfully submitted for review.',
       });
       requestForm.reset();
       setIsRequestFormOpen(false);
+      
+      // Force another refetch to ensure the most up-to-date data
+      queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
     },
     onError: (error: any) => {
       toast({
@@ -155,8 +163,11 @@ export default function JobRequestsPage() {
       const res = await apiRequest('PUT', `/api/job-requests/${data.id}`, data.requestData);
       return await res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
+    onSuccess: async (data) => {
+      // Immediately refetch data before showing the toast
+      await refetch();
+      
+      // Then update the UI and show notification
       toast({
         title: 'Request Updated',
         description: 'Your job request has been successfully updated.',
@@ -164,6 +175,9 @@ export default function JobRequestsPage() {
       requestForm.reset();
       setIsRequestFormOpen(false);
       setIsEditMode(false);
+      
+      // Force another refetch to ensure the most up-to-date data
+      queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
     },
     onError: (error: any) => {
       toast({
