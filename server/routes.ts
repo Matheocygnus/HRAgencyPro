@@ -168,7 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Define role-specific default permissions
         if (userRoleLower === "client") {
-          defaultPermissions = ["client_dashboard"];
+          defaultPermissions = ["client_dashboard", "job_requests"];
         } else if (userRoleLower === "recruiter") {
           defaultPermissions = ["dashboard", "prospects", "interviews"];
         } else if (userRoleLower === "hero") {
@@ -1508,11 +1508,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Job Request routes
-  app.get("/api/job-requests", hasRole(["super_admin", "admin"]), async (req, res) => {
+  app.get("/api/job-requests", hasRole(["super_admin", "admin", "client"]), async (req, res) => {
     try {
+      // If client, only return their own job requests
+      if (req.user?.role === "client" || req.user?.role === "Client") {
+        const client = await storage.getClientByEmail(req.user.email);
+        if (client) {
+          const clientJobRequests = await storage.getJobRequestsByClient(client.id);
+          return res.json(clientJobRequests);
+        }
+        return res.json([]);
+      }
+      
+      // For admin roles, return all job requests
       const jobRequests = await storage.getJobRequests();
       res.json(jobRequests);
     } catch (error) {
+      console.error("Error fetching job requests:", error);
       res.status(500).json({ message: "Failed to retrieve job requests" });
     }
   });
