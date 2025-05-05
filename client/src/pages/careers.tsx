@@ -148,7 +148,11 @@ export default function CareersPage() {
         <Tabs defaultValue={jobTypes[0] || 'all'} className="w-full">
           <TabsList className="mb-8 flex justify-center">
             {jobTypes.map(type => (
-              <TabsTrigger key={type} value={type}>{type}</TabsTrigger>
+              <TabsTrigger key={type} value={type}>
+                {type === 'full_time' ? 'Full-time' : 
+                 type === 'part_time' ? 'Part-time' : 
+                 type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+              </TabsTrigger>
             ))}
           </TabsList>
 
@@ -163,7 +167,11 @@ export default function CareersPage() {
                         <CardTitle>{job.title}</CardTitle>
                         <CardDescription>
                           <div className="flex flex-wrap gap-2 mt-2">
-                            <Badge>{job.jobType}</Badge>
+                            <Badge>
+                              {job.jobType === 'full_time' ? 'Full-time' : 
+                               job.jobType === 'part_time' ? 'Part-time' : 
+                               job.jobType.charAt(0).toUpperCase() + job.jobType.slice(1).replace('_', ' ')}
+                            </Badge>
                             <Badge variant="outline">{job.location}</Badge>
                           </div>
                         </CardDescription>
