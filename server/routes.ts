@@ -1415,7 +1415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Job Application routes
-  app.get("/api/job-applications", hasRole(["super_admin", "admin", "recruiter"]), async (req, res) => {
+  app.get("/api/job-applications", hasPermission(["admin_job_requests"]), async (req, res) => {
     try {
       const jobApplications = await storage.getJobApplications();
       res.json(jobApplications);
@@ -1424,7 +1424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/job-applications/:id", hasRole(["super_admin", "admin", "recruiter"]), async (req, res) => {
+  app.get("/api/job-applications/:id", hasPermission(["admin_job_requests"]), async (req, res) => {
     try {
       const jobApplication = await storage.getJobApplication(parseInt(req.params.id));
       if (!jobApplication) {
@@ -1436,7 +1436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/job-openings/:id/applications", hasRole(["super_admin", "admin", "recruiter"]), async (req, res) => {
+  app.get("/api/job-openings/:id/applications", hasPermission(["admin_job_requests"]), async (req, res) => {
     try {
       const jobOpeningId = parseInt(req.params.id);
       const jobApplications = await storage.getJobApplicationsByJobOpening(jobOpeningId);
@@ -1460,7 +1460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Convert a job application to a prospect
-  app.post("/api/job-applications/:id/convert-to-prospect", hasRole(["super_admin", "admin", "recruiter"]), async (req, res) => {
+  app.post("/api/job-applications/:id/convert-to-prospect", hasPermission(["admin_job_requests"]), async (req, res) => {
     try {
       const applicationId = parseInt(req.params.id);
       const application = await storage.getJobApplication(applicationId);
@@ -1514,7 +1514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put("/api/job-applications/:id", hasRole(["super_admin", "admin", "recruiter"]), async (req, res) => {
+  app.put("/api/job-applications/:id", hasPermission(["admin_job_requests"]), async (req, res) => {
     try {
       const jobApplicationData = insertJobApplicationSchema.partial().parse(req.body);
       const updatedJobApplication = await storage.updateJobApplication(parseInt(req.params.id), jobApplicationData);
