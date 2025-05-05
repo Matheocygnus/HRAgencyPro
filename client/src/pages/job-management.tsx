@@ -90,6 +90,8 @@ const applicationStatusSchema = z.object({
 // Component to display job requests from clients
 function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [approvedRequestId, setApprovedRequestId] = useState<number | null>(null);
   const { toast } = useToast();
   
   // Fetch all job requests
@@ -192,7 +194,13 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
 
   // Handle approve button click
   const handleApprove = (id: number) => {
-    approveRequestMutation.mutate(id);
+    approveRequestMutation.mutate(id, {
+      onSuccess: () => {
+        // After successful approval, set the approved request ID and open the publish dialog
+        setApprovedRequestId(id);
+        setIsPublishDialogOpen(true);
+      }
+    });
   };
 
   // Handle reject button click
@@ -203,6 +211,15 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
   // Handle publish button click
   const handlePublish = (id: number) => {
     publishRequestMutation.mutate(id);
+  };
+  
+  // Handle continue to publish after approval
+  const handleContinueToPublish = () => {
+    if (approvedRequestId) {
+      publishRequestMutation.mutate(approvedRequestId);
+      setIsPublishDialogOpen(false);
+      setApprovedRequestId(null);
+    }
   };
 
   return (
