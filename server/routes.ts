@@ -110,6 +110,12 @@ function hasPermission(requiredPermissions: string[]) {
         }
       }
       
+      // Admin and super_admin roles should have access to everything
+      const userRoleLower = user.role.toLowerCase();
+      if (userRoleLower === "admin" || userRoleLower === "super_admin") {
+        return next();
+      }
+      
       // Check if the user's permissions include all required permissions
       const hasAllPermissions = requiredPermissions.every(permission => 
         permissionsArray.includes(permission)
@@ -176,7 +182,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else if (userRoleLower === "prospect") {
           defaultPermissions = ["prospect_dashboard"];
         } else if (userRoleLower === "admin" || userRoleLower === "super_admin") {
-          defaultPermissions = ["dashboard", "job_requests", "admin_job_requests"];
+          defaultPermissions = [
+            "dashboard", 
+            "job_requests", 
+            "admin_job_requests",
+            "prospects",
+            "interviews",
+            "heroes",
+            "companies",
+            "contracts",
+            "invoices",
+            "client_dashboard",
+            "hero_dashboard",
+            "prospect_dashboard",
+            "user_management",
+            "settings"
+          ];
         }
         
         // Return default permissions
