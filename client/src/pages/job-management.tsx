@@ -94,10 +94,12 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
   const [approvedRequestId, setApprovedRequestId] = useState<number | null>(null);
   const { toast } = useToast();
   
-  // Fetch all job requests
-  const { data: jobRequests, isLoading } = useQuery<JobRequest[]>({
+  // Fetch all job requests with more aggressive refresh
+  const { data: jobRequests, isLoading, refetch: refetchJobRequests } = useQuery<JobRequest[]>({
     queryKey: ['/api/job-requests'],
-    enabled: true
+    enabled: true,
+    refetchInterval: 3000, // Poll every 3 seconds
+    staleTime: 1000 // Consider data stale after 1 second
   });
 
   // Fetch all clients for detailed information
@@ -133,12 +135,24 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
   // Mutation to approve a job request
   const approveRequestMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest('PUT', `/api/job-requests/${id}/approve`);
-      return await res.json();
+      try {
+        // Use POST method instead of PUT to match the server endpoint
+        const res = await apiRequest('POST', `/api/job-requests/${id}/approve`, {});
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Failed to approve job request');
+        }
+        return await res.json();
+      } catch (error) {
+        console.error('Error approving job request:', error);
+        throw error;
+      }
     },
     onSuccess: async (data, variables) => {
-      // First, immediately force refetch the job requests to update the UI
-      await queryClient.refetchQueries({ queryKey: ['/api/job-requests'], type: 'active' });
+      console.log('Job request approved successfully:', data);
+      
+      // Force immediate refresh
+      await refetchJobRequests();
       
       toast({
         title: "Job Request Approved",
@@ -148,20 +162,47 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
       // Set the approved request ID for the publish dialog
       setApprovedRequestId(variables);
       setIsPublishDialogOpen(true);
+    },
+    onError: (error: any) => {
+      console.error('Error in approval mutation:', error);
+      toast({
+        title: 'Approval Failed',
+        description: error.message || 'There was an error approving the job request. Please try again.',
+        variant: 'destructive',
+      });
     }
   });
 
   // Mutation to reject a job request
   const rejectRequestMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest('PUT', `/api/job-requests/${id}/reject`);
-      return await res.json();
+      try {
+        // Use POST method instead of PUT to match the server endpoint
+        const res = await apiRequest('POST', `/api/job-requests/${id}/reject`, {});
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Failed to reject job request');
+        }
+        return await res.json();
+      } catch (error) {
+        console.error('Error rejecting job request:', error);
+        throw error;
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
+    onSuccess: async () => {
+      // Force immediate refresh
+      await refetchJobRequests();
+      
       toast({
         title: "Job Request Rejected",
         description: "The job request has been rejected.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Rejection Failed',
+        description: error.message || 'There was an error rejecting the job request. Please try again.',
+        variant: 'destructive',
       });
     }
   });
@@ -169,19 +210,39 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
   // Mutation to publish a job request as a job opening
   const publishRequestMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest('PUT', `/api/job-requests/${id}/publish`);
-      return await res.json();
+      try {
+        // Use POST method instead of PUT to match the server endpoint
+        const res = await apiRequest('POST', `/api/job-requests/${id}/publish`, {});
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Failed to publish job request');
+        }
+        return await res.json();
+      } catch (error) {
+        console.error('Error publishing job request:', error);
+        throw error;
+      }
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
+      console.log('Job request published successfully:', data);
+      
       // Force immediate refresh of both job requests and job openings data
       await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['/api/job-requests'], type: 'active' }),
+        refetchJobRequests(),
         queryClient.refetchQueries({ queryKey: ['/api/job-openings'], type: 'active' })
       ]);
       
       toast({
         title: "Job Published",
         description: "The job has been published and is now visible to applicants.",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error in publish mutation:', error);
+      toast({
+        title: 'Publication Failed',
+        description: error.message || 'There was an error publishing the job request. Please try again.',
+        variant: 'destructive',
       });
     }
   });
