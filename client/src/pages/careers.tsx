@@ -170,9 +170,6 @@ export default function CareersPage() {
                       </CardHeader>
                       <CardContent className="flex-grow">
                         <p className="text-sm">{job.description}</p>
-                        {job.salary && (
-                          <p className="mt-4 font-medium">Salary: {job.salary}</p>
-                        )}
                       </CardContent>
                       <CardFooter>
                         <Button onClick={() => handleApply(job.id)} className="w-full">
