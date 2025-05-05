@@ -175,6 +175,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           defaultPermissions = ["hero_dashboard"];
         } else if (userRoleLower === "prospect") {
           defaultPermissions = ["prospect_dashboard"];
+        } else if (userRoleLower === "admin" || userRoleLower === "super_admin") {
+          defaultPermissions = ["dashboard", "job_requests", "admin_job_requests"];
         }
         
         // Return default permissions
@@ -1541,7 +1543,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/job-requests/status/:status", hasRole(["super_admin", "admin"]), async (req, res) => {
+  app.get("/api/job-requests/status/:status", hasPermission(["admin_job_requests"]), async (req, res) => {
     try {
       const jobRequests = await storage.getJobRequestsByStatus(req.params.status);
       res.json(jobRequests);
@@ -1572,7 +1574,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.put("/api/job-requests/:id", hasRole(["super_admin", "admin", "client"]), async (req, res) => {
+  app.put("/api/job-requests/:id", hasPermission(["job_requests"]), async (req, res) => {
     try {
       const jobRequestData = insertJobRequestSchema.partial().parse(req.body);
       const updatedJobRequest = await storage.updateJobRequest(parseInt(req.params.id), jobRequestData);
@@ -1588,7 +1590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/job-requests/:id/approve", hasRole(["super_admin", "admin"]), async (req, res) => {
+  app.post("/api/job-requests/:id/approve", hasPermission(["admin_job_requests"]), async (req, res) => {
     try {
       const notes = req.body.notes;
       const jobRequest = await storage.approveJobRequest(parseInt(req.params.id), notes);
@@ -1603,7 +1605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/job-requests/:id/reject", hasRole(["super_admin", "admin"]), async (req, res) => {
+  app.post("/api/job-requests/:id/reject", hasPermission(["admin_job_requests"]), async (req, res) => {
     try {
       const notes = req.body.notes;
       const jobRequest = await storage.rejectJobRequest(parseInt(req.params.id), notes);
@@ -1618,7 +1620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/job-requests/:id/publish", hasRole(["super_admin", "admin"]), async (req, res) => {
+  app.post("/api/job-requests/:id/publish", hasPermission(["admin_job_requests"]), async (req, res) => {
     try {
       const jobOpening = await storage.publishJobRequest(parseInt(req.params.id));
       
