@@ -1508,7 +1508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Job Request routes
-  app.get("/api/job-requests", hasRole(["super_admin", "admin", "client"]), async (req, res) => {
+  app.get("/api/job-requests", hasPermission(["job_requests"]), async (req, res) => {
     try {
       // If client, only return their own job requests
       if (req.user?.role === "client" || req.user?.role === "Client") {
@@ -1529,7 +1529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/job-requests/:id", hasRole(["super_admin", "admin", "client"]), async (req, res) => {
+  app.get("/api/job-requests/:id", hasPermission(["job_requests"]), async (req, res) => {
     try {
       const jobRequest = await storage.getJobRequest(parseInt(req.params.id));
       if (!jobRequest) {
@@ -1550,7 +1550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.get("/api/clients/:clientId/job-requests", hasRole(["super_admin", "admin", "client"]), async (req, res) => {
+  app.get("/api/clients/:clientId/job-requests", hasPermission(["job_requests"]), async (req, res) => {
     try {
       const jobRequests = await storage.getJobRequestsByClient(parseInt(req.params.clientId));
       res.json(jobRequests);
@@ -1559,7 +1559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/job-requests", hasRole(["super_admin", "admin", "client"]), async (req, res) => {
+  app.post("/api/job-requests", hasPermission(["job_requests"]), async (req, res) => {
     try {
       const jobRequestData = insertJobRequestSchema.parse(req.body);
       const jobRequest = await storage.createJobRequest(jobRequestData);
