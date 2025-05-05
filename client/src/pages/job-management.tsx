@@ -439,7 +439,7 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
                             </p>
                           </div>
                           <div>
-                            <h4 className="text-sm font-semibold mb-2">Salary Range</h4>
+                            <h4 className="text-sm font-semibold mb-2">Budget</h4>
                             <p className="text-sm text-muted-foreground">
                               {request.salary || "Not specified"}
                             </p>
@@ -1121,7 +1121,7 @@ export default function JobManagementPage() {
                   name="salary"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Salary Range (Optional)</FormLabel>
+                      <FormLabel>Budget (Optional)</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g. $80,000 - $100,000" {...field} />
                       </FormControl>

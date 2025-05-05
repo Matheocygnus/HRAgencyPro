@@ -383,7 +383,7 @@ export default function JobRequestsPage() {
                   name="salary"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Salary Range (Optional)</FormLabel>
+                      <FormLabel>Budget (Optional)</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g. $80,000 - $100,000" {...field} />
                       </FormControl>
