@@ -87,6 +87,38 @@ export default function JobRequestsPage() {
     }
   });
 
+  // Define client interface
+  interface Client {
+    id: number;
+    name: string;
+    contactPerson: string;
+    email: string;
+    status: string;
+  }
+
+  interface Company {
+    id: number;
+    name: string;
+    clientId: number;
+  }
+
+  // Fetch current client data if user is a client
+  const { data: clientData, isLoading: isLoadingClient } = useQuery<Client>({
+    queryKey: ['/api/user/client'],
+    enabled: true
+  });
+
+  // Fetch client's companies if client data is available
+  const { data: clientCompanies } = useQuery<Company[]>({
+    queryKey: ['/api/clients', clientData?.id, 'companies'],
+    queryFn: async () => {
+      if (!clientData?.id) return [];
+      const res = await fetch(`/api/clients/${clientData.id}/companies`);
+      return await res.json();
+    },
+    enabled: !!clientData?.id
+  });
+
   // Fetch client's job requests
   const { data: jobRequests, isLoading: isLoadingRequests } = useQuery<JobRequest[]>({
     queryKey: ['/api/job-requests'],
@@ -219,8 +251,8 @@ export default function JobRequestsPage() {
               location: '',
               jobType: 'full_time',
               salary: '',
-              clientId: 1, // Mock client ID for development
-              companyId: 1, // Mock company ID for development
+              clientId: clientData?.id || 0,
+              companyId: clientCompanies && clientCompanies.length > 0 ? clientCompanies[0].id : 0,
               notes: ''
             });
             setIsRequestFormOpen(true);
@@ -371,7 +403,37 @@ export default function JobRequestsPage() {
                     </FormItem>
                   )}
                 />
-                <div className="col-span-2">
+                
+                {/* Company selection */}
+                <FormField
+                  control={requestForm.control}
+                  name="companyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <Select 
+                        onValueChange={(value) => field.onChange(parseInt(value))} 
+                        defaultValue={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select company" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {clientCompanies?.map(company => (
+                            <SelectItem key={company.id} value={company.id.toString()}>
+                              {company.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div>
                   {/* Empty space for alignment */}
                 </div>
               </div>
