@@ -136,12 +136,18 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
       const res = await apiRequest('PUT', `/api/job-requests/${id}/approve`);
       return await res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
+    onSuccess: async (data, variables) => {
+      // First, immediately force refetch the job requests to update the UI
+      await queryClient.refetchQueries({ queryKey: ['/api/job-requests'], type: 'active' });
+      
       toast({
         title: "Job Request Approved",
         description: "The job request has been approved successfully.",
       });
+      
+      // Set the approved request ID for the publish dialog
+      setApprovedRequestId(variables);
+      setIsPublishDialogOpen(true);
     }
   });
 
@@ -166,9 +172,13 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
       const res = await apiRequest('PUT', `/api/job-requests/${id}/publish`);
       return await res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/job-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/job-openings'] });
+    onSuccess: async () => {
+      // Force immediate refresh of both job requests and job openings data
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['/api/job-requests'], type: 'active' }),
+        queryClient.refetchQueries({ queryKey: ['/api/job-openings'], type: 'active' })
+      ]);
+      
       toast({
         title: "Job Published",
         description: "The job has been published and is now visible to applicants.",
@@ -194,13 +204,7 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
 
   // Handle approve button click
   const handleApprove = (id: number) => {
-    approveRequestMutation.mutate(id, {
-      onSuccess: () => {
-        // After successful approval, set the approved request ID and open the publish dialog
-        setApprovedRequestId(id);
-        setIsPublishDialogOpen(true);
-      }
-    });
+    approveRequestMutation.mutate(id);
   };
 
   // Handle reject button click
@@ -536,9 +540,11 @@ export default function JobManagementPage() {
   });
 
   // Fetch all job openings
-  const { data: jobOpenings, isLoading: isLoadingJobs } = useQuery<JobOpening[]>({
+  const { data: jobOpenings, isLoading: isLoadingJobs, refetch: refetchJobs } = useQuery<JobOpening[]>({
     queryKey: ['/api/job-openings'],
-    enabled: true
+    enabled: true,
+    refetchInterval: 5000, // Refresh job openings data every 5 seconds
+    staleTime: 0 // Consider data stale immediately to ensure fresh data on tab switch
   });
 
   // Fetch applications for the selected job opening
@@ -799,7 +805,20 @@ export default function JobManagementPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="jobs" className="w-full">
+      <Tabs 
+        defaultValue="jobs" 
+        className="w-full"
+        onValueChange={(value) => {
+          // Force refresh data when switching tabs
+          if (value === 'jobs') {
+            refetchJobs();
+          } else if (value === 'requests') {
+            queryClient.refetchQueries({ queryKey: ['/api/job-requests'], type: 'active' });
+          } else if (value === 'applications') {
+            queryClient.refetchQueries({ queryKey: ['/api/job-applications'], type: 'active' });
+          }
+        }}
+      >
         <TabsList className="mb-4">
           <TabsTrigger value="jobs">
             <Briefcase className="mr-2 h-4 w-4" /> Job Openings
