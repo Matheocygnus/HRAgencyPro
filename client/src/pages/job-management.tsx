@@ -224,6 +224,44 @@ function JobRequestsContent({ searchTerm }: { searchTerm: string }) {
 
   return (
     <>
+      {/* Dialog to confirm publishing after approval */}
+      <Dialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Job Request Approved</DialogTitle>
+            <DialogDescription>
+              The job request has been successfully approved. Would you like to publish it to the careers page now?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Publishing the job will make it visible to candidates on the careers page, allowing them to apply for the position.
+            </p>
+          </div>
+          <DialogFooter className="flex justify-between mt-6">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsPublishDialogOpen(false);
+                setApprovedRequestId(null);
+              }}
+            >
+              Later
+            </Button>
+            <Button 
+              onClick={handleContinueToPublish}
+              disabled={publishRequestMutation.isPending}
+              className="bg-primary text-white"
+            >
+              {publishRequestMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Publish Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
