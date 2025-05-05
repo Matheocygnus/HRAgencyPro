@@ -71,7 +71,7 @@ function Router() {
       <ProtectedRoute path="/job-management" component={JobManagement} requiredPermission="job_management" />
       
       {/* Job requests */}
-      <ProtectedRoute path="/job-requests" component={JobRequests} requiredPermission="job_management" />
+      <ProtectedRoute path="/job-requests" component={JobRequests} requiredPermission="job_requests" />
       
       {/* Job request management (admin) */}
       <ProtectedRoute path="/job-request-management" component={JobRequestManagement} requiredPermission="job_management" />
