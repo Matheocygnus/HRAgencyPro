@@ -28,10 +28,10 @@ export async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-// Create initial super admin user if none exists
+// Create initial super admin user if none exists, or reset password if exists
 async function createSuperAdminIfNotExists() {
   try {
-    // Check if user with this email exists
+    const defaultPassword = "Rollo001";
     const existingUser = await storage.getUserByUsername("brunov@catalystgrowthsystems.com");
     if (!existingUser) {
       console.log("Creating super admin user...");
@@ -40,14 +40,19 @@ async function createSuperAdminIfNotExists() {
         email: "brunov@catalystgrowthsystems.com",
         firstName: "Bruno",
         lastName: "Verutti",
-        password: await hashPassword("Rollo001"),
-        role: "super_admin", // Using the role name directly
+        password: await hashPassword(defaultPassword),
+        role: "super_admin",
         avatar: null
       });
       console.log("Super admin user created successfully");
+    } else {
+      // Update password to ensure it matches the default
+      const hashedPassword = await hashPassword(defaultPassword);
+      await storage.updateUser(existingUser.id, { password: hashedPassword });
+      console.log("Super admin password reset to default");
     }
   } catch (error) {
-    console.error("Error creating super admin user:", error);
+    console.error("Error creating/updating super admin user:", error);
   }
 }
 
