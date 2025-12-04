@@ -45,11 +45,15 @@ async function createSuperAdminIfNotExists() {
         avatar: null
       });
       console.log("Super admin user created successfully");
-    } else {
-      // Update password to ensure it matches the default
-      const hashedPassword = await hashPassword(defaultPassword);
-      await storage.updateUser(existingUser.id, { password: hashedPassword });
-      console.log("Super admin password reset to default");
+    }
+    
+    // Reset password for sarina user
+    const sarinaUser = await storage.getUserByUsername("sarina@remotehero.us");
+    if (sarinaUser) {
+      const sarinaPassword = "S@arin@_RH!App";
+      const hashedPassword = await hashPassword(sarinaPassword);
+      await storage.updateUser(sarinaUser.id, { password: hashedPassword });
+      console.log("Sarina user password reset successfully");
     }
   } catch (error) {
     console.error("Error creating/updating super admin user:", error);
