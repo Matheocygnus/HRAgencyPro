@@ -1,9 +1,26 @@
 import { useState, useEffect, useRef } from 'react'
+
+function ExpandableCell({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false)
+  return (
+    <button
+      type="button"
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => { e.stopPropagation(); setExpanded(v => !v) }}
+      className="w-full bg-transparent border-0 p-0 text-left cursor-pointer"
+    >
+      <span className="text-xs text-danger/80 italic">
+        {expanded ? text : text.length > 55 ? text.slice(0, 55) + '…' : text}
+      </span>
+    </button>
+  )
+}
 import { createFileRoute } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Table, Chip, Button, Card, SearchField, Tabs } from '@heroui/react'
+import { Table, Chip, Button, Card, SearchField, Tabs, Select, ListBox } from '@heroui/react'
+import type { Key } from '@heroui/react'
 import { prospectsApi } from '../../../api/prospects.api'
 import { companiesApi } from '../../../api/companies.api'
 import { useToast } from '../../../lib/toast'
@@ -15,6 +32,9 @@ export const Route = createFileRoute('/_authenticated/_dashboard-shell/prospect-
 })
 
 type ActiveTab = 'prospects' | 'companies'
+
+const normalize = (s: string) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 
 const statusColor: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'danger'> = {
   sourcing: 'default', contacted: 'primary', interview: 'warning',
@@ -30,6 +50,8 @@ export function ProspectDatabase() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('prospects')
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [roleFilters, setRoleFilters] = useState<string[]>([])
+  const [statusFilter, setStatusFilter] = useState('')
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -53,14 +75,23 @@ export function ProspectDatabase() {
   // Hired prospects are Heroes — exclude them from the database view
   const activeProspects = prospects.filter(p => p.status !== 'hired')
 
+  const availableRoles = Array.from(
+    new Set(activeProspects.map(p => p.position).filter(Boolean))
+  ).sort() as string[]
+
+  const hasFilters = debouncedSearch !== '' || roleFilters.length > 0 || statusFilter !== ''
+
   const filteredProspects = activeProspects.filter(p => {
     const term = debouncedSearch.toLowerCase()
-    return (
+    const matchesSearch = !term || (
       p.firstName.toLowerCase().includes(term) ||
       p.lastName.toLowerCase().includes(term) ||
       p.email.toLowerCase().includes(term) ||
       (p.targetCompany?.toLowerCase().includes(term) ?? false)
     )
+    const matchesRole = roleFilters.length === 0 || roleFilters.some(r => normalize(r) === normalize(p.position ?? ''))
+    const matchesStatus = !statusFilter || p.status === statusFilter
+    return matchesSearch && matchesRole && matchesStatus
   })
 
   const filteredCompanies = companies.filter(c =>
@@ -112,6 +143,75 @@ export function ProspectDatabase() {
             <SearchField.ClearButton />
           </SearchField.Group>
         </SearchField>
+
+        {activeTab === 'prospects' && (
+          <>
+            <Select
+              className="w-44"
+              placeholder="All roles"
+              selectionMode="multiple"
+              value={roleFilters}
+              onChange={(keys) => setRoleFilters((keys as Key[]).map(String))}
+            >
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox selectionMode="multiple">
+                  {availableRoles.map(r => (
+                    <ListBox.Item key={r} id={r} textValue={r}>
+                      {r}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
+
+            <Select
+              className="w-36"
+              placeholder="All statuses"
+              value={statusFilter || null}
+              onChange={(val) => setStatusFilter(val ? String(val) : '')}
+            >
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {[
+                    { id: 'sourcing', label: 'Sourcing' },
+                    { id: 'contacted', label: 'Contacted' },
+                    { id: 'interview', label: 'Interview' },
+                    { id: 'client_review', label: 'Client Review' },
+                    { id: 'budget', label: 'Budget' },
+                    { id: 'contract', label: 'Contract' },
+                    { id: 'rejected', label: 'Rejected' },
+                  ].map(s => (
+                    <ListBox.Item key={s.id} id={s.id} textValue={s.label}>
+                      {s.label}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
+
+            {hasFilters && (
+              <Button
+                size="sm"
+                variant="flat"
+                color="default"
+                onPress={() => { setSearch(''); setRoleFilters([]); setStatusFilter('') }}
+              >
+                Clear filters
+              </Button>
+            )}
+          </>
+        )}
+
         <Tabs
           selectedKey={activeTab}
           onSelectionChange={k => setActiveTab(k as ActiveTab)}
@@ -138,6 +238,7 @@ export function ProspectDatabase() {
                     <Table.Column>Email</Table.Column>
                     <Table.Column>Status</Table.Column>
                     <Table.Column>Company</Table.Column>
+                    <Table.Column>Rejection Reason</Table.Column>
                   </Table.Header>
                   <Table.Body
                     items={filteredProspects}
@@ -145,20 +246,33 @@ export function ProspectDatabase() {
                       <div className="py-12 text-center text-sm text-muted">No prospects found.</div>
                     )}
                   >
-                    {p => (
-                      <Table.Row key={p.id} id={p.id} data-testid={`prospect-row-${p.id}`}>
-                        <Table.Cell>
-                          <span className="font-medium">{p.firstName} {p.lastName}</span>
-                        </Table.Cell>
-                        <Table.Cell>{p.email}</Table.Cell>
-                        <Table.Cell>
-                          <Chip size="sm" variant="flat" color={statusColor[p.status] ?? 'default'}>
-                            {p.status}
-                          </Chip>
-                        </Table.Cell>
-                        <Table.Cell>{p.targetCompany ?? '—'}</Table.Cell>
-                      </Table.Row>
-                    )}
+                    {p => {
+                      const hasReason = p.status === 'rejected' && !!p.rejectionReason
+                      return (
+                        <Table.Row
+                          key={p.id}
+                          id={p.id}
+                          data-testid={`prospect-row-${p.id}`}
+                        >
+                          <Table.Cell>
+                            <span className="font-medium">{p.firstName} {p.lastName}</span>
+                          </Table.Cell>
+                          <Table.Cell>{p.email}</Table.Cell>
+                          <Table.Cell>
+                            <Chip size="sm" variant="flat" color={statusColor[p.status] ?? 'default'}>
+                              {p.status}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell>{p.targetCompany ?? '—'}</Table.Cell>
+                          <Table.Cell>
+                            {hasReason
+                              ? <ExpandableCell text={p.rejectionReason!} />
+                              : <span className="text-muted">—</span>
+                            }
+                          </Table.Cell>
+                        </Table.Row>
+                      )
+                    }}
                   </Table.Body>
                 </Table.Content>
               </Table.ScrollContainer>

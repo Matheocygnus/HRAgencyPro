@@ -24,5 +24,6 @@ export interface Prospect {
   isBudgetAgreed?: boolean
   resume?: string
   notesHistory?: { note: string; createdAt: string }[]
+  rejectionReason?: string | null
   createdAt: string
 }

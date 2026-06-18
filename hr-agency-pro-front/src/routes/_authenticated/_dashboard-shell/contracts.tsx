@@ -65,7 +65,14 @@ export function ContractsPage() {
     .filter(c => {
       if (!search) return true
       const q = search.toLowerCase()
-      return String(c.heroId).includes(q) || String(c.id).includes(q)
+      const heroName = (heroMap[c.heroId] ?? '').toLowerCase()
+      const clientName = (clientMap[c.clientId] ?? '').toLowerCase()
+      return (
+        String(c.id).includes(q) ||
+        String(c.heroId).includes(q) ||
+        heroName.includes(q) ||
+        clientName.includes(q)
+      )
     })
 
   async function handleCreate(data: Partial<Contract>) {

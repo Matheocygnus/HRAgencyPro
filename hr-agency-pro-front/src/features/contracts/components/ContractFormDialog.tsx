@@ -43,7 +43,7 @@ export function ContractFormDialog({
     handleSubmit,
     watch,
     reset,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -58,6 +58,9 @@ export function ContractFormDialog({
       lengthMonths: defaultValues?.lengthMonths ?? undefined,
     },
   })
+
+  const ok = (n: keyof FormValues) => !!dirtyFields[n] && !errors[n]
+  const cls = (n: keyof FormValues) => `input w-full${ok(n) ? ' input-valid' : ''}`
 
   const selectedClientId = watch('clientId')
 
@@ -116,23 +119,23 @@ export function ContractFormDialog({
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body className="overflow-y-auto max-h-[60vh]">
             <form
               id="contract-form"
               onSubmit={handleSubmit(handleFormSubmit)}
               className="flex flex-col gap-4"
             >
               <TextField isInvalid={!!errors.title}>
-                <Label>Title</Label>
-                <input {...register('title')} className="input w-full" placeholder="Contract title" />
+                <Label className="field-required">Title</Label>
+                <input {...register('title')} className={cls('title')} placeholder="Contract title" />
                 {errors.title && (
                   <p className="text-xs text-danger mt-1">{errors.title.message}</p>
                 )}
               </TextField>
 
               <TextField isInvalid={!!errors.heroId}>
-                <Label>Hero</Label>
-                <select {...register('heroId')} className="input w-full">
+                <Label className="field-required">Hero</Label>
+                <select {...register('heroId')} className={cls('heroId')}>
                   <option value="">Select hero...</option>
                   {heroes.map((h: any) => (
                     <option key={h.id} value={h.id}>
@@ -146,8 +149,8 @@ export function ContractFormDialog({
               </TextField>
 
               <TextField isInvalid={!!errors.clientId}>
-                <Label>Client</Label>
-                <select {...register('clientId')} className="input w-full">
+                <Label className="field-required">Client</Label>
+                <select {...register('clientId')} className={cls('clientId')}>
                   <option value="">Select client...</option>
                   {clients.map((c: any) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -159,8 +162,8 @@ export function ContractFormDialog({
               </TextField>
 
               <TextField isInvalid={!!errors.companyId}>
-                <Label>Company</Label>
-                <select {...register('companyId')} className="input w-full">
+                <Label className="field-required">Company</Label>
+                <select {...register('companyId')} className={cls('companyId')}>
                   <option value="">Select company...</option>
                   {companies.map((c: any) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -172,8 +175,8 @@ export function ContractFormDialog({
               </TextField>
 
               <TextField isInvalid={!!errors.compensation}>
-                <Label>Compensation (monthly USD)</Label>
-                <input {...register('compensation')} type="number" step="0.01" className="input w-full" placeholder="5000" />
+                <Label className="field-required">Compensation (monthly USD)</Label>
+                <input {...register('compensation')} type="number" step="0.01" className={cls('compensation')} placeholder="5000" />
                 {errors.compensation && (
                   <p className="text-xs text-danger mt-1">{errors.compensation.message}</p>
                 )}
@@ -181,7 +184,7 @@ export function ContractFormDialog({
 
               <TextField>
                 <Label>Status</Label>
-                <select {...register('status')} className="input w-full">
+                <select {...register('status')} className={cls('status')}>
                   {(['draft', 'signed', 'active', 'completed', 'terminated'] as const).map(s => (
                     <option key={s} value={s}>{s}</option>
                   ))}
@@ -189,8 +192,8 @@ export function ContractFormDialog({
               </TextField>
 
               <TextField isInvalid={!!errors.startDate}>
-                <Label>Start Date</Label>
-                <input {...register('startDate')} type="date" className="input w-full" />
+                <Label className="field-required">Start Date</Label>
+                <input {...register('startDate')} type="date" className={cls('startDate')} />
                 {errors.startDate && (
                   <p className="text-xs text-danger mt-1">{errors.startDate.message}</p>
                 )}
@@ -198,12 +201,12 @@ export function ContractFormDialog({
 
               <TextField>
                 <Label>End Date (optional)</Label>
-                <input {...register('endDate')} type="date" className="input w-full" />
+                <input {...register('endDate')} type="date" className={cls('endDate')} />
               </TextField>
 
               <TextField>
                 <Label>Length (months, optional)</Label>
-                <input {...register('lengthMonths')} type="number" className="input w-full" />
+                <input {...register('lengthMonths')} type="number" className={cls('lengthMonths')} />
               </TextField>
             </form>
           </Modal.Body>
