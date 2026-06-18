@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@import "@heroui/styles/css";
+@import "@heroui-pro/react/css";
+
+/* ─── Form input states ─────────────────────────────────────────────── */
+
+/* Default: subtle border so inputs are visually distinct */
+/* outline works here; box-shadow for valid state because appearance:auto blocks outline on <input> */
+.input {
+  transition: box-shadow 180ms ease !important;
+  outline: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Valid: green ring + subtle outer glow */
+.input.input-valid {
+  box-shadow:
+    inset 0 0 0 1.5px oklch(0.7329 0.1935 150.81 / 0.85),
+    0 0 8px oklch(0.7329 0.1935 150.81 / 0.18) !important;
+}
+
+/* Required field asterisk */
+.field-required::after {
+  content: " *";
+  color: var(--heroui-danger);
+  font-size: 0.75rem;
+}
+
+/* ─── HeroUI Pro palette — indigo accent matching heroui.pro ────────────── */
+html.dark {
+  /* True indigo-500 in oklch — heroui.pro primary color */
+  --accent: oklch(0.62 0.24 264);
+  --accent-foreground: oklch(0.98 0 0);
+
+  /* Deep dark with subtle violet tint */
+  --background: oklch(0.12 0.008 264);
+  --surface: oklch(0.20 0.008 264);
+
+  /* Radial glow — same top-right indigo gradient as heroui.pro */
+  background-image:
+    radial-gradient(
+      ellipse 60% 40% at 100% 0%,
+      oklch(0.62 0.24 264 / 0.18) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 30% 25% at 5% 5%,
+      oklch(0.65 0.19 292 / 0.10) 0%,
+      transparent 60%
+    );
+  background-attachment: fixed;
+}
