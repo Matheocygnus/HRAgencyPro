@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
-import { useQuery } from '@tanstack/react-query'
-import { Card, Tabs, Table, Chip, Skeleton, Button, Avatar } from '@heroui/react'
-import { ArrowLeft, Mail, Phone } from 'lucide-react'
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
+import { Card, Tabs, Table, Chip, Skeleton, Button, Avatar, Modal, Label, TextField } from '@heroui/react'
+import { ArrowLeft, Mail, Phone, Pencil } from 'lucide-react'
 import { heroesApi } from '../../../api/heroes.api'
 import { contractsApi } from '../../../api/contracts.api'
+import { prospectsApi } from '../../../api/prospects.api'
 import type { Hero } from '../../../types/hero.types'
 import type { Contract } from '../../../types/contract.types'
 
@@ -122,6 +123,18 @@ export function HeroDetail() {
   const heroId = Number(id)
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview')
+  const [editSkillsOpen, setEditSkillsOpen] = useState(false)
+  const [skillsInput, setSkillsInput] = useState('')
+  const queryClient = useQueryClient()
+
+  const skillsMutation = useMutation({
+    mutationFn: ({ prospectId, skills }: { prospectId: number; skills: string }) =>
+      prospectsApi.update(prospectId, { skills }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['heroes', heroId] })
+      setEditSkillsOpen(false)
+    },
+  })
 
   const { data: hero, isLoading } = useQuery<Hero>({
     queryKey: ['heroes', heroId],
@@ -211,14 +224,27 @@ export function HeroDetail() {
         <Tabs.Panel id="overview" className="pt-3">
           <Card data-testid="hero-overview">
             <Card.Content className="p-4 md:p-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-foreground">Skills</p>
+                {can('prospects') && (
+                  <Button
+                    size="sm"
+                    variant="flat"
+                    startContent={<Pencil className="size-3" />}
+                    onPress={() => {
+                      setSkillsInput((hero.skills ?? []).join(', '))
+                      setEditSkillsOpen(true)
+                    }}
+                  >
+                    Edit Skills
+                  </Button>
+                )}
+              </div>
               {hero.skills && hero.skills.length > 0 ? (
-                <div>
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">Skills</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {hero.skills.map(skill => (
-                      <Chip key={skill} size="sm" variant="flat" color="primary">{skill}</Chip>
-                    ))}
-                  </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {hero.skills.map(skill => (
+                    <Chip key={skill} size="sm" variant="flat" color="primary">{skill}</Chip>
+                  ))}
                 </div>
               ) : (
                 <p className="text-sm text-muted">No skills listed.</p>
@@ -269,6 +295,42 @@ export function HeroDetail() {
           <HeroPerformance contracts={contracts} startDate={hero.startDate} />
         </Tabs.Panel>
       </Tabs>
+
+      <Modal.Backdrop isOpen={editSkillsOpen} onOpenChange={(isOpen) => { if (!isOpen) setEditSkillsOpen(false) }}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-md">
+            <Modal.Header>
+              <Modal.Heading>Edit Skills</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body className="overflow-y-auto max-h-[60vh]">
+              <TextField>
+                <Label>Skills</Label>
+                <textarea
+                  className="input w-full"
+                  rows={3}
+                  value={skillsInput}
+                  onChange={e => setSkillsInput(e.target.value)}
+                  placeholder="e.g. React, Node.js, TypeScript"
+                />
+                <p className="text-xs text-muted mt-1">Separate skills with commas</p>
+              </TextField>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" slot="close">Cancel</Button>
+              <Button
+                color="accent"
+                isDisabled={!hero.prospectId || skillsMutation.isPending}
+                onPress={() => {
+                  if (!hero.prospectId) return
+                  skillsMutation.mutate({ prospectId: hero.prospectId, skills: skillsInput.trim() })
+                }}
+              >
+                Save
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </div>
   )
 }

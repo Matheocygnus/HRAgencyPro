@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table, Chip, Button, Card, Tabs, Skeleton } from '@heroui/react'
@@ -7,6 +7,7 @@ import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
 import { jobsApi } from '../../../api/jobs.api'
 import { prospectsApi } from '../../../api/prospects.api'
+import { clientsApi } from '../../../api/clients.api'
 import type { JobOpening, JobApplication, JobRequest, ApplicationStatus } from '../../../types/job.types'
 import { JobOpeningFormDialog } from '../../../features/jobs/components/JobOpeningFormDialog'
 import { JobApplicationFormDialog } from '../../../features/jobs/components/JobApplicationFormDialog'
@@ -47,8 +48,7 @@ const statusColor: Record<string, 'default' | 'primary' | 'success' | 'warning' 
   new: 'default', screened: 'primary', cv_sent: 'primary',
   interview_scheduled: 'warning', offer_agreed: 'warning',
   hired: 'success', rejected: 'danger',
-  pending: 'warning', reviewed: 'primary',
-  approved: 'success',
+  pending: 'warning', converted: 'primary', rejected: 'danger',
 }
 
 export function JobsPage() {
@@ -89,6 +89,16 @@ export function JobsPage() {
     queryKey: ['job-requests'],
     queryFn: () => jobsApi.requests.list(),
   })
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => clientsApi.list(),
+  })
+
+  const clientMap = useMemo(() =>
+    Object.fromEntries(clients.map((c: any) => [c.id, c.name])),
+    [clients]
+  )
 
   const selectedOpening = openings.find(o => o.id === selectedOpeningId) ?? null
   const selectedApp = applications.find(a => a.id === selectedAppId) ?? null
@@ -144,19 +154,23 @@ export function JobsPage() {
   }
 
   // --- Request handlers ---
-  async function handleApproveRequest(id: number) {
-    await jobsApi.requests.update(id, { status: 'approved' })
-    queryClient.invalidateQueries({ queryKey: ['job-requests'] })
-  }
-
   async function handleRejectRequest(id: number) {
     await jobsApi.requests.update(id, { status: 'rejected' })
     queryClient.invalidateQueries({ queryKey: ['job-requests'] })
   }
 
   async function handleConvertToOpening(req: JobRequest) {
-    await jobsApi.openings.create({ title: req.title, description: req.description })
+    await jobsApi.openings.create({
+      title: req.title,
+      description: req.description,
+      requirements: req.requirements,
+      jobType: req.jobType,
+      clientId: (req as any).clientId,
+      companyId: (req as any).companyId,
+    })
+    await jobsApi.requests.update(req.id, { status: 'converted' })
     queryClient.invalidateQueries({ queryKey: ['job-openings'] })
+    queryClient.invalidateQueries({ queryKey: ['job-requests'] })
   }
 
   async function handleUpdateRequest(data: Partial<JobRequest>) {
@@ -230,6 +244,7 @@ export function JobsPage() {
                         <Table.Header>
                           <Table.Column isRowHeader>ID</Table.Column>
                           <Table.Column>Title</Table.Column>
+                          <Table.Column>Client</Table.Column>
                           <Table.Column>Location</Table.Column>
                           <Table.Column>Salary Range</Table.Column>
                           <Table.Column>Status</Table.Column>
@@ -251,6 +266,7 @@ export function JobsPage() {
                             >
                               <Table.Cell><span className="font-medium">{o.id}</span></Table.Cell>
                               <Table.Cell>{o.title}</Table.Cell>
+                              <Table.Cell>{clientMap[(o as any).clientId] ?? '—'}</Table.Cell>
                               <Table.Cell>{o.location ?? '—'}</Table.Cell>
                               <Table.Cell>{o.salaryRange ?? o.salary ?? '—'}</Table.Cell>
                               <Table.Cell>
@@ -522,7 +538,7 @@ export function JobsPage() {
                     <Table.Content aria-label="Job requests table" data-testid="requests-table">
                       <Table.Header>
                         <Table.Column isRowHeader>ID</Table.Column>
-                        <Table.Column>Client ID</Table.Column>
+                        <Table.Column>Client</Table.Column>
                         <Table.Column>Title</Table.Column>
                         <Table.Column>Status</Table.Column>
                         <Table.Column>Created</Table.Column>
@@ -537,21 +553,28 @@ export function JobsPage() {
                         {r => (
                           <Table.Row key={r.id} id={r.id} data-testid={`req-row-${r.id}`}>
                             <Table.Cell><span className="font-medium">{r.id}</span></Table.Cell>
-                            <Table.Cell>{r.clientId}</Table.Cell>
+                            <Table.Cell>{(r as any).clientName ?? clientMap[r.clientId] ?? '—'}</Table.Cell>
                             <Table.Cell>{r.title}</Table.Cell>
                             <Table.Cell>
                               <Chip size="sm" variant="flat" color={statusColor[r.status] ?? 'default'}>
                                 {r.status}
                               </Chip>
                             </Table.Cell>
-                            <Table.Cell>{r.createdAt}</Table.Cell>
                             <Table.Cell>
-                              <div className="flex gap-1">
-                                <Button size="sm" variant="ghost" color="success" onPress={() => handleApproveRequest(r.id)}>Approve</Button>
-                                <Button size="sm" variant="ghost" color="danger" onPress={() => handleRejectRequest(r.id)}>Reject</Button>
-                                <Button size="sm" variant="ghost" color="primary" onPress={() => handleConvertToOpening(r)}>To Opening</Button>
+                              {r.createdAt
+                                ? new Date(r.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                : '—'}
+                            </Table.Cell>
+                            <Table.Cell>
+                              <div className="flex gap-1 flex-wrap">
+                                {r.status === 'pending' && (
+                                  <>
+                                    <Button size="sm" variant="ghost" color="danger" onPress={() => handleRejectRequest(r.id)}>Reject</Button>
+                                    <Button size="sm" variant="ghost" color="primary" onPress={() => handleConvertToOpening(r)}>To Opening</Button>
+                                  </>
+                                )}
                                 <Button size="sm" variant="ghost" onPress={() => setEditRequest(r)}>Edit</Button>
-                                <Button size="sm" variant="ghost" onPress={() => setDeleteReqTarget(r.id)}>Delete</Button>
+                                <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteReqTarget(r.id)}>Delete</Button>
                               </div>
                             </Table.Cell>
                           </Table.Row>

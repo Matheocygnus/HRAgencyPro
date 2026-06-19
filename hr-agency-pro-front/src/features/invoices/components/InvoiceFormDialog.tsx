@@ -8,8 +8,9 @@ import { contractsApi } from '../../../api/contracts.api'
 import { heroesApi } from '../../../api/heroes.api'
 import { clientsApi } from '../../../api/clients.api'
 import { companiesApi } from '../../../api/companies.api'
-import { usePermissions } from '../../../features/auth/use-permissions'
 import type { Invoice } from '../../../types/invoice.types'
+
+const todayStr = new Date().toISOString().split('T')[0]
 
 const schema = z.object({
   invoiceNumber: z.string().min(1, 'Invoice number is required'),
@@ -17,7 +18,7 @@ const schema = z.object({
   heroId: z.coerce.number().min(1, 'Hero is required'),
   clientId: z.coerce.number().min(1, 'Client is required'),
   companyId: z.coerce.number().min(1, 'Company is required'),
-  amount: z.coerce.number().min(0.01, 'Amount must be positive'),
+  amount: z.coerce.number().min(0.01, 'Amount must be greater than 0'),
   status: z.enum(['pending', 'paid', 'overdue', 'cancelled']),
   dueDate: z.string().min(1, 'Due date is required'),
   paidDate: z.string().optional(),
@@ -40,8 +41,7 @@ export function InvoiceFormDialog({
   defaultValues,
   title = 'Add Invoice',
 }: InvoiceFormDialogProps) {
-  const { can } = usePermissions()
-  const canViewContracts = can('contracts')
+  const isEdit = !!defaultValues?.id
 
   const {
     register,
@@ -73,25 +73,25 @@ export function InvoiceFormDialog({
   const { data: contracts = [] } = useQuery({
     queryKey: ['contracts'],
     queryFn: () => contractsApi.list(),
-    enabled: open && canViewContracts,
+    enabled: open,
   })
 
   const { data: heroes = [] } = useQuery({
     queryKey: ['heroes'],
     queryFn: () => heroesApi.list(),
-    enabled: open && !canViewContracts,
+    enabled: open,
   })
 
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: () => clientsApi.list(),
-    enabled: open && !canViewContracts,
+    enabled: open,
   })
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
     queryFn: () => companiesApi.list(),
-    enabled: open && !canViewContracts,
+    enabled: open,
   })
 
   useEffect(() => {
@@ -110,15 +110,14 @@ export function InvoiceFormDialog({
     }
   }, [open])
 
-  // Auto-populate heroId, clientId, companyId when a contract is selected
   useEffect(() => {
-    if (!selectedContractId || !canViewContracts) return
+    if (!selectedContractId) return
     const contract = contracts.find((c: any) => c.id === Number(selectedContractId))
     if (!contract) return
     setValue('heroId', contract.heroId)
     setValue('clientId', contract.clientId)
     setValue('companyId', contract.companyId)
-  }, [selectedContractId, contracts, setValue, canViewContracts])
+  }, [selectedContractId, contracts, setValue])
 
   function handleFormSubmit(data: FormValues) {
     const payload: Partial<Invoice> = { ...data }
@@ -130,110 +129,66 @@ export function InvoiceFormDialog({
   }
 
   return (
-    <Modal.Backdrop
-      isOpen={open}
-      onOpenChange={(isOpen) => { if (!isOpen) onClose() }}
-    >
+    <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <Modal.Container>
-        <Modal.Dialog
-          className="sm:max-w-md"
-          data-testid="invoice-form-dialog"
-        >
+        <Modal.Dialog className="sm:max-w-md" data-testid="invoice-form-dialog">
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>
           </Modal.Header>
-          <Modal.Body>
-            <form
-              id="invoice-form"
-              onSubmit={handleSubmit(handleFormSubmit)}
-              className="flex flex-col gap-4"
-            >
+          <Modal.Body className="overflow-y-auto max-h-[60vh]">
+            <form id="invoice-form" onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-4">
               <TextField isInvalid={!!errors.invoiceNumber}>
                 <Label className="field-required">Invoice Number</Label>
-                <input {...register('invoiceNumber')} className={cls('invoiceNumber')} placeholder="INV-001" />
-                {errors.invoiceNumber && (
-                  <p className="text-xs text-danger mt-1">{errors.invoiceNumber.message}</p>
+                <input {...register('invoiceNumber')} className={cls('invoiceNumber')} placeholder="INV-2026-001" />
+                {errors.invoiceNumber && <p className="text-xs text-danger mt-1">{errors.invoiceNumber.message}</p>}
+              </TextField>
+
+              <TextField>
+                <Label>Contract (optional)</Label>
+                <select {...register('contractId')} className={cls('contractId')}>
+                  <option value="">Select contract...</option>
+                  {contracts.map((c: any) => (
+                    <option key={c.id} value={c.id}>#{c.id} — {c.title}</option>
+                  ))}
+                </select>
+                {selectedContractId && (
+                  <p className="text-xs text-muted mt-1">Hero, client and company are populated from the contract.</p>
                 )}
               </TextField>
 
-              {canViewContracts ? (
-                <>
-                  <TextField isInvalid={!!errors.contractId}>
-                    <Label>Contract</Label>
-                    <select {...register('contractId')} className={cls('contractId')}>
-                      <option value="">Select contract...</option>
-                      {contracts.map((c: any) => (
-                        <option key={c.id} value={c.id}>
-                          #{c.id} — {c.title}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.contractId && (
-                      <p className="text-xs text-danger mt-1">{errors.contractId.message}</p>
-                    )}
-                  </TextField>
+              <TextField isInvalid={!!errors.clientId}>
+                <Label className="field-required">Client</Label>
+                <select {...register('clientId')} className={cls('clientId')}>
+                  <option value="">Select client...</option>
+                  {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                {errors.clientId && <p className="text-xs text-danger mt-1">{errors.clientId.message}</p>}
+              </TextField>
 
-                  {selectedContractId && (
-                    <p className="text-xs text-muted -mt-2">
-                      Hero, client and company are set automatically from the contract.
-                    </p>
-                  )}
+              <TextField isInvalid={!!errors.heroId}>
+                <Label className="field-required">Hero</Label>
+                <select {...register('heroId')} className={cls('heroId')}>
+                  <option value="">Select hero...</option>
+                  {heroes.map((h: any) => (
+                    <option key={h.id} value={h.id}>#{h.id} — {h.firstName} {h.lastName}</option>
+                  ))}
+                </select>
+                {errors.heroId && <p className="text-xs text-danger mt-1">{errors.heroId.message}</p>}
+              </TextField>
 
-                  <input type="hidden" {...register('heroId')} />
-                  <input type="hidden" {...register('clientId')} />
-                  <input type="hidden" {...register('companyId')} />
-                </>
-              ) : (
-                <>
-                  <TextField isInvalid={!!errors.heroId}>
-                    <Label className="field-required">Hero</Label>
-                    <select {...register('heroId')} className={cls('heroId')}>
-                      <option value="">Select hero...</option>
-                      {heroes.map((h: any) => (
-                        <option key={h.id} value={h.id}>
-                          {h.firstName} {h.lastName}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.heroId && (
-                      <p className="text-xs text-danger mt-1">{errors.heroId.message}</p>
-                    )}
-                  </TextField>
-
-                  <TextField isInvalid={!!errors.clientId}>
-                    <Label className="field-required">Client</Label>
-                    <select {...register('clientId')} className={cls('clientId')}>
-                      <option value="">Select client...</option>
-                      {clients.map((c: any) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                    {errors.clientId && (
-                      <p className="text-xs text-danger mt-1">{errors.clientId.message}</p>
-                    )}
-                  </TextField>
-
-                  <TextField isInvalid={!!errors.companyId}>
-                    <Label className="field-required">Company</Label>
-                    <select {...register('companyId')} className={cls('companyId')}>
-                      <option value="">Select company...</option>
-                      {companies.map((c: any) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                    {errors.companyId && (
-                      <p className="text-xs text-danger mt-1">{errors.companyId.message}</p>
-                    )}
-                  </TextField>
-                </>
-              )}
+              <TextField isInvalid={!!errors.companyId}>
+                <Label className="field-required">Company</Label>
+                <select {...register('companyId')} className={cls('companyId')}>
+                  <option value="">Select company...</option>
+                  {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                {errors.companyId && <p className="text-xs text-danger mt-1">{errors.companyId.message}</p>}
+              </TextField>
 
               <TextField isInvalid={!!errors.amount}>
                 <Label className="field-required">Amount (USD)</Label>
-                <input {...register('amount')} type="number" step="0.01" className={cls('amount')} />
-                {errors.amount && (
-                  <p className="text-xs text-danger mt-1">{errors.amount.message}</p>
-                )}
+                <input {...register('amount')} type="number" step="0.01" min="0.01" className={cls('amount')} placeholder="1000.00" />
+                {errors.amount && <p className="text-xs text-danger mt-1">{errors.amount.message}</p>}
               </TextField>
 
               <TextField>
@@ -247,10 +202,13 @@ export function InvoiceFormDialog({
 
               <TextField isInvalid={!!errors.dueDate}>
                 <Label className="field-required">Due Date</Label>
-                <input {...register('dueDate')} type="date" className={cls('dueDate')} />
-                {errors.dueDate && (
-                  <p className="text-xs text-danger mt-1">{errors.dueDate.message}</p>
-                )}
+                <input
+                  {...register('dueDate')}
+                  type="date"
+                  min={!isEdit ? todayStr : undefined}
+                  className={cls('dueDate')}
+                />
+                {errors.dueDate && <p className="text-xs text-danger mt-1">{errors.dueDate.message}</p>}
               </TextField>
 
               <TextField>

@@ -32,7 +32,7 @@ const interviewStatusColor: Record<string, 'default' | 'primary' | 'success' | '
 
 export function ProspectDashboard() {
   const { can } = usePermissions()
-  if (!can('prospects')) return <AccessDenied />
+  if (!can('prospect_dashboard')) return <AccessDenied />
   const { user } = useAuthContext()
   const prospectId = user?.prospectId
 

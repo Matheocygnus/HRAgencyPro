@@ -63,7 +63,7 @@ export interface JobRequest {
   tools?: string
   jobType?: string
   workingHours?: string
-  timezone?: string
+  location?: string
   reportsTo?: string
   languages?: string[]
   seniority?: string

@@ -1,7 +1,10 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useQuery } from '@tanstack/react-query'
 import { Modal, Button, Label, TextField } from '@heroui/react'
+import { clientsApi } from '../../../api/clients.api'
+import { companiesApi } from '../../../api/companies.api'
 import type { JobOpening } from '../../../types/job.types'
 
 const schema = z.object({
@@ -12,6 +15,8 @@ const schema = z.object({
   jobType: z.string().optional(),
   salaryRange: z.string().optional(),
   status: z.enum(['active', 'closed']),
+  clientId: z.coerce.number().optional(),
+  companyId: z.coerce.number().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -28,7 +33,7 @@ export function JobOpeningFormDialog({ open, onClose, onSubmit, initial }: JobOp
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -39,11 +44,31 @@ export function JobOpeningFormDialog({ open, onClose, onSubmit, initial }: JobOp
       jobType: initial?.jobType ?? '',
       salaryRange: initial?.salaryRange ?? initial?.salary ?? '',
       status: initial?.status ?? 'active',
+      clientId: initial?.clientId ?? undefined,
+      companyId: initial?.companyId ?? undefined,
     },
   })
 
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => clientsApi.list(),
+    enabled: open,
+  })
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies'],
+    queryFn: () => companiesApi.list(),
+    enabled: open,
+  })
+
+  const ok = (n: keyof FormValues) => !!dirtyFields[n] && !errors[n]
+  const cls = (n: keyof FormValues) => `input w-full${ok(n) ? ' input-valid' : ''}`
+
   function handleFormSubmit(data: FormValues) {
-    onSubmit(data)
+    const payload: Partial<JobOpening> = { ...data }
+    if (!payload.clientId) delete payload.clientId
+    if (!payload.companyId) delete payload.companyId
+    onSubmit(payload)
     reset()
     onClose()
   }
@@ -55,44 +80,62 @@ export function JobOpeningFormDialog({ open, onClose, onSubmit, initial }: JobOp
           <Modal.Header>
             <Modal.Heading>{initial ? 'Edit Job Opening' : 'Add Job Opening'}</Modal.Heading>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body className="overflow-y-auto max-h-[60vh]">
             <form
               id="job-opening-form"
               onSubmit={handleSubmit(handleFormSubmit)}
               className="flex flex-col gap-4"
             >
               <TextField isInvalid={!!errors.title}>
-                <Label>Title</Label>
-                <input {...register('title')} className="input w-full" placeholder="Job title" />
-                {errors.title && (
-                  <p className="text-xs text-danger mt-1">{errors.title.message}</p>
-                )}
+                <Label className="field-required">Title</Label>
+                <input {...register('title')} className={cls('title')} placeholder="Job title" />
+                {errors.title && <p className="text-xs text-danger mt-1">{errors.title.message}</p>}
               </TextField>
+
+              <TextField>
+                <Label>Client (optional)</Label>
+                <select {...register('clientId')} className={cls('clientId')}>
+                  <option value="">Select client...</option>
+                  {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </TextField>
+
+              <TextField>
+                <Label>Company (optional)</Label>
+                <select {...register('companyId')} className={cls('companyId')}>
+                  <option value="">Select company...</option>
+                  {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </TextField>
+
               <TextField>
                 <Label>Description</Label>
                 <textarea
                   {...register('description')}
-                  className="input w-full"
+                  className={cls('description')}
                   rows={3}
                   placeholder="Job description"
                 />
               </TextField>
+
               <TextField>
                 <Label>Requirements</Label>
                 <textarea
                   {...register('requirements')}
-                  className="input w-full"
+                  className={cls('requirements')}
                   rows={2}
                   placeholder="Required skills and experience"
                 />
               </TextField>
+
               <TextField>
                 <Label>Location</Label>
-                <input {...register('location')} className="input w-full" placeholder="Remote / City" />
+                <input {...register('location')} className={cls('location')} placeholder="Remote / City" />
               </TextField>
+
               <TextField>
                 <Label>Job Type</Label>
-                <select {...register('jobType')} className="input w-full">
+                <select {...register('jobType')} className={cls('jobType')}>
                   <option value="">Select type</option>
                   <option value="full-time">Full-time</option>
                   <option value="part-time">Part-time</option>
@@ -100,13 +143,15 @@ export function JobOpeningFormDialog({ open, onClose, onSubmit, initial }: JobOp
                   <option value="freelance">Freelance</option>
                 </select>
               </TextField>
+
               <TextField>
                 <Label>Salary Range</Label>
-                <input {...register('salaryRange')} className="input w-full" placeholder="e.g. 5k-8k USD" />
+                <input {...register('salaryRange')} className={cls('salaryRange')} placeholder="e.g. 5k-8k USD" />
               </TextField>
+
               <TextField>
                 <Label>Status</Label>
-                <select {...register('status')} className="input w-full">
+                <select {...register('status')} className={cls('status')}>
                   <option value="active">Active</option>
                   <option value="closed">Closed</option>
                 </select>

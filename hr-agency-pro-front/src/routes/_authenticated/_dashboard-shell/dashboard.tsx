@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { KPI } from '@heroui-pro/react'
 import { Tabs, Table, Chip, Skeleton, Card } from '@heroui/react'
 import { CalendarDays, UserCheck, Building2, FileText } from 'lucide-react'
 import { api } from '../../../lib/api'
+import { clientsApi } from '../../../api/clients.api'
 import { useAuthContext } from '../../../features/auth/auth-context'
 
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/dashboard')({
@@ -20,10 +21,11 @@ interface DashboardStats {
 
 interface JobRequest {
   id: number
+  clientId: number
   title: string
   clientName?: string
   companyName?: string
-  timezone?: string
+  location?: string
   status: string
   createdAt?: string
 }
@@ -99,6 +101,16 @@ export function Dashboard() {
     queryKey: ['job-applications'],
     queryFn: () => api.get<JobApplication[]>('/job-applications').then(r => r.data),
   })
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => clientsApi.list(),
+  })
+
+  const clientMap = useMemo(() =>
+    Object.fromEntries(clients.map((c: any) => [c.id, c.name])),
+    [clients]
+  )
 
   const stats = statsQuery.data
   const jobRequests = jobRequestsQuery.data ?? []
@@ -195,7 +207,7 @@ export function Dashboard() {
                       <Table.Header>
                         <Table.Column isRowHeader>TITLE</Table.Column>
                         <Table.Column>CLIENT</Table.Column>
-                        <Table.Column>TIMEZONE</Table.Column>
+                        <Table.Column>LOCATION</Table.Column>
                         <Table.Column>STATUS</Table.Column>
                         <Table.Column>DATE</Table.Column>
                       </Table.Header>
@@ -208,8 +220,8 @@ export function Dashboard() {
                         {req => (
                           <Table.Row key={req.id}>
                             <Table.Cell><span className="font-medium">{req.title}</span></Table.Cell>
-                            <Table.Cell>{req.clientName ?? '—'}</Table.Cell>
-                            <Table.Cell>{req.timezone ?? '—'}</Table.Cell>
+                            <Table.Cell>{req.clientName ?? clientMap[req.clientId] ?? '—'}</Table.Cell>
+                            <Table.Cell>{req.location ?? '—'}</Table.Cell>
                             <Table.Cell>
                               <Chip color={statusColor[req.status] ?? 'default'} size="sm" variant="flat">
                                 {req.status}

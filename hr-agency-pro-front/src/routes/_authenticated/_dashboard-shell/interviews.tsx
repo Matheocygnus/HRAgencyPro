@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table, Chip, Button, Card, Skeleton } from '@heroui/react'
-import { Plus } from 'lucide-react'
+import { Plus, ExternalLink } from 'lucide-react'
 import { interviewsApi } from '../../../api/interviews.api'
+import { prospectsApi } from '../../../api/prospects.api'
 import type { Interview } from '../../../types/interview.types'
 import { InterviewFormDialog } from '../../../features/interviews/components/InterviewFormDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
@@ -32,6 +33,16 @@ export function InterviewsPage() {
     queryKey: ['interviews'],
     queryFn: () => interviewsApi.list(),
   })
+
+  const { data: prospects = [] } = useQuery({
+    queryKey: ['prospects'],
+    queryFn: () => prospectsApi.list(),
+  })
+
+  const prospectMap = useMemo(() =>
+    Object.fromEntries(prospects.map((p: any) => [p.id, `${p.firstName} ${p.lastName}`.trim()])),
+    [prospects]
+  )
 
   const filtered = interviews.filter(i => {
     if (dateFrom && i.scheduledDate < dateFrom) return false
@@ -122,7 +133,7 @@ export function InterviewsPage() {
                   {filtered.map(interview => (
                     <Table.Row key={interview.id} id={interview.id} data-testid={`interview-row-${interview.id}`}>
                       <Table.Cell><span className="font-medium">{interview.id}</span></Table.Cell>
-                      <Table.Cell>{interview.prospectId}</Table.Cell>
+                      <Table.Cell>{prospectMap[interview.prospectId] ?? '—'}</Table.Cell>
                       <Table.Cell>{interview.title ?? '—'}</Table.Cell>
                       <Table.Cell>{interview.scheduledDate ? new Date(interview.scheduledDate).toLocaleString() : '—'}</Table.Cell>
                       <Table.Cell>{interview.duration ? `${interview.duration}min` : '—'}</Table.Cell>
@@ -134,7 +145,18 @@ export function InterviewsPage() {
                       <Table.Cell>{interview.notes ?? '—'}</Table.Cell>
                       <Table.Cell>
                         <div className="flex gap-1">
-                          <Button size="sm" variant="ghost" isDisabled>Join Video Call</Button>
+                          {interview.meetingLink ? (
+                            <a
+                              href={/^https?:\/\//i.test(interview.meetingLink) ? interview.meetingLink : `https://${interview.meetingLink}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                            >
+                              Join Video Call
+                            </a>
+                          ) : (
+                            <span className="px-2 py-1 text-xs text-muted italic">No Link</span>
+                          )}
                           <Button size="sm" variant="ghost" color="primary" onPress={() => setEditTarget(interview)}>Edit</Button>
                           <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteTarget(interview.id)}>Delete</Button>
                         </div>

@@ -7,6 +7,7 @@ import { Table, Chip, Button, Card, SearchField, Tabs, Skeleton } from '@heroui/
 import { Plus } from 'lucide-react'
 import { invoicesApi } from '../../../api/invoices.api'
 import { clientsApi } from '../../../api/clients.api'
+import { heroesApi } from '../../../api/heroes.api'
 import type { Invoice } from '../../../types/invoice.types'
 import { InvoiceFormDialog } from '../../../features/invoices/components/InvoiceFormDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
@@ -20,6 +21,13 @@ const STATUS_TABS: StatusTab[] = ['all', 'pending', 'paid', 'overdue', 'cancelle
 
 const statusColor: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'danger'> = {
   pending: 'warning', paid: 'success', overdue: 'danger', cancelled: 'default',
+}
+
+function isEffectivelyOverdue(invoice: Invoice): boolean {
+  if (invoice.status === 'paid' || invoice.status === 'cancelled') return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return new Date(invoice.dueDate) < today
 }
 
 export function InvoicesPage() {
@@ -43,17 +51,40 @@ export function InvoicesPage() {
     enabled: can('companies'),
   })
 
+  const { data: heroes = [] } = useQuery({
+    queryKey: ['heroes'],
+    queryFn: () => heroesApi.list(),
+  })
+
   const clientMap = useMemo(() =>
     Object.fromEntries(clients.map(c => [c.id, c.name])),
     [clients]
   )
 
+  const heroMap = useMemo(() =>
+    Object.fromEntries(heroes.map((h: any) => [h.id, `${h.firstName} ${h.lastName}`.trim()])),
+    [heroes]
+  )
+
   const filtered = invoices
-    .filter(i => activeTab === 'all' || i.status === activeTab)
+    .filter(i => {
+      if (activeTab === 'all') return true
+      if (activeTab === 'overdue') return i.status === 'overdue' || isEffectivelyOverdue(i)
+      return i.status === activeTab
+    })
     .filter(i => {
       if (!search) return true
       const q = search.toLowerCase()
-      return String(i.clientId).includes(q) || String(i.amount).includes(q)
+      const clientName = (clientMap[i.clientId] ?? '').toLowerCase()
+      const heroName = (heroMap[i.heroId] ?? '').toLowerCase()
+      return (
+        String(i.id).includes(q) ||
+        String(i.clientId).includes(q) ||
+        clientName.includes(q) ||
+        heroName.includes(q) ||
+        String(i.amount).includes(q) ||
+        (i.invoiceNumber ?? '').toLowerCase().includes(q)
+      )
     })
 
   async function handleCreate(data: Partial<Invoice>) {
@@ -96,7 +127,7 @@ export function InvoicesPage() {
         >
           <SearchField.Group>
             <SearchField.SearchIcon />
-            <SearchField.Input placeholder="Search by client ID or amount..." />
+            <SearchField.Input placeholder="Search by client, invoice number, amount..." />
             <SearchField.ClearButton />
           </SearchField.Group>
         </SearchField>
@@ -131,6 +162,7 @@ export function InvoicesPage() {
                 <Table.Header>
                   <Table.Column isRowHeader>ID</Table.Column>
                   <Table.Column>Client</Table.Column>
+                  <Table.Column>Hero</Table.Column>
                   <Table.Column>Amount</Table.Column>
                   <Table.Column>Status</Table.Column>
                   <Table.Column>Due Date</Table.Column>
@@ -140,25 +172,44 @@ export function InvoicesPage() {
                     <div className="py-12 text-center text-sm text-muted">No invoices found.</div>
                   )}
                 >
-                  {filtered.map(invoice => (
-                    <Table.Row key={invoice.id} id={invoice.id} data-testid={`invoice-row-${invoice.id}`}>
+                  {filtered.map(invoice => {
+                    const overdue = isEffectivelyOverdue(invoice)
+                    return (
+                    <Table.Row
+                      key={invoice.id}
+                      id={invoice.id}
+                      data-testid={`invoice-row-${invoice.id}`}
+                      className={overdue ? 'bg-danger/10' : undefined}
+                    >
                       <Table.Cell><span className="font-medium">{invoice.id}</span></Table.Cell>
                       <Table.Cell>{clientMap[invoice.clientId] ?? `Client #${invoice.clientId}`}</Table.Cell>
-                      <Table.Cell>{invoice.amount}</Table.Cell>
+                      <Table.Cell>{heroMap[invoice.heroId] ?? '—'}</Table.Cell>
+                      <Table.Cell>${invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Table.Cell>
                       <Table.Cell>
-                        <Chip size="sm" variant="flat" color={statusColor[invoice.status] ?? 'default'}>
-                          {invoice.status}
+                        <Chip size="sm" variant="flat" color={overdue ? 'danger' : (statusColor[invoice.status] ?? 'default')}>
+                          {overdue && invoice.status === 'pending' ? 'overdue' : invoice.status}
                         </Chip>
                       </Table.Cell>
-                      <Table.Cell>{invoice.dueDate}</Table.Cell>
+                      <Table.Cell>
+                        <span className={overdue ? 'text-danger font-medium' : undefined}>{invoice.dueDate}</span>
+                      </Table.Cell>
                       <Table.Cell>
                         <div className="flex gap-1">
                           <Button size="sm" variant="ghost" color="primary" onPress={() => setEditTarget(invoice)}>Edit</Button>
-                          <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteTarget(invoice.id)}>Delete</Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            color="danger"
+                            isDisabled={invoice.status === 'paid'}
+                            onPress={() => setDeleteTarget(invoice.id)}
+                          >
+                            Delete
+                          </Button>
                         </div>
                       </Table.Cell>
                     </Table.Row>
-                  ))}
+                    )
+                  })}
                 </Table.Body>
               </Table.Content>
             </Table.ScrollContainer>

@@ -1,5 +1,6 @@
 export interface Hero {
   id: number
+  prospectId?: number
   firstName: string
   lastName: string
   email: string
@@ -7,5 +8,6 @@ export interface Hero {
   skills?: string[]
   clientId?: number
   companyId?: number
+  startDate?: string
   createdAt: string
 }

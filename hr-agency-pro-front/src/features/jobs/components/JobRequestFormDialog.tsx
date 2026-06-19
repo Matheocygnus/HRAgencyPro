@@ -36,7 +36,7 @@ export function JobRequestFormDialog({ open, onClose, onSubmit, defaultValues, t
     handleSubmit,
     watch,
     reset,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues as FormValues | undefined,
@@ -60,6 +60,9 @@ export function JobRequestFormDialog({ open, onClose, onSubmit, defaultValues, t
     if (!open) reset()
   }, [open, reset])
 
+  const ok = (n: keyof FormValues) => !!dirtyFields[n] && !errors[n]
+  const cls = (n: keyof FormValues) => `input w-full${ok(n) ? ' input-valid' : ''}`
+
   function handleFormSubmit(data: FormValues) {
     const client = clients.find((c: any) => c.id === Number(data.clientId))
     const company = companies.find((c: any) => c.id === Number(data.companyId))
@@ -79,92 +82,78 @@ export function JobRequestFormDialog({ open, onClose, onSubmit, defaultValues, t
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body className="overflow-y-auto max-h-[60vh]">
             <form
               id="job-request-form"
               onSubmit={handleSubmit(handleFormSubmit)}
               className="flex flex-col gap-4"
             >
               <TextField isInvalid={!!errors.clientId}>
-                <Label>Client</Label>
-                <select {...register('clientId')} className="input w-full">
+                <Label className="field-required">Client</Label>
+                <select {...register('clientId')} className={cls('clientId')}>
                   <option value="">Select client...</option>
                   {clients.map((c: any) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
-                {errors.clientId && (
-                  <p className="text-xs text-danger mt-1">{errors.clientId.message}</p>
-                )}
+                {errors.clientId && <p className="text-xs text-danger mt-1">{errors.clientId.message}</p>}
               </TextField>
 
               <TextField isInvalid={!!errors.companyId}>
-                <Label>Company</Label>
-                <select {...register('companyId')} className="input w-full">
+                <Label className="field-required">Company</Label>
+                <select {...register('companyId')} className={cls('companyId')}>
                   <option value="">Select company...</option>
                   {companies.map((c: any) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
-                {errors.companyId && (
-                  <p className="text-xs text-danger mt-1">{errors.companyId.message}</p>
-                )}
+                {errors.companyId && <p className="text-xs text-danger mt-1">{errors.companyId.message}</p>}
               </TextField>
 
               <TextField isInvalid={!!errors.title}>
-                <Label>Title</Label>
-                <input {...register('title')} className="input w-full" placeholder="Position title" />
-                {errors.title && (
-                  <p className="text-xs text-danger mt-1">{errors.title.message}</p>
-                )}
+                <Label className="field-required">Title</Label>
+                <input {...register('title')} className={cls('title')} placeholder="Position title" />
+                {errors.title && <p className="text-xs text-danger mt-1">{errors.title.message}</p>}
               </TextField>
 
               <TextField isInvalid={!!errors.description}>
-                <Label>Description</Label>
-                <textarea {...register('description')} className="input w-full" rows={2} placeholder="Role description" />
-                {errors.description && (
-                  <p className="text-xs text-danger mt-1">{errors.description.message}</p>
-                )}
+                <Label className="field-required">Description</Label>
+                <textarea {...register('description')} className={cls('description')} rows={2} placeholder="Role description" />
+                {errors.description && <p className="text-xs text-danger mt-1">{errors.description.message}</p>}
               </TextField>
 
               <TextField isInvalid={!!errors.requirements}>
-                <Label>Requirements</Label>
-                <textarea {...register('requirements')} className="input w-full" rows={2} placeholder="Required skills" />
-                {errors.requirements && (
-                  <p className="text-xs text-danger mt-1">{errors.requirements.message}</p>
-                )}
+                <Label className="field-required">Requirements</Label>
+                <textarea {...register('requirements')} className={cls('requirements')} rows={2} placeholder="Required skills" />
+                {errors.requirements && <p className="text-xs text-danger mt-1">{errors.requirements.message}</p>}
               </TextField>
 
               <TextField isInvalid={!!errors.location}>
-                <Label>Location</Label>
-                <input {...register('location')} className="input w-full" placeholder="Remote / City" />
-                {errors.location && (
-                  <p className="text-xs text-danger mt-1">{errors.location.message}</p>
-                )}
+                <Label className="field-required">Location</Label>
+                <input {...register('location')} className={cls('location')} placeholder="Remote / City" />
+                {errors.location && <p className="text-xs text-danger mt-1">{errors.location.message}</p>}
               </TextField>
 
               <TextField isInvalid={!!errors.jobType}>
-                <Label>Job Type</Label>
-                <select {...register('jobType')} className="input w-full">
+                <Label className="field-required">Job Type</Label>
+                <select {...register('jobType')} className={cls('jobType')}>
                   <option value="">Select type...</option>
                   <option value="full-time">Full-time</option>
                   <option value="part-time">Part-time</option>
                   <option value="contract">Contract</option>
                   <option value="freelance">Freelance</option>
                 </select>
-                {errors.jobType && (
-                  <p className="text-xs text-danger mt-1">{errors.jobType.message}</p>
-                )}
+                {errors.jobType && <p className="text-xs text-danger mt-1">{errors.jobType.message}</p>}
               </TextField>
 
               <TextField>
                 <Label>Salary (optional)</Label>
-                <input {...register('salary')} type="number" className="input w-full" placeholder="Monthly in USD" />
+                <input {...register('salary')} type="number" className={cls('salary')} placeholder="Monthly in USD" />
               </TextField>
 
               <TextField>
                 <Label>Notes (optional)</Label>
-                <textarea {...register('notes')} className="input w-full" rows={2} />
+                <textarea {...register('notes')} className={cls('notes')} rows={2} />
               </TextField>
             </form>
           </Modal.Body>

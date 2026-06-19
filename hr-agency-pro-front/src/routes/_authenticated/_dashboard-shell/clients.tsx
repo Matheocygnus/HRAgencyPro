@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
@@ -40,6 +40,11 @@ export function ClientsPage() {
     queryKey: ['companies'],
     queryFn: () => companiesApi.list(),
   })
+
+  const clientMap = useMemo(() =>
+    Object.fromEntries(clients.map(c => [c.id, c.name])),
+    [clients]
+  )
 
   async function handleCreateClient(data: Partial<Client>) {
     await clientsApi.create(data)
@@ -172,7 +177,7 @@ export function ClientsPage() {
                 <Table.Content aria-label="Companies table" data-testid="companies-table">
                   <Table.Header>
                     <Table.Column isRowHeader>Name</Table.Column>
-                    <Table.Column>Client ID</Table.Column>
+                    <Table.Column>Client</Table.Column>
                     <Table.Column>Actions</Table.Column>
                   </Table.Header>
                   <Table.Body
@@ -184,7 +189,7 @@ export function ClientsPage() {
                     {company => (
                       <Table.Row key={company.id} id={company.id} data-testid={`company-row-${company.id}`}>
                         <Table.Cell><span className="font-medium">{company.name}</span></Table.Cell>
-                        <Table.Cell>{company.clientId ?? '—'}</Table.Cell>
+                        <Table.Cell>{clientMap[company.clientId] ?? '—'}</Table.Cell>
                         <Table.Cell>
                           <div className="flex gap-1">
                             <Button size="sm" variant="ghost" color="primary" isIconOnly aria-label="Edit company" onPress={() => setEditCompanyTarget(company)}>
