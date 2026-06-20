@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Invoice } from './entities/invoice.entity';
@@ -12,8 +12,11 @@ export class InvoicesService {
     private readonly invoiceRepository: Repository<Invoice>,
   ) {}
 
-  findAll(): Promise<Invoice[]> {
-    return this.invoiceRepository.find();
+  findAll(filters?: { clientId?: number }): Promise<Invoice[]> {
+    return this.invoiceRepository.find({
+      where: filters?.clientId ? { clientId: filters.clientId } : undefined,
+      relations: { hero: { prospect: true } },
+    });
   }
 
   async findOne(id: number): Promise<Invoice> {
@@ -22,15 +25,26 @@ export class InvoicesService {
     return invoice;
   }
 
-  create(dto: CreateInvoiceDto): Promise<Invoice> {
+  async create(dto: CreateInvoiceDto): Promise<Invoice> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const due = new Date(dto.dueDate);
+    const [y, m, d] = dto.dueDate.split('T')[0].split('-').map(Number);
+    const due = new Date(y, m - 1, d);
     if (due < today) {
       throw new BadRequestException('Due date cannot be in the past');
     }
     const invoice = this.invoiceRepository.create(dto);
-    return this.invoiceRepository.save(invoice);
+    try {
+      return await this.invoiceRepository.save(invoice);
+    } catch (err: any) {
+      if (err.code === '23505') {
+        throw new ConflictException('Invoice number already exists');
+      }
+      if (err.code === '23503') {
+        throw new BadRequestException('Invalid reference: hero, client, company, or contract not found');
+      }
+      throw err;
+    }
   }
 
   async update(id: number, dto: UpdateInvoiceDto): Promise<Invoice> {

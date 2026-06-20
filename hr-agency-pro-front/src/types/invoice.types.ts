@@ -3,6 +3,13 @@ export interface Invoice {
   invoiceNumber: string
   contractId: number
   heroId: number
+  hero?: {
+    id: number
+    prospect?: {
+      firstName?: string
+      lastName?: string
+    }
+  }
   clientId: number
   companyId: number
   amount: number
@@ -10,4 +17,13 @@ export interface Invoice {
   dueDate: string
   paidDate?: string
   createdAt: string
+}
+
+export function heroName(invoice: Invoice): string {
+  const p = invoice.hero?.prospect
+  if (p) {
+    const name = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim()
+    if (name) return name
+  }
+  return ''
 }

@@ -124,6 +124,18 @@ export class JobRequestsController {
     }
     return this.jobsService.cancelRequest(id, user.clientId);
   }
+
+  @Patch(':id/resubmit')
+  resubmit(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateJobRequestDto,
+    @CurrentUser() user: { clientId?: number },
+  ) {
+    if (!user?.clientId) {
+      throw new ForbiddenException('Only clients can resubmit requests');
+    }
+    return this.jobsService.resubmitRequest(id, user.clientId, dto);
+  }
 }
 
 // ---- Job Applications ----

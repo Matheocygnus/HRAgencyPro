@@ -13,6 +13,7 @@ import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { RequirePermissions } from '../../common/decorators/require-permissions.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('invoices')
 @ApiBearerAuth()
@@ -22,8 +23,8 @@ export class InvoicesController {
 
   @Get()
   @RequirePermissions('invoices:read')
-  findAll() {
-    return this.invoicesService.findAll();
+  findAll(@CurrentUser() user: any) {
+    return this.invoicesService.findAll({ clientId: user?.clientId });
   }
 
   @Get(':id')

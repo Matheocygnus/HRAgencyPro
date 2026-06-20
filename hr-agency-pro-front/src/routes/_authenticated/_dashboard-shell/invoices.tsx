@@ -1,14 +1,16 @@
 import { useState, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
+import { useAuthContext } from '../../../features/auth/auth-context'
 import { AccessDenied } from '../../../components/AccessDenied'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Table, Chip, Button, Card, SearchField, Tabs, Skeleton } from '@heroui/react'
+import { Table, Chip, Button, Card, SearchField, Tabs, Skeleton, Modal } from '@heroui/react'
 import { Plus } from 'lucide-react'
 import { invoicesApi } from '../../../api/invoices.api'
 import { clientsApi } from '../../../api/clients.api'
 import { heroesApi } from '../../../api/heroes.api'
 import type { Invoice } from '../../../types/invoice.types'
+import { heroName as getHeroName } from '../../../types/invoice.types'
 import { InvoiceFormDialog } from '../../../features/invoices/components/InvoiceFormDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
@@ -32,17 +34,19 @@ function isEffectivelyOverdue(invoice: Invoice): boolean {
 
 export function InvoicesPage() {
   const { can } = usePermissions()
-  if (!can('invoices')) return <AccessDenied />
+  const { user } = useAuthContext()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<StatusTab>('all')
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Invoice | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
+  const [viewTarget, setViewTarget] = useState<Invoice | null>(null)
 
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
-    queryKey: ['invoices'],
+    queryKey: ['invoices', user?.id],
     queryFn: () => invoicesApi.list(),
+    enabled: can('invoices') || can('client_dashboard'),
   })
 
   const { data: clients = [] } = useQuery({
@@ -51,20 +55,29 @@ export function InvoicesPage() {
     enabled: can('companies'),
   })
 
+  const { data: ownClient } = useQuery({
+    queryKey: ['clients', user?.clientId],
+    queryFn: () => clientsApi.get(user!.clientId!),
+    enabled: can('client_dashboard') && !can('companies') && user?.clientId != null,
+  })
+
   const { data: heroes = [] } = useQuery({
     queryKey: ['heroes'],
     queryFn: () => heroesApi.list(),
+    enabled: can('invoices') || can('client_dashboard'),
   })
 
-  const clientMap = useMemo(() =>
-    Object.fromEntries(clients.map(c => [c.id, c.name])),
-    [clients]
-  )
+  const clientMap = useMemo(() => {
+    if (ownClient) return { [ownClient.id]: ownClient.name }
+    return Object.fromEntries(clients.map(c => [c.id, c.name]))
+  }, [clients, ownClient])
 
   const heroMap = useMemo(() =>
     Object.fromEntries(heroes.map((h: any) => [h.id, `${h.firstName} ${h.lastName}`.trim()])),
     [heroes]
   )
+
+  if (!can('invoices') && !can('client_dashboard')) return <AccessDenied />
 
   const filtered = invoices
     .filter(i => {
@@ -76,12 +89,12 @@ export function InvoicesPage() {
       if (!search) return true
       const q = search.toLowerCase()
       const clientName = (clientMap[i.clientId] ?? '').toLowerCase()
-      const heroName = (heroMap[i.heroId] ?? '').toLowerCase()
+      const heroStr = (getHeroName(i) || heroMap[i.heroId] || '').toLowerCase()
       return (
         String(i.id).includes(q) ||
         String(i.clientId).includes(q) ||
         clientName.includes(q) ||
-        heroName.includes(q) ||
+        heroStr.includes(q) ||
         String(i.amount).includes(q) ||
         (i.invoiceNumber ?? '').toLowerCase().includes(q)
       )
@@ -112,9 +125,11 @@ export function InvoicesPage() {
           <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Invoices</h1>
           <p className="text-xs text-muted md:text-sm">Track and manage billing invoices</p>
         </div>
-        <Button color="primary" size="sm" startContent={<Plus className="size-4" />} onPress={() => setDialogOpen(true)}>
-          Add Invoice
-        </Button>
+        {can('invoices') && (
+          <Button color="primary" size="sm" startContent={<Plus className="size-4" />} onPress={() => setDialogOpen(true)}>
+            Add Invoice
+          </Button>
+        )}
       </div>
 
       {/* Toolbar */}
@@ -127,7 +142,7 @@ export function InvoicesPage() {
         >
           <SearchField.Group>
             <SearchField.SearchIcon />
-            <SearchField.Input placeholder="Search by client, invoice number, amount..." />
+            <SearchField.Input placeholder={can('invoices') ? 'Search by client, invoice number, amount...' : 'Search by hero or invoice ID'} />
             <SearchField.ClearButton />
           </SearchField.Group>
         </SearchField>
@@ -156,64 +171,88 @@ export function InvoicesPage() {
       ) : (
       <Card>
         <Card.Content className="p-0">
-          <Table>
-            <Table.ScrollContainer>
-              <Table.Content aria-label="Invoices table" data-testid="invoices-table">
-                <Table.Header>
-                  <Table.Column isRowHeader>ID</Table.Column>
-                  <Table.Column>Client</Table.Column>
-                  <Table.Column>Hero</Table.Column>
-                  <Table.Column>Amount</Table.Column>
-                  <Table.Column>Status</Table.Column>
-                  <Table.Column>Due Date</Table.Column>
-                  <Table.Column>Actions</Table.Column>
-                </Table.Header>
-                <Table.Body renderEmptyState={() => (
+          {can('invoices') ? (
+            <Table>
+              <Table.ScrollContainer>
+                <Table.Content aria-label="Invoices table" data-testid="invoices-table">
+                  <Table.Header>
+                    <Table.Column isRowHeader>ID</Table.Column>
+                    <Table.Column>Client</Table.Column>
+                    <Table.Column>Hero</Table.Column>
+                    <Table.Column>Amount</Table.Column>
+                    <Table.Column>Status</Table.Column>
+                    <Table.Column>Due Date</Table.Column>
+                    <Table.Column>Actions</Table.Column>
+                  </Table.Header>
+                  <Table.Body items={filtered} renderEmptyState={() => (
                     <div className="py-12 text-center text-sm text-muted">No invoices found.</div>
-                  )}
-                >
-                  {filtered.map(invoice => {
-                    const overdue = isEffectivelyOverdue(invoice)
-                    return (
-                    <Table.Row
-                      key={invoice.id}
-                      id={invoice.id}
-                      data-testid={`invoice-row-${invoice.id}`}
-                      className={overdue ? 'bg-danger/10' : undefined}
-                    >
-                      <Table.Cell><span className="font-medium">{invoice.id}</span></Table.Cell>
-                      <Table.Cell>{clientMap[invoice.clientId] ?? `Client #${invoice.clientId}`}</Table.Cell>
-                      <Table.Cell>{heroMap[invoice.heroId] ?? '—'}</Table.Cell>
-                      <Table.Cell>${invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Table.Cell>
-                      <Table.Cell>
-                        <Chip size="sm" variant="flat" color={overdue ? 'danger' : (statusColor[invoice.status] ?? 'default')}>
-                          {overdue && invoice.status === 'pending' ? 'overdue' : invoice.status}
-                        </Chip>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <span className={overdue ? 'text-danger font-medium' : undefined}>{invoice.dueDate}</span>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <div className="flex gap-1">
-                          <Button size="sm" variant="ghost" color="primary" onPress={() => setEditTarget(invoice)}>Edit</Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            color="danger"
-                            isDisabled={invoice.status === 'paid'}
-                            onPress={() => setDeleteTarget(invoice.id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </Table.Cell>
-                    </Table.Row>
-                    )
-                  })}
-                </Table.Body>
-              </Table.Content>
-            </Table.ScrollContainer>
-          </Table>
+                  )}>
+                    {(invoice) => {
+                      const overdue = isEffectivelyOverdue(invoice)
+                      return (
+                        <Table.Row key={invoice.id} id={invoice.id} data-testid={`invoice-row-${invoice.id}`} className={overdue ? 'bg-danger/10' : undefined}>
+                          <Table.Cell><span className="font-medium">{invoice.id}</span></Table.Cell>
+                          <Table.Cell>{clientMap[invoice.clientId] ?? `Client #${invoice.clientId}`}</Table.Cell>
+                          <Table.Cell>{getHeroName(invoice) || heroMap[invoice.heroId] || '—'}</Table.Cell>
+                          <Table.Cell>${invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Table.Cell>
+                          <Table.Cell>
+                            <Chip size="sm" variant="flat" color={overdue ? 'danger' : (statusColor[invoice.status] ?? 'default')}>
+                              {overdue && invoice.status === 'pending' ? 'overdue' : invoice.status}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell><span className={overdue ? 'text-danger font-medium' : undefined}>{invoice.dueDate}</span></Table.Cell>
+                          <Table.Cell>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" color="primary" onPress={() => setEditTarget(invoice)}>Edit</Button>
+                              <Button size="sm" variant="ghost" color="danger" isDisabled={invoice.status === 'paid'} onPress={() => setDeleteTarget(invoice.id)}>Delete</Button>
+                            </div>
+                          </Table.Cell>
+                        </Table.Row>
+                      )
+                    }}
+                  </Table.Body>
+                </Table.Content>
+              </Table.ScrollContainer>
+            </Table>
+          ) : (
+            <Table>
+              <Table.ScrollContainer>
+                <Table.Content aria-label="Invoices table" data-testid="invoices-table">
+                  <Table.Header>
+                    <Table.Column isRowHeader>ID</Table.Column>
+                    <Table.Column>Hero</Table.Column>
+                    <Table.Column>Amount</Table.Column>
+                    <Table.Column>Status</Table.Column>
+                    <Table.Column>Due Date</Table.Column>
+                    <Table.Column>Actions</Table.Column>
+                  </Table.Header>
+                  <Table.Body items={filtered} renderEmptyState={() => (
+                    <div className="py-12 text-center text-sm text-muted">No invoices found.</div>
+                  )}>
+                    {(invoice) => {
+                      const overdue = isEffectivelyOverdue(invoice)
+                      return (
+                        <Table.Row key={invoice.id} id={invoice.id} data-testid={`invoice-row-${invoice.id}`} className={overdue ? 'bg-danger/10' : undefined}>
+                          <Table.Cell><span className="font-medium">{invoice.id}</span></Table.Cell>
+                          <Table.Cell>{getHeroName(invoice) || heroMap[invoice.heroId] || '—'}</Table.Cell>
+                          <Table.Cell>${invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Table.Cell>
+                          <Table.Cell>
+                            <Chip size="sm" variant="flat" color={overdue ? 'danger' : (statusColor[invoice.status] ?? 'default')}>
+                              {overdue && invoice.status === 'pending' ? 'overdue' : invoice.status}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell><span className={overdue ? 'text-danger font-medium' : undefined}>{invoice.dueDate}</span></Table.Cell>
+                          <Table.Cell>
+                            <Button size="sm" variant="ghost" color="primary" onPress={() => setViewTarget(invoice)}>View</Button>
+                          </Table.Cell>
+                        </Table.Row>
+                      )
+                    }}
+                  </Table.Body>
+                </Table.Content>
+              </Table.ScrollContainer>
+            </Table>
+          )}
         </Card.Content>
       </Card>
       )}
@@ -241,6 +280,41 @@ export function InvoicesPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => { if (deleteTarget !== null) handleDelete(deleteTarget) }}
       />
+
+      {viewTarget && (
+        <Modal.Backdrop isOpen onOpenChange={(isOpen) => { if (!isOpen) setViewTarget(null) }}>
+          <Modal.Container>
+            <Modal.Dialog className="sm:max-w-sm">
+              <Modal.Header>
+                <Modal.Heading>Invoice Details</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                  <dt className="text-muted">Invoice #</dt>
+                  <dd className="font-medium">{viewTarget.invoiceNumber ?? '—'}</dd>
+                  <dt className="text-muted">Hero</dt>
+                  <dd>{heroMap[viewTarget.heroId] ?? '—'}</dd>
+                  <dt className="text-muted">Amount</dt>
+                  <dd className="font-medium">${viewTarget.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</dd>
+                  <dt className="text-muted">Status</dt>
+                  <dd>
+                    <Chip size="sm" variant="flat" color={statusColor[viewTarget.status] ?? 'default'}>
+                      {viewTarget.status}
+                    </Chip>
+                  </dd>
+                  <dt className="text-muted">Due Date</dt>
+                  <dd>{viewTarget.dueDate ?? '—'}</dd>
+                  <dt className="text-muted">Paid Date</dt>
+                  <dd>{viewTarget.paidDate ?? '—'}</dd>
+                </dl>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="secondary" slot="close">Close</Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      )}
     </div>
   )
 }

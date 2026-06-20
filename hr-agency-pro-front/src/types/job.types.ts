@@ -9,6 +9,8 @@ export interface JobOpening {
   salary?: string
   isActive?: boolean
   status: 'active' | 'closed'
+  clientId?: number
+  companyId?: number
   createdAt: string
 }
 

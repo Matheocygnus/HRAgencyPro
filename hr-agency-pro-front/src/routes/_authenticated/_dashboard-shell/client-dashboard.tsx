@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { KPI } from '@heroui-pro/react'
@@ -37,14 +37,13 @@ const statusLabel: Record<string, string> = {
 
 export function ClientDashboard() {
   const { can } = usePermissions()
-  if (!can('client_dashboard')) return <AccessDenied />
-
   const { user } = useAuthContext()
   const clientId = user?.clientId
   const queryClient = useQueryClient()
   const toast = useToast()
   const [showRequestDialog, setShowRequestDialog] = useState(false)
   const [cancelTarget, setCancelTarget] = useState<number | null>(null)
+  const [resubmitSource, setResubmitSource] = useState<JobRequest | null>(null)
 
   const approveMutation = useMutation({
     mutationFn: (id: number) => api.post(`/prospects/${id}/client-approve`).then(r => r.data),
@@ -79,11 +78,23 @@ export function ClientDashboard() {
     mutationFn: (data: Record<string, unknown>) =>
       api.post('/job-requests', data).then(r => r.data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['job-requests'] })
+      void queryClient.invalidateQueries({ queryKey: ['job-requests', { clientId }] })
       toast.addToast('Request submitted successfully.', 'success')
     },
     onError: () => {
       toast.addToast('Failed to submit request. Please try again.', 'error')
+    },
+  })
+
+  const resubmitMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
+      api.patch(`/job-requests/${id}/resubmit`, data).then(r => r.data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['job-requests', { clientId }] })
+      toast.addToast('Request resubmitted successfully.', 'success')
+    },
+    onError: () => {
+      toast.addToast('Failed to resubmit request. Please try again.', 'error')
     },
   })
 
@@ -119,6 +130,42 @@ export function ClientDashboard() {
   const jobRequests = jobRequestsQuery.data ?? []
   const pending = pendingQuery.data ?? []
   const isLoadingStats = clientQuery.isLoading || heroesQuery.isLoading || contractsQuery.isLoading
+
+  const resubmitDefaults = useMemo(() => {
+    if (!resubmitSource) return undefined
+    const req = resubmitSource
+    let budget: number | undefined
+    let notes: string | undefined = req.notes
+    if (req.notes) {
+      const match = req.notes.match(/^Monthly Budget: \$([0-9,]+)\/month\n?/)
+      if (match) {
+        budget = Number(match[1].replace(/,/g, ''))
+        notes = req.notes.slice(match[0].length).trim() || undefined
+      }
+    }
+    return {
+      title: req.title,
+      openPositions: req.openPositions,
+      startDate: req.startDate ?? undefined,
+      description: req.description ?? undefined,
+      requirements: req.requirements ?? undefined,
+      niceToHaveSkills: req.niceToHaveSkills ?? undefined,
+      tools: req.tools ?? undefined,
+      jobType: req.jobType ?? undefined,
+      workingHours: req.workingHours ?? undefined,
+      timezone: req.location ?? undefined,
+      reportsTo: req.reportsTo ?? undefined,
+      languages: req.languages ?? [],
+      seniority: req.seniority ?? undefined,
+      requiresProficiencyTest: req.requiresProficiencyTest ?? false,
+      interviewQuestions: req.interviewQuestions ?? undefined,
+      testingRequirements: req.testingRequirements ?? undefined,
+      budget,
+      notes,
+    }
+  }, [resubmitSource])
+
+  if (!can('client_dashboard')) return <AccessDenied />
 
   return (
     <div data-testid="client-dashboard" className="flex flex-col gap-6 p-4 md:p-6">
@@ -223,6 +270,15 @@ export function ClientDashboard() {
                   {jobRequests.length > 0 && (
                     <Chip size="sm" variant="flat" color="primary" className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">
                       {jobRequests.length}
+                    </Chip>
+                  )}
+                  <Tabs.Indicator />
+                </Tabs.Tab>
+                <Tabs.Tab id="contracts">
+                  Contracts
+                  {contracts.length > 0 && (
+                    <Chip size="sm" variant="flat" color="primary" className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">
+                      {contracts.length}
                     </Chip>
                   )}
                   <Tabs.Indicator />
@@ -348,6 +404,19 @@ export function ClientDashboard() {
                                 Cancel
                               </Button>
                             )}
+                            {req.status === 'rejected' && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                color="primary"
+                                onPress={() => {
+                                  setResubmitSource(req)
+                                  setShowRequestDialog(true)
+                                }}
+                              >
+                                Resubmit
+                              </Button>
+                            )}
                           </Table.Cell>
                         </Table.Row>
                       )}
@@ -356,6 +425,35 @@ export function ClientDashboard() {
                 </Table>
               </div>
             </Tabs.Panel>
+            <Tabs.Panel id="contracts" className="pt-4">
+              <div className="overflow-x-auto">
+                <Table>
+                  <Table.Content aria-label="Contracts table">
+                    <Table.Header>
+                      <Table.Column isRowHeader>Title</Table.Column>
+                      <Table.Column>Status</Table.Column>
+                    </Table.Header>
+                    <Table.Body items={contracts} renderEmptyState={() => (
+                      <div className="py-10 text-center text-sm text-muted">No active contracts.</div>
+                    )}>
+                      {contract => (
+                        <Table.Row key={contract.id}>
+                          <Table.Cell>
+                            <span className="font-medium">{contract.title}</span>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <Chip color={statusColor[contract.status] ?? 'default'} size="sm" variant="flat">
+                              {statusLabel[contract.status] ?? contract.status}
+                            </Chip>
+                          </Table.Cell>
+                        </Table.Row>
+                      )}
+                    </Table.Body>
+                  </Table.Content>
+                </Table>
+              </div>
+            </Tabs.Panel>
+
             <Tabs.Panel id="pending" className="pt-4">
               {pendingQuery.isLoading ? (
                 <div className="flex flex-col gap-4">
@@ -427,16 +525,33 @@ export function ClientDashboard() {
       </Card>
 
       <HeroRequestDialog
+        key={resubmitSource?.id ?? 'new'}
         open={showRequestDialog}
-        onClose={() => setShowRequestDialog(false)}
+        onClose={() => {
+          setShowRequestDialog(false)
+          setResubmitSource(null)
+        }}
         onSubmit={(data) => {
-          createRequestMutation.mutate({
-            ...data,
+          const { budget, notes, timezone, ...rest } = data
+          const budgetLine = budget ? `Monthly Budget: $${Number(budget).toLocaleString('en-US')}/month` : ''
+          const mergedNotes = [budgetLine, notes].filter(Boolean).join('\n') || undefined
+          const payload = {
+            ...rest,
+            location: timezone,
+            notes: mergedNotes,
             clientId: clientId ?? 0,
             companyId: clientId ?? 0,
-          })
+            clientName: clientQuery.data?.name,
+          }
+          if (resubmitSource) {
+            resubmitMutation.mutate({ id: resubmitSource.id, data: { ...payload, status: 'pending' } })
+          } else {
+            createRequestMutation.mutate(payload)
+          }
+          setResubmitSource(null)
         }}
-        isSubmitting={createRequestMutation.isPending}
+        isSubmitting={createRequestMutation.isPending || resubmitMutation.isPending}
+        defaultValues={resubmitDefaults}
       />
 
       <ConfirmDialog

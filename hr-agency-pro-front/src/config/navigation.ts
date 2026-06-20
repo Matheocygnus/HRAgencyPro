@@ -7,6 +7,7 @@ export interface NavItem {
 export const navigationItems: NavItem[] = [
   { label: 'Dashboard', to: '/dashboard', permission: 'dashboard' },
   { label: 'Client Dashboard', to: '/client-dashboard', permission: 'client_dashboard' },
+  { label: 'Invoices', to: '/invoices', permission: 'client_dashboard' },
   { label: 'Hero Dashboard', to: '/hero-dashboard', permission: 'hero_dashboard' },
   { label: 'Prospect Dashboard', to: '/prospect-dashboard', permission: 'prospect_dashboard' },
   { label: 'Prospects', to: '/prospects', permission: 'prospects' },

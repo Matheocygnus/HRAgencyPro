@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery } from '@tanstack/react-query'
@@ -8,6 +8,7 @@ import { contractsApi } from '../../../api/contracts.api'
 import { heroesApi } from '../../../api/heroes.api'
 import { clientsApi } from '../../../api/clients.api'
 import { companiesApi } from '../../../api/companies.api'
+import { SearchableSelect } from '../../../components/SearchableSelect'
 import type { Invoice } from '../../../types/invoice.types'
 
 const todayStr = new Date().toISOString().split('T')[0]
@@ -49,6 +50,7 @@ export function InvoiceFormDialog({
     watch,
     setValue,
     reset,
+    control,
     formState: { errors, dirtyFields },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -158,21 +160,40 @@ export function InvoiceFormDialog({
 
               <TextField isInvalid={!!errors.clientId}>
                 <Label className="field-required">Client</Label>
-                <select {...register('clientId')} className={cls('clientId')}>
-                  <option value="">Select client...</option>
-                  {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                <Controller
+                  control={control}
+                  name="clientId"
+                  render={({ field }) => (
+                    <SearchableSelect
+                      options={clients.map((c: any) => ({ value: c.id, label: c.name }))}
+                      value={field.value || undefined}
+                      onChange={v => field.onChange(v ?? 0)}
+                      placeholder="Search client..."
+                      isInvalid={!!errors.clientId}
+                    />
+                  )}
+                />
                 {errors.clientId && <p className="text-xs text-danger mt-1">{errors.clientId.message}</p>}
               </TextField>
 
               <TextField isInvalid={!!errors.heroId}>
                 <Label className="field-required">Hero</Label>
-                <select {...register('heroId')} className={cls('heroId')}>
-                  <option value="">Select hero...</option>
-                  {heroes.map((h: any) => (
-                    <option key={h.id} value={h.id}>#{h.id} — {h.firstName} {h.lastName}</option>
-                  ))}
-                </select>
+                <Controller
+                  control={control}
+                  name="heroId"
+                  render={({ field }) => (
+                    <SearchableSelect
+                      options={heroes.map((h: any) => ({
+                        value: h.id,
+                        label: `#${h.id} — ${h.firstName ?? ''} ${h.lastName ?? ''}`.trim(),
+                      }))}
+                      value={field.value || undefined}
+                      onChange={v => field.onChange(v ?? 0)}
+                      placeholder="Search hero..."
+                      isInvalid={!!errors.heroId}
+                    />
+                  )}
+                />
                 {errors.heroId && <p className="text-xs text-danger mt-1">{errors.heroId.message}</p>}
               </TextField>
 

@@ -124,6 +124,18 @@ export class JobsService {
     await this.jobRequestRepository.remove(request);
   }
 
+  async resubmitRequest(id: number, clientId: number, dto: UpdateJobRequestDto): Promise<JobRequest> {
+    const request = await this.findOneRequest(id);
+    if (request.clientId !== clientId) {
+      throw new ForbiddenException('You do not have permission to resubmit this request');
+    }
+    if (request.status !== 'rejected') {
+      throw new ForbiddenException('Only rejected requests can be resubmitted');
+    }
+    Object.assign(request, dto, { status: 'pending' });
+    return this.jobRequestRepository.save(request);
+  }
+
   // ---- Job Applications ----
 
   findAllApplications(): Promise<JobApplication[]> {

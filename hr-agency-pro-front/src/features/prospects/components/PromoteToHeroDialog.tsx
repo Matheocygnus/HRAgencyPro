@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery } from '@tanstack/react-query'
@@ -8,6 +8,7 @@ import { CheckCircle } from 'lucide-react'
 import { prospectsApi } from '../../../api/prospects.api'
 import { clientsApi } from '../../../api/clients.api'
 import { companiesApi } from '../../../api/companies.api'
+import { SearchableSelect } from '../../../components/SearchableSelect'
 import type { Prospect } from '../../../types/prospect.types'
 
 const schema = z.object({
@@ -35,7 +36,7 @@ export function PromoteToHeroDialog({ open, prospect, onClose, onSuccess }: Prom
 
   const today = new Date().toISOString().split('T')[0]
 
-  const { register, handleSubmit, reset, formState: { errors, dirtyFields } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, control, formState: { errors, dirtyFields } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       clientId: prospect?.clientId ?? 0,
@@ -119,12 +120,19 @@ export function PromoteToHeroDialog({ open, prospect, onClose, onSuccess }: Prom
 
                 <TextField isInvalid={!!errors.clientId}>
                   <Label className="field-required">Client</Label>
-                  <select {...register('clientId')} className={cls('clientId')}>
-                    <option value={0}>Select client...</option>
-                    {clients.map((c: any) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                  <Controller
+                    control={control}
+                    name="clientId"
+                    render={({ field }) => (
+                      <SearchableSelect
+                        options={clients.map((c: any) => ({ value: c.id, label: c.name }))}
+                        value={field.value || undefined}
+                        onChange={v => field.onChange(v ?? 0)}
+                        placeholder="Search client..."
+                        isInvalid={!!errors.clientId}
+                      />
+                    )}
+                  />
                   {errors.clientId && (
                     <p className="mt-1 text-xs text-danger">{errors.clientId.message}</p>
                   )}

@@ -18,6 +18,14 @@
     0 0 8px oklch(0.7329 0.1935 150.81 / 0.18) !important;
 }
 
+/* Searchable select dropdown */
+.searchable-select-dropdown {
+  backdrop-filter: none;
+}
+.searchable-select-option:hover {
+  background-color: oklch(0.27 0.012 264);
+}
+
 /* Required field asterisk */
 .field-required::after {
   content: " *";

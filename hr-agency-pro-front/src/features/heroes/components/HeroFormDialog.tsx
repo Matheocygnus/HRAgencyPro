@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery } from '@tanstack/react-query'
@@ -7,6 +7,7 @@ import { Modal, Button, Label, TextField } from '@heroui/react'
 import { prospectsApi } from '../../../api/prospects.api'
 import { clientsApi } from '../../../api/clients.api'
 import { companiesApi } from '../../../api/companies.api'
+import { SearchableSelect } from '../../../components/SearchableSelect'
 
 function buildSchema(isEditing: boolean) {
   return z.object({
@@ -46,6 +47,7 @@ export function HeroFormDialog({ open, onClose, onSubmit, defaultValues, isEditi
     watch,
     reset,
     setValue,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -145,12 +147,19 @@ export function HeroFormDialog({ open, onClose, onSubmit, defaultValues, isEditi
 
               <TextField isInvalid={!!errors.clientId}>
                 <Label>Client</Label>
-                <select {...register('clientId')} className="input w-full">
-                  <option value="">Select client...</option>
-                  {clients.map((c: any) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+                <Controller
+                  control={control}
+                  name="clientId"
+                  render={({ field }) => (
+                    <SearchableSelect
+                      options={clients.map((c: any) => ({ value: c.id, label: c.name }))}
+                      value={field.value || undefined}
+                      onChange={v => field.onChange(v ?? 0)}
+                      placeholder="Search client..."
+                      isInvalid={!!errors.clientId}
+                    />
+                  )}
+                />
                 {errors.clientId && (
                   <p className="text-xs text-danger mt-1">{errors.clientId.message}</p>
                 )}

@@ -10,6 +10,10 @@ const schema = z.object({
     (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
     z.number().int().positive('Must be a positive number'),
   ),
+  budget: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+    z.number({ required_error: 'Monthly budget is required' }).positive('Must be greater than 0'),
+  ),
   startDate: z.string().min(1, 'Start date is required'),
   description: z.string().min(10, 'Please describe responsibilities (min 10 chars)'),
   requirements: z.string().min(10, 'Please list must-have skills (min 10 chars)'),
@@ -34,6 +38,7 @@ interface HeroRequestDialogProps {
   onClose: () => void
   onSubmit: (data: FormValues) => void
   isSubmitting?: boolean
+  defaultValues?: Partial<FormValues>
 }
 
 const WORK_SHIFTS = ['Full time (40 hours)', 'Part time (20 hours)', 'Other']
@@ -175,7 +180,7 @@ function MultiChipSelector({
   )
 }
 
-export function HeroRequestDialog({ open, onClose, onSubmit, isSubmitting }: HeroRequestDialogProps) {
+export function HeroRequestDialog({ open, onClose, onSubmit, isSubmitting, defaultValues }: HeroRequestDialogProps) {
   const {
     register,
     handleSubmit,
@@ -189,6 +194,7 @@ export function HeroRequestDialog({ open, onClose, onSubmit, isSubmitting }: Her
     defaultValues: {
       languages: [],
       requiresProficiencyTest: false,
+      ...defaultValues,
     },
   })
 
@@ -245,14 +251,34 @@ export function HeroRequestDialog({ open, onClose, onSubmit, isSubmitting }: Her
                   <FieldError message={errors.openPositions?.message} />
                 </div>
                 <div>
-                  <FieldLabel>Estimated Start Date</FieldLabel>
-                  <input
-                    {...register('startDate')}
-                    type="date"
-                    className={fieldClass(!!touchedFields.startDate, !!errors.startDate, !!values.startDate)}
-                  />
-                  <FieldError message={errors.startDate?.message} />
+                  <FieldLabel>
+                    Monthly Budget (USD){' '}
+                    <span className="text-danger text-xs">*</span>
+                  </FieldLabel>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted">$</span>
+                    <input
+                      {...register('budget')}
+                      type="number"
+                      min={1}
+                      step="0.01"
+                      placeholder="e.g. 5000 USD"
+                      className={`pl-6 ${fieldClass(!!touchedFields.budget, !!errors.budget, !!values.budget)}`}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-muted">Max monthly budget for this position.</p>
+                  <FieldError message={errors.budget?.message} />
                 </div>
+              </div>
+
+              <div>
+                <FieldLabel>Estimated Start Date</FieldLabel>
+                <input
+                  {...register('startDate')}
+                  type="date"
+                  className={fieldClass(!!touchedFields.startDate, !!errors.startDate, !!values.startDate)}
+                />
+                <FieldError message={errors.startDate?.message} />
               </div>
 
               <div>

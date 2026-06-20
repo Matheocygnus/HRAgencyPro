@@ -2,8 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Hero } from '../../heroes/entities/hero.entity';
 
 @Entity('invoices')
 export class Invoice {
@@ -18,6 +21,10 @@ export class Invoice {
 
   @Column({ name: 'hero_id' })
   heroId: number;
+
+  @ManyToOne(() => Hero, { eager: false, nullable: true })
+  @JoinColumn({ name: 'hero_id' })
+  hero: Hero;
 
   @Column({ name: 'client_id' })
   clientId: number;
