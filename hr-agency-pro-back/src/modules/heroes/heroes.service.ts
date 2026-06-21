@@ -12,8 +12,11 @@ export class HeroesService {
     private readonly heroRepository: Repository<Hero>,
   ) {}
 
-  findAll(): Promise<Hero[]> {
-    return this.heroRepository.find({ relations: { prospect: true } });
+  findAll(clientId?: number): Promise<Hero[]> {
+    return this.heroRepository.find({
+      relations: { prospect: true },
+      ...(clientId ? { where: { clientId } } : {}),
+    });
   }
 
   async findOne(id: number): Promise<Hero> {

@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { HeroesService } from './heroes.service';
@@ -22,8 +23,8 @@ export class HeroesController {
 
   @Get()
   @RequirePermissions('heroes:read')
-  findAll() {
-    return this.heroesService.findAll();
+  findAll(@Query('clientId', new ParseIntPipe({ optional: true })) clientId?: number) {
+    return this.heroesService.findAll(clientId);
   }
 
   @Get(':id')

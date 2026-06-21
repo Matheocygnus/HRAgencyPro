@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
+import { useAuthContext } from '../../../features/auth/auth-context'
 import { AccessDenied } from '../../../components/AccessDenied'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table, Chip, Button, Card, SearchField, Skeleton } from '@heroui/react'
@@ -20,6 +21,8 @@ export function HeroesList() {
   const canWrite = can('heroes')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { user } = useAuthContext()
+  const clientId = user?.clientId
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
@@ -27,7 +30,7 @@ export function HeroesList() {
 
   const { data: heroes = [], isLoading } = useQuery<Hero[]>({
     queryKey: ['heroes'],
-    queryFn: () => heroesApi.list(),
+    queryFn: () => heroesApi.list(clientId != null ? { clientId } : undefined),
   })
 
   const filtered = heroes.filter(h => {
