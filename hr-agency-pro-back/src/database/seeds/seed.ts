@@ -27,26 +27,36 @@ async function bootstrap() {
     {
       name: 'recruiter',
       permissions: [
-        'prospects:read',
-        'prospects:create',
-        'prospects:update',
-        'interviews:read',
-        'interviews:create',
-        'jobs:read',
-        'clients:read',
-        'companies:read',
+        'prospects',    // full prospect CRUD + page access
+        'interviews',   // full interview CRUD + page access
+        'jobs',         // full job CRUD + page access
+        'companies',    // full company + client CRUD + page access
+        'heroes',       // full hero CRUD + page access
+        'contracts',    // full contract CRUD + page access
+        'invoices',     // full invoice CRUD + page access
+        'job-requests', // job-requests page access
       ],
     },
     {
       name: 'client',
-      permissions: ['heroes:read', 'contracts:read', 'invoices:read'],
+      permissions: [
+        'client_dashboard', // client dashboard + invoices read-only access
+        'heroes:read',      // heroes list in read-only mode
+        'contracts:read',   // contracts shown in dashboard tab
+        'invoices:read',    // invoices shown via client_dashboard check
+        'job-requests',     // job-requests page access
+        'jobs:read',        // jobs page read-only access
+        'jobs:create',      // ability to create job requests
+      ],
     },
   ];
 
   for (const def of roleDefs) {
     const existing = await roleRepo.findOne({ where: { name: def.name } });
     if (existing) {
-      console.log(`Role '${def.name}' already exists — skipping`);
+      existing.permissions = def.permissions;
+      await roleRepo.save(existing);
+      console.log(`Role '${def.name}' updated`);
     } else {
       await roleRepo.save(roleRepo.create(def));
       console.log(`Role '${def.name}' created`);

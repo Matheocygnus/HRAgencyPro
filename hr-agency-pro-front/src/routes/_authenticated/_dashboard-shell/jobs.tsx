@@ -53,7 +53,9 @@ const statusColor: Record<string, 'default' | 'primary' | 'success' | 'warning' 
 
 export function JobsPage() {
   const { can } = usePermissions()
-  if (!can('jobs')) return <AccessDenied />
+  if (!can('jobs') && !can('jobs:read')) return <AccessDenied />
+  const canWrite = can('jobs')
+  const canCreateRequest = can('jobs') || can('jobs:create')
   const queryClient = useQueryClient()
   const [mainTab, setMainTab] = useState<MainTab>('openings')
 
@@ -216,17 +218,17 @@ export function JobsPage() {
           <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Jobs</h1>
           <p className="text-xs text-muted md:text-sm">Manage job openings, applications and requests</p>
         </div>
-        {mainTab === 'openings' && (
+        {canWrite && mainTab === 'openings' && (
           <Button color="primary" size="sm" startContent={<Plus className="size-4" />} onPress={() => setOpeningDialogOpen(true)}>
             Add Opening
           </Button>
         )}
-        {mainTab === 'applications' && (
+        {canWrite && mainTab === 'applications' && (
           <Button color="primary" size="sm" startContent={<Plus className="size-4" />} onPress={() => setAppDialogOpen(true)}>
             Add Application
           </Button>
         )}
-        {mainTab === 'requests' && (
+        {canCreateRequest && mainTab === 'requests' && (
           <Button color="primary" size="sm" startContent={<Plus className="size-4" />} onPress={() => setReqDialogOpen(true)}>
             Add Request
           </Button>
@@ -300,8 +302,8 @@ export function JobsPage() {
                               <Table.Cell>
                                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                                   <Button size="sm" variant="ghost" onPress={() => setSelectedOpeningId(o.id === selectedOpeningId ? null : o.id)}>View</Button>
-                                  <Button size="sm" variant="ghost" color="primary" onPress={() => setEditOpening(o)}>Edit</Button>
-                                  <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteOpeningTarget(o.id)}>Delete</Button>
+                                  {canWrite && <Button size="sm" variant="ghost" color="primary" onPress={() => setEditOpening(o)}>Edit</Button>}
+                                  {canWrite && <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteOpeningTarget(o.id)}>Delete</Button>}
                                 </div>
                               </Table.Cell>
                             </Table.Row>
@@ -469,8 +471,8 @@ export function JobsPage() {
                                 </Table.Cell>
                                 <Table.Cell>
                                   <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                                    <Button size="sm" variant="ghost" color="primary" onPress={() => setEditApp(a)}>Edit</Button>
-                                    <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteAppTarget(a.id)}>Delete</Button>
+                                    {canWrite && <Button size="sm" variant="ghost" color="primary" onPress={() => setEditApp(a)}>Edit</Button>}
+                                    {canWrite && <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteAppTarget(a.id)}>Delete</Button>}
                                   </div>
                                 </Table.Cell>
                               </Table.Row>
@@ -625,14 +627,14 @@ export function JobsPage() {
                               <Table.Cell>
                                 <div className="flex gap-1 flex-wrap">
                                   <Button size="sm" variant="ghost" onPress={() => setViewRequest(viewRequest?.id === r.id ? null : r)}>View</Button>
-                                  {r.status === 'pending' && (
+                                  {canWrite && r.status === 'pending' && (
                                     <>
                                       <Button size="sm" variant="ghost" color="danger" onPress={() => handleRejectRequest(r.id)}>Reject</Button>
                                       <Button size="sm" variant="ghost" color="primary" onPress={() => handleConvertToOpening(r)}>To Opening</Button>
                                     </>
                                   )}
-                                  <Button size="sm" variant="ghost" onPress={() => setEditRequest(r)}>Edit</Button>
-                                  <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteReqTarget(r.id)}>Delete</Button>
+                                  {canWrite && <Button size="sm" variant="ghost" onPress={() => setEditRequest(r)}>Edit</Button>}
+                                  {canWrite && <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteReqTarget(r.id)}>Delete</Button>}
                                 </div>
                               </Table.Cell>
                             </Table.Row>
