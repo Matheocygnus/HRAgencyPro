@@ -83,8 +83,8 @@ export class JobRequestsController {
 
   @Get()
   @RequirePermissions('jobs:read')
-  findAll() {
-    return this.jobsService.findAllRequests();
+  findAll(@CurrentUser() user: { clientId?: number }) {
+    return this.jobsService.findAllRequests(user?.clientId);
   }
 
   @Get(':id')
