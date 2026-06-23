@@ -83,9 +83,10 @@ export class JobsService {
   // ---- Job Requests ----
 
   findAllRequests(clientId?: number): Promise<JobRequest[]> {
-    return this.jobRequestRepository.find(
-      clientId ? { where: { clientId } } : {},
-    );
+    return this.jobRequestRepository.find({
+      ...(clientId ? { where: { clientId } } : {}),
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async findOneRequest(id: number): Promise<JobRequest> {
