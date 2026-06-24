@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Prospect } from './entities/prospect.entity';
@@ -52,6 +52,8 @@ function parseCsvRow(line: string): string[] {
 
 @Injectable()
 export class ProspectsService {
+  private readonly logger = new Logger(ProspectsService.name);
+
   constructor(
     @InjectRepository(Prospect)
     private readonly prospectRepository: Repository<Prospect>,
@@ -240,7 +242,8 @@ export class ProspectsService {
       throw new BadRequestException('Prospect must have a client and company assigned before promotion');
     }
 
-    return this.dataSource.transaction(async (manager) => {
+    try {
+    return await this.dataSource.transaction(async (manager) => {
       await manager.update(Prospect, id, { status: 'hired' });
       prospect.status = 'hired';
 
@@ -276,9 +279,8 @@ export class ProspectsService {
       const dueDate = new Date(startDate);
       dueDate.setDate(dueDate.getDate() + 30);
 
-      const invoiceNumber = `INV-${new Date().getFullYear()}-${String(savedHero.id).padStart(4, '0')}`;
       const invoice = manager.create(Invoice, {
-        invoiceNumber,
+        invoiceNumber: 'PENDING',
         contractId: savedContract.id,
         heroId: savedHero.id,
         clientId: prospect.clientId!,
@@ -289,7 +291,28 @@ export class ProspectsService {
       });
       const savedInvoice = await manager.save(Invoice, invoice);
 
+      const invoiceNumber = `INV-${new Date().getFullYear()}-${String(savedInvoice.id).padStart(4, '0')}`;
+      await manager.update(Invoice, savedInvoice.id, { invoiceNumber });
+      savedInvoice.invoiceNumber = invoiceNumber;
+
       return { prospect, hero: savedHero, contract: savedContract, invoice: savedInvoice };
     });
+    } catch (err: any) {
+      const msg: string = err?.message ?? '';
+      if (msg.includes('fk_heroes_company_id') || msg.includes('company_id')) {
+        throw new BadRequestException('Invalid company: the selected company does not exist');
+      }
+      if (msg.includes('fk_heroes_client_id') || msg.includes('client_id')) {
+        throw new BadRequestException('Invalid client: the selected client does not exist');
+      }
+      if (msg.includes('invoice_number') || msg.includes('invoices_invoice_number')) {
+        throw new BadRequestException('An invoice for this hero already exists');
+      }
+      if (msg.includes('prospect_id') || msg.includes('fk_heroes_prospect_id')) {
+        throw new ConflictException('This prospect has already been promoted to Hero');
+      }
+      this.logger.error('promoteToHero transaction failed', err);
+      throw new BadRequestException(`Promotion failed: ${msg}`);
+    }
   }
 }

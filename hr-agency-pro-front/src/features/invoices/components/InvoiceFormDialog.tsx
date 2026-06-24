@@ -8,13 +8,13 @@ import { contractsApi } from '../../../api/contracts.api'
 import { heroesApi } from '../../../api/heroes.api'
 import { clientsApi } from '../../../api/clients.api'
 import { companiesApi } from '../../../api/companies.api'
+import { invoicesApi } from '../../../api/invoices.api'
 import { SearchableSelect } from '../../../components/SearchableSelect'
 import type { Invoice } from '../../../types/invoice.types'
 
 const todayStr = new Date().toISOString().split('T')[0]
 
 const schema = z.object({
-  invoiceNumber: z.string().min(1, 'Invoice number is required'),
   contractId: z.coerce.number().optional(),
   heroId: z.coerce.number().min(1, 'Hero is required'),
   clientId: z.coerce.number().min(1, 'Client is required'),
@@ -55,7 +55,6 @@ export function InvoiceFormDialog({
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      invoiceNumber: defaultValues?.invoiceNumber ?? '',
       contractId: defaultValues?.contractId ?? undefined,
       heroId: defaultValues?.heroId ?? 0,
       clientId: defaultValues?.clientId ?? 0,
@@ -71,6 +70,13 @@ export function InvoiceFormDialog({
 
   const ok = (n: keyof FormValues) => !!dirtyFields[n] && !errors[n]
   const cls = (n: keyof FormValues) => `input w-full${ok(n) ? ' input-valid' : ''}`
+
+  const { data: nextNumberData, isLoading: isLoadingNumber } = useQuery({
+    queryKey: ['invoices', 'next-number'],
+    queryFn: () => invoicesApi.nextNumber(),
+    enabled: open && !isEdit,
+    staleTime: 0,
+  })
 
   const { data: contracts = [] } = useQuery({
     queryKey: ['contracts'],
@@ -99,7 +105,6 @@ export function InvoiceFormDialog({
   useEffect(() => {
     if (open) {
       reset({
-        invoiceNumber: defaultValues?.invoiceNumber ?? '',
         contractId: defaultValues?.contractId ?? undefined,
         heroId: defaultValues?.heroId ?? 0,
         clientId: defaultValues?.clientId ?? 0,
@@ -139,10 +144,26 @@ export function InvoiceFormDialog({
           </Modal.Header>
           <Modal.Body className="overflow-y-auto max-h-[60vh]">
             <form id="invoice-form" onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-4">
-              <TextField isInvalid={!!errors.invoiceNumber}>
-                <Label className="field-required">Invoice Number</Label>
-                <input {...register('invoiceNumber')} className={cls('invoiceNumber')} placeholder="INV-2026-001" />
-                {errors.invoiceNumber && <p className="text-xs text-danger mt-1">{errors.invoiceNumber.message}</p>}
+
+              <TextField>
+                <Label>Invoice Number</Label>
+                {isEdit ? (
+                  <input
+                    value={defaultValues?.invoiceNumber ?? ''}
+                    readOnly
+                    className="input w-full opacity-60 cursor-not-allowed"
+                  />
+                ) : (
+                  <div className="input w-full flex items-center justify-between">
+                    <span className={`font-mono text-sm ${isLoadingNumber ? 'text-muted' : 'text-foreground'}`}>
+                      {isLoadingNumber ? 'Calculating...' : (nextNumberData?.invoiceNumber ?? '—')}
+                    </span>
+                    <span className="text-xs text-muted ml-3 shrink-0">Auto-assigned</span>
+                  </div>
+                )}
+                <p className="text-xs text-muted mt-1">
+                  {isEdit ? 'Invoice number cannot be changed.' : 'Assigned automatically on save.'}
+                </p>
               </TextField>
 
               <TextField>

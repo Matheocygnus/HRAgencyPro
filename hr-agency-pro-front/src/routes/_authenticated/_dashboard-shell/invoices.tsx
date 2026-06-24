@@ -176,7 +176,7 @@ export function InvoicesPage() {
               <Table.ScrollContainer>
                 <Table.Content aria-label="Invoices table" data-testid="invoices-table">
                   <Table.Header>
-                    <Table.Column isRowHeader>ID</Table.Column>
+                    <Table.Column isRowHeader>Invoice #</Table.Column>
                     <Table.Column>Client</Table.Column>
                     <Table.Column>Hero</Table.Column>
                     <Table.Column>Amount</Table.Column>
@@ -191,7 +191,7 @@ export function InvoicesPage() {
                       const overdue = isEffectivelyOverdue(invoice)
                       return (
                         <Table.Row key={invoice.id} id={invoice.id} data-testid={`invoice-row-${invoice.id}`} className={overdue ? 'bg-danger/10' : undefined}>
-                          <Table.Cell><span className="font-medium">{invoice.id}</span></Table.Cell>
+                          <Table.Cell><span className="font-mono font-medium">{invoice.invoiceNumber ?? `#${invoice.id}`}</span></Table.Cell>
                           <Table.Cell>{clientMap[invoice.clientId] ?? `Client #${invoice.clientId}`}</Table.Cell>
                           <Table.Cell>{getHeroName(invoice) || heroMap[invoice.heroId] || '—'}</Table.Cell>
                           <Table.Cell>${invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Table.Cell>
@@ -219,7 +219,7 @@ export function InvoicesPage() {
               <Table.ScrollContainer>
                 <Table.Content aria-label="Invoices table" data-testid="invoices-table">
                   <Table.Header>
-                    <Table.Column isRowHeader>ID</Table.Column>
+                    <Table.Column isRowHeader>Invoice #</Table.Column>
                     <Table.Column>Hero</Table.Column>
                     <Table.Column>Amount</Table.Column>
                     <Table.Column>Status</Table.Column>
@@ -233,7 +233,7 @@ export function InvoicesPage() {
                       const overdue = isEffectivelyOverdue(invoice)
                       return (
                         <Table.Row key={invoice.id} id={invoice.id} data-testid={`invoice-row-${invoice.id}`} className={overdue ? 'bg-danger/10' : undefined}>
-                          <Table.Cell><span className="font-medium">{invoice.id}</span></Table.Cell>
+                          <Table.Cell><span className="font-mono font-medium">{invoice.invoiceNumber ?? `#${invoice.id}`}</span></Table.Cell>
                           <Table.Cell>{getHeroName(invoice) || heroMap[invoice.heroId] || '—'}</Table.Cell>
                           <Table.Cell>${invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Table.Cell>
                           <Table.Cell>

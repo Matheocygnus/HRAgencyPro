@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Invoice } from './entities/invoice.entity';
@@ -25,6 +25,15 @@ export class InvoicesService {
     return invoice;
   }
 
+  async previewNextNumber(): Promise<string> {
+    const result = await this.invoiceRepository
+      .createQueryBuilder('invoice')
+      .select('MAX(invoice.id)', 'maxId')
+      .getRawOne();
+    const nextId = (result?.maxId ?? 0) + 1;
+    return `INV-${new Date().getFullYear()}-${String(nextId).padStart(4, '0')}`;
+  }
+
   async create(dto: CreateInvoiceDto): Promise<Invoice> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -33,18 +42,21 @@ export class InvoicesService {
     if (due < today) {
       throw new BadRequestException('Due date cannot be in the past');
     }
-    const invoice = this.invoiceRepository.create(dto);
+    const { invoiceNumber: _ignored, ...rest } = dto;
+    const invoice = this.invoiceRepository.create({ ...rest, invoiceNumber: 'PENDING' });
+    let saved: Invoice;
     try {
-      return await this.invoiceRepository.save(invoice);
+      saved = await this.invoiceRepository.save(invoice);
     } catch (err: any) {
-      if (err.code === '23505') {
-        throw new ConflictException('Invoice number already exists');
-      }
       if (err.code === '23503') {
         throw new BadRequestException('Invalid reference: hero, client, company, or contract not found');
       }
       throw err;
     }
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(saved.id).padStart(4, '0')}`;
+    await this.invoiceRepository.update(saved.id, { invoiceNumber });
+    saved.invoiceNumber = invoiceNumber;
+    return saved;
   }
 
   async update(id: number, dto: UpdateInvoiceDto): Promise<Invoice> {

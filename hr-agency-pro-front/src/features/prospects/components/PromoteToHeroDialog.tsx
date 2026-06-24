@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useState, useEffect } from 'react'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery } from '@tanstack/react-query'
@@ -36,18 +36,15 @@ export function PromoteToHeroDialog({ open, prospect, onClose, onSuccess }: Prom
 
   const today = new Date().toISOString().split('T')[0]
 
-  const { register, handleSubmit, reset, control, formState: { errors, dirtyFields } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, control, setValue, getValues, formState: { errors, dirtyFields } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      clientId: prospect?.clientId ?? 0,
-      companyId: prospect?.companyId ?? 0,
+      clientId: 0,
+      companyId: 0,
       startDate: today,
       compensation: 0,
     },
   })
-
-  const ok = (n: keyof FormValues) => !!dirtyFields[n] && !errors[n]
-  const cls = (n: keyof FormValues) => `input w-full${ok(n) ? ' input-valid' : ''}`
 
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
@@ -60,6 +57,29 @@ export function PromoteToHeroDialog({ open, prospect, onClose, onSuccess }: Prom
     queryFn: () => companiesApi.list(),
     enabled: open,
   })
+
+  useEffect(() => {
+    if (open && prospect) {
+      reset({
+        clientId: prospect.clientId ?? 0,
+        companyId: prospect.companyId ?? 0,
+        startDate: today,
+        compensation: 0,
+      })
+    }
+  }, [open, prospect?.id])
+
+  const watchedClientId = useWatch({ control, name: 'clientId' })
+
+  useEffect(() => {
+    if (!watchedClientId || !companies.length) return
+    if (getValues('companyId')) return
+    const match = companies.find((c: any) => c.clientId === watchedClientId)
+    if (match) setValue('companyId', match.id)
+  }, [watchedClientId, companies])
+
+  const ok = (n: keyof FormValues) => !!dirtyFields[n] && !errors[n]
+  const cls = (n: keyof FormValues) => `input w-full${ok(n) ? ' input-valid' : ''}`
 
   async function onSubmit(data: FormValues) {
     if (!prospect) return

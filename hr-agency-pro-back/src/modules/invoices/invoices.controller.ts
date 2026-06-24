@@ -24,7 +24,20 @@ export class InvoicesController {
   @Get()
   @RequirePermissions('invoices:read')
   findAll(@CurrentUser() user: any) {
-    return this.invoicesService.findAll({ clientId: user?.clientId });
+    const permissions: string[] = user?.permissions ?? []
+    const hasFullAccess = permissions.includes('invoices') || permissions.includes('*')
+    if (hasFullAccess) return this.invoicesService.findAll()
+    // Client role: scope to their clientId; if not set, return nothing (never leak)
+    const clientId: number | undefined = user?.clientId ?? undefined
+    if (!clientId) return []
+    return this.invoicesService.findAll({ clientId })
+  }
+
+  @Get('next-number')
+  @RequirePermissions('invoices:read')
+  async getNextNumber() {
+    const invoiceNumber = await this.invoicesService.previewNextNumber();
+    return { invoiceNumber };
   }
 
   @Get(':id')

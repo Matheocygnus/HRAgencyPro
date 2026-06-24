@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
+import { useAuthContext } from '../../../features/auth/auth-context'
 import { AccessDenied } from '../../../components/AccessDenied'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { Card, Tabs, Table, Chip, Skeleton, Button, Avatar, Modal, Label, TextField } from '@heroui/react'
 import { ArrowLeft, Mail, Phone, Pencil } from 'lucide-react'
 import { heroesApi } from '../../../api/heroes.api'
 import { contractsApi } from '../../../api/contracts.api'
+import { clientsApi } from '../../../api/clients.api'
 import { prospectsApi } from '../../../api/prospects.api'
 import type { Hero } from '../../../types/hero.types'
 import type { Contract } from '../../../types/contract.types'
+import type { Client } from '../../../types/client.types'
 
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/heroes/$id')({
   component: HeroDetail,
@@ -26,7 +29,7 @@ const contractStatusColor: Record<string, 'default' | 'primary' | 'success' | 'w
   active: 'success', signed: 'primary', draft: 'default', completed: 'success', terminated: 'danger',
 }
 
-function HeroPerformance({ contracts, startDate }: { contracts: Contract[]; startDate?: string }) {
+function HeroPerformance({ contracts, startDate, clientMap }: { contracts: Contract[]; startDate?: string; clientMap: Map<number, string> }) {
   const totalContracts = contracts.length
   const activeContracts = contracts.filter(c => c.status === 'active' || c.status === 'signed')
   const completedContracts = contracts.filter(c => c.status === 'completed')
@@ -36,6 +39,7 @@ function HeroPerformance({ contracts, startDate }: { contracts: Contract[]; star
     ? (() => {
         const ms = Date.now() - new Date(startDate).getTime()
         const days = Math.floor(ms / 86400000)
+        if (days < 0) return '—'
         if (days < 30) return `${days}d`
         if (days < 365) return `${Math.floor(days / 30)}mo`
         const yrs = Math.floor(days / 365)
@@ -76,6 +80,7 @@ function HeroPerformance({ contracts, startDate }: { contracts: Contract[]; star
                 <Table.Content aria-label="Contract history">
                   <Table.Header>
                     <Table.Column isRowHeader>Title</Table.Column>
+                    <Table.Column>Client</Table.Column>
                     <Table.Column>Status</Table.Column>
                     <Table.Column>Compensation / mo</Table.Column>
                     <Table.Column>Start</Table.Column>
@@ -85,6 +90,7 @@ function HeroPerformance({ contracts, startDate }: { contracts: Contract[]; star
                     {contract => (
                       <Table.Row key={contract.id} id={contract.id}>
                         <Table.Cell><span className="font-medium">{contract.title ?? `#${contract.id}`}</span></Table.Cell>
+                        <Table.Cell>{clientMap.get(contract.clientId) ?? '—'}</Table.Cell>
                         <Table.Cell>
                           <Chip size="sm" variant="flat" color={contractStatusColor[contract.status] ?? 'default'}>
                             {contract.status}
@@ -118,6 +124,7 @@ function HeroPerformance({ contracts, startDate }: { contracts: Contract[]; star
 
 export function HeroDetail() {
   const { can } = usePermissions()
+  const { user } = useAuthContext()
   if (!can('heroes') && !can('heroes:read')) return <AccessDenied />
   const { id } = Route.useParams()
   const heroId = Number(id)
@@ -126,6 +133,9 @@ export function HeroDetail() {
   const [editSkillsOpen, setEditSkillsOpen] = useState(false)
   const [skillsInput, setSkillsInput] = useState('')
   const queryClient = useQueryClient()
+
+  // Recruiter has flat 'contracts'; client only has 'contracts:read'
+  const isRecruiter = can('contracts')
 
   const skillsMutation = useMutation({
     mutationFn: ({ prospectId, skills }: { prospectId: number; skills: string }) =>
@@ -141,11 +151,27 @@ export function HeroDetail() {
     queryFn: () => heroesApi.get(heroId),
   })
 
-  const { data: contracts = [] } = useQuery<Contract[]>({
+  const canSeeContracts = isRecruiter || can('contracts:read')
+
+  const { data: allContracts = [] } = useQuery<Contract[]>({
     queryKey: ['contracts', { heroId }],
     queryFn: () => contractsApi.list({ heroId }),
-    enabled: can('contracts') && (activeTab === 'contract' || activeTab === 'performance'),
+    enabled: canSeeContracts && (activeTab === 'contract' || activeTab === 'performance'),
   })
+
+  // Clients only see their own contracts — never other companies' data
+  const contracts = isRecruiter
+    ? allContracts
+    : allContracts.filter(c => c.clientId === user?.clientId)
+
+  // Only recruiters can call /api/clients (client role gets 403)
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ['clients'],
+    queryFn: () => clientsApi.list(),
+    enabled: isRecruiter && (activeTab === 'contract' || activeTab === 'performance'),
+  })
+
+  const clientMap = new Map(clients.map((c: Client) => [c.id, c.name]))
 
   if (isLoading) {
     return (
@@ -217,7 +243,7 @@ export function HeroDetail() {
           <Tabs.List aria-label="Hero detail tabs">
             <Tabs.Tab id="overview">Overview<Tabs.Indicator /></Tabs.Tab>
             <Tabs.Tab id="contract">Contracts<Tabs.Indicator /></Tabs.Tab>
-            <Tabs.Tab id="performance">Performance<Tabs.Indicator /></Tabs.Tab>
+            {isRecruiter && <Tabs.Tab id="performance">Performance<Tabs.Indicator /></Tabs.Tab>}
           </Tabs.List>
         </Tabs.ListContainer>
 
@@ -260,8 +286,10 @@ export function HeroDetail() {
                 <Table.ScrollContainer>
                   <Table.Content aria-label="Hero contracts">
                     <Table.Header>
-                      <Table.Column isRowHeader>ID</Table.Column>
+                      <Table.Column isRowHeader>Title</Table.Column>
+                      {isRecruiter && <Table.Column>Client</Table.Column>}
                       <Table.Column>Status</Table.Column>
+                      <Table.Column>Compensation / mo</Table.Column>
                       <Table.Column>Start</Table.Column>
                       <Table.Column>End</Table.Column>
                     </Table.Header>
@@ -273,11 +301,15 @@ export function HeroDetail() {
                     >
                       {contract => (
                         <Table.Row key={contract.id} id={contract.id}>
-                          <Table.Cell><span className="font-medium">{contract.id}</span></Table.Cell>
+                          <Table.Cell><span className="font-medium">{contract.title ?? `#${contract.id}`}</span></Table.Cell>
+                          {isRecruiter && <Table.Cell>{clientMap.get(contract.clientId) ?? '—'}</Table.Cell>}
                           <Table.Cell>
                             <Chip size="sm" variant="flat" color={statusColor[contract.status] ?? 'default'}>
                               {contract.status}
                             </Chip>
+                          </Table.Cell>
+                          <Table.Cell>
+                            {contract.compensation != null ? `$${contract.compensation.toLocaleString()}` : '—'}
                           </Table.Cell>
                           <Table.Cell>{contract.startDate}</Table.Cell>
                           <Table.Cell>{contract.endDate ?? '—'}</Table.Cell>
@@ -292,7 +324,7 @@ export function HeroDetail() {
         </Tabs.Panel>
 
         <Tabs.Panel id="performance" className="pt-3">
-          <HeroPerformance contracts={contracts} startDate={hero.startDate} />
+          <HeroPerformance contracts={contracts} startDate={hero.startDate} clientMap={clientMap} />
         </Tabs.Panel>
       </Tabs>
 

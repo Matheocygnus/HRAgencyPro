@@ -7,13 +7,13 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { HeroesService } from './heroes.service';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
 import { RequirePermissions } from '../../common/decorators/require-permissions.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('heroes')
 @ApiBearerAuth()
@@ -23,7 +23,12 @@ export class HeroesController {
 
   @Get()
   @RequirePermissions('heroes:read')
-  findAll(@Query('clientId', new ParseIntPipe({ optional: true })) clientId?: number) {
+  findAll(@CurrentUser() user: any) {
+    const permissions: string[] = user?.permissions ?? [];
+    const hasFullAccess = permissions.includes('heroes') || permissions.includes('*');
+    if (hasFullAccess) return this.heroesService.findAll();
+    const clientId: number | undefined = user?.clientId ?? undefined;
+    if (!clientId) return [];
     return this.heroesService.findAll(clientId);
   }
 
