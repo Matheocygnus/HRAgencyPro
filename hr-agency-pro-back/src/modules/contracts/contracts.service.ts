@@ -23,11 +23,17 @@ export class ContractsService {
     const where: Partial<Contract> = {};
     if (filters?.heroId) where.heroId = filters.heroId;
     if (filters?.clientId) where.clientId = filters.clientId;
-    return this.contractRepository.find(Object.keys(where).length ? { where } : undefined);
+    return this.contractRepository.find({
+      where: Object.keys(where).length ? where : undefined,
+      relations: { company: true, hero: { prospect: true } },
+    });
   }
 
   async findOne(id: number): Promise<Contract> {
-    const contract = await this.contractRepository.findOne({ where: { id } });
+    const contract = await this.contractRepository.findOne({
+      where: { id },
+      relations: { company: true, hero: { prospect: true } },
+    });
     if (!contract) throw new NotFoundException(`Contract #${id} not found`);
     return contract;
   }

@@ -12,6 +12,7 @@ interface SearchableSelectProps {
   onChange: (value: number | undefined) => void
   placeholder?: string
   isInvalid?: boolean
+  disabled?: boolean
 }
 
 export function SearchableSelect({
@@ -20,22 +21,26 @@ export function SearchableSelect({
   onChange,
   placeholder = 'Search...',
   isInvalid = false,
+  disabled = false,
 }: SearchableSelectProps) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const userIsEditingRef = useRef(false)
 
-  // Sync display text when value changes externally (edit mode, contract auto-fill, reset)
+  // Sync display text when value changes externally (edit mode, contract auto-fill, reset).
+  // When disabled, always force-sync and bypass the userIsEditing guard.
   useEffect(() => {
-    if (userIsEditingRef.current) return
+    if (!disabled && userIsEditingRef.current) return
+    if (disabled) userIsEditingRef.current = false
     if (value) {
       const found = options.find(o => o.value === value)
       if (found) setQuery(found.label)
+      else if (disabled) setQuery(`#${value}`)
     } else {
       setQuery('')
     }
-  }, [value, options])
+  }, [value, options, disabled])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -73,13 +78,15 @@ export function SearchableSelect({
       <input
         type="text"
         value={query}
-        onChange={handleInputChange}
-        onFocus={() => setOpen(true)}
+        onChange={disabled ? undefined : handleInputChange}
+        onFocus={disabled ? undefined : () => setOpen(true)}
         placeholder={placeholder}
         autoComplete="off"
+        readOnly={disabled}
         className={[
           'input w-full pr-8',
           isInvalid ? 'border-danger focus:border-danger focus:ring-danger' : '',
+          disabled ? 'opacity-60 cursor-not-allowed' : '',
         ]
           .filter(Boolean)
           .join(' ')}
