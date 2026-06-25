@@ -12,7 +12,10 @@ import { prospectsApi } from '../../../api/prospects.api'
 import type { Hero } from '../../../types/hero.types'
 import type { Contract } from '../../../types/contract.types'
 
+import { guardHeroProfile } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/heroes/$id')({
+  beforeLoad: guardHeroProfile(),
   component: HeroDetail,
 })
 
@@ -77,28 +80,28 @@ function HeroPerformance({ contracts, startDate }: { contracts: Contract[]; star
               <Table.ScrollContainer>
                 <Table.Content aria-label="Contract history">
                   <Table.Header>
-                    <Table.Column isRowHeader>Title</Table.Column>
-                    <Table.Column>Client</Table.Column>
-                    <Table.Column>Status</Table.Column>
-                    <Table.Column>Compensation / mo</Table.Column>
-                    <Table.Column>Start</Table.Column>
-                    <Table.Column>End</Table.Column>
+                    <Table.Column isRowHeader className="whitespace-nowrap">Title</Table.Column>
+                    <Table.Column className="whitespace-nowrap">Client</Table.Column>
+                    <Table.Column className="whitespace-nowrap">Status</Table.Column>
+                    <Table.Column className="whitespace-nowrap">Compensation / mo</Table.Column>
+                    <Table.Column className="whitespace-nowrap">Start</Table.Column>
+                    <Table.Column className="whitespace-nowrap">End</Table.Column>
                   </Table.Header>
                   <Table.Body items={contracts}>
                     {contract => (
                       <Table.Row key={contract.id} id={contract.id}>
-                        <Table.Cell><span className="font-medium">{contract.title ?? `#${contract.id}`}</span></Table.Cell>
-                        <Table.Cell>{contract.company?.name ?? '—'}</Table.Cell>
-                        <Table.Cell>
+                        <Table.Cell className="whitespace-nowrap"><span className="font-medium">{contract.title ?? `#${contract.id}`}</span></Table.Cell>
+                        <Table.Cell className="whitespace-nowrap">{contract.company?.name ?? '—'}</Table.Cell>
+                        <Table.Cell className="whitespace-nowrap">
                           <Chip size="sm" variant="flat" color={contractStatusColor[contract.status] ?? 'default'}>
                             {contract.status}
                           </Chip>
                         </Table.Cell>
-                        <Table.Cell>
+                        <Table.Cell className="whitespace-nowrap">
                           {contract.compensation != null ? `$${contract.compensation.toLocaleString()}` : '—'}
                         </Table.Cell>
-                        <Table.Cell>{contract.startDate ?? '—'}</Table.Cell>
-                        <Table.Cell>{contract.endDate ?? '—'}</Table.Cell>
+                        <Table.Cell className="whitespace-nowrap">{contract.startDate ?? '—'}</Table.Cell>
+                        <Table.Cell className="whitespace-nowrap">{contract.endDate ?? '—'}</Table.Cell>
                       </Table.Row>
                     )}
                   </Table.Body>
@@ -281,12 +284,12 @@ export function HeroDetail() {
                 <Table.ScrollContainer>
                   <Table.Content aria-label="Hero contracts">
                     <Table.Header>
-                      <Table.Column isRowHeader>Title</Table.Column>
-                      {isRecruiter && <Table.Column>Client</Table.Column>}
-                      <Table.Column>Status</Table.Column>
-                      <Table.Column>Compensation / mo</Table.Column>
-                      <Table.Column>Start</Table.Column>
-                      <Table.Column>End</Table.Column>
+                      <Table.Column isRowHeader className="whitespace-nowrap">Title</Table.Column>
+                      {isRecruiter && <Table.Column className="whitespace-nowrap">Client</Table.Column>}
+                      <Table.Column className="whitespace-nowrap">Status</Table.Column>
+                      <Table.Column className="whitespace-nowrap">Compensation / mo</Table.Column>
+                      <Table.Column className="whitespace-nowrap">Start</Table.Column>
+                      <Table.Column className="whitespace-nowrap">End</Table.Column>
                     </Table.Header>
                     <Table.Body
                       items={contracts}
@@ -296,18 +299,18 @@ export function HeroDetail() {
                     >
                       {contract => (
                         <Table.Row key={contract.id} id={contract.id}>
-                          <Table.Cell><span className="font-medium">{contract.title ?? `#${contract.id}`}</span></Table.Cell>
-                          {isRecruiter && <Table.Cell>{contract.company?.name ?? '—'}</Table.Cell>}
-                          <Table.Cell>
+                          <Table.Cell className="whitespace-nowrap"><span className="font-medium">{contract.title ?? `#${contract.id}`}</span></Table.Cell>
+                          {isRecruiter && <Table.Cell className="whitespace-nowrap">{contract.company?.name ?? '—'}</Table.Cell>}
+                          <Table.Cell className="whitespace-nowrap">
                             <Chip size="sm" variant="flat" color={statusColor[contract.status] ?? 'default'}>
                               {contract.status}
                             </Chip>
                           </Table.Cell>
-                          <Table.Cell>
+                          <Table.Cell className="whitespace-nowrap">
                             {contract.compensation != null ? `$${contract.compensation.toLocaleString()}` : '—'}
                           </Table.Cell>
-                          <Table.Cell>{contract.startDate ?? '—'}</Table.Cell>
-                          <Table.Cell>{contract.endDate ?? '—'}</Table.Cell>
+                          <Table.Cell className="whitespace-nowrap">{contract.startDate ?? '—'}</Table.Cell>
+                          <Table.Cell className="whitespace-nowrap">{contract.endDate ?? '—'}</Table.Cell>
                         </Table.Row>
                       )}
                     </Table.Body>

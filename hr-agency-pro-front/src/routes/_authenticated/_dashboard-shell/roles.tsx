@@ -10,7 +10,10 @@ import type { Role } from '../../../types/role.types'
 import { RoleFormDialog } from '../../../features/roles/components/RoleFormDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
+import { guardRoute } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/roles')({
+  beforeLoad: guardRoute('roles'),
   component: RolesPage,
 })
 

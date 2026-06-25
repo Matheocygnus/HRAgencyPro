@@ -29,7 +29,10 @@ import type { Company } from '../../../types/company.types'
 import { ProspectFormDialog } from '../../../features/prospects/components/ProspectFormDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
+import { guardRoute } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/prospect-database')({
+  beforeLoad: guardRoute('prospects'),
   component: ProspectDatabase,
 })
 

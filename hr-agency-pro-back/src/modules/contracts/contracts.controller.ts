@@ -35,9 +35,11 @@ export class ContractsController {
   ) {
     // Hero role: enforce own heroId from JWT — never trust query params for scoping
     const effectiveHeroId = user.heroId != null ? user.heroId : (heroId ? +heroId : undefined);
+    // Client role: enforce own clientId from JWT — prevent horizontal privilege escalation
+    const effectiveClientId = user.clientId != null ? user.clientId : (clientId ? +clientId : undefined);
     return this.contractsService.findAll({
       heroId: effectiveHeroId,
-      clientId: clientId ? +clientId : undefined,
+      clientId: effectiveClientId,
     });
   }
 

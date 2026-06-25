@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseIntPipe,
@@ -24,13 +25,17 @@ export class HeroesController {
   @Get()
   @RequirePermissions('heroes:read')
   findAll(@CurrentUser() user: any) {
+    if (user?.heroId) throw new ForbiddenException('Heroes cannot access the full hero list');
     if (user?.clientId) return this.heroesService.findAll(user.clientId);
     return this.heroesService.findAll();
   }
 
   @Get(':id')
   @RequirePermissions('heroes:read')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
+    if (user?.heroId && user.heroId !== id) {
+      throw new ForbiddenException('Heroes can only view their own profile');
+    }
     return this.heroesService.findOne(id);
   }
 

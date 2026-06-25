@@ -13,7 +13,10 @@ import { ClientFormDialog } from '../../../features/clients/components/ClientFor
 import { CompanyFormDialog } from '../../../features/companies/components/CompanyFormDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
+import { guardRoute } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/clients')({
+  beforeLoad: guardRoute('companies'),
   component: ClientsPage,
 })
 

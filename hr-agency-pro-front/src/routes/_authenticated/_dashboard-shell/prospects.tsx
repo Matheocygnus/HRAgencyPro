@@ -26,7 +26,10 @@ import { PromoteToHeroDialog } from '../../../features/prospects/components/Prom
 import { RejectProspectDialog } from '../../../features/prospects/components/RejectProspectDialog'
 import { InterviewFormDialog } from '../../../features/interviews/components/InterviewFormDialog'
 
+import { guardRoute } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/prospects')({
+  beforeLoad: guardRoute('prospects'),
   component: ProspectsKanban,
 })
 

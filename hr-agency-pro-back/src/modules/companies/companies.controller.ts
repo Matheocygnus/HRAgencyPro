@@ -71,9 +71,16 @@ export class CompaniesController {
   }
 
   @Get(':id')
-  @RequirePermissions('companies:read')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.companiesService.findOneCompany(id);
+  async findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
+    const hasFullAccess =
+      user?.permissions?.includes('*') || user?.permissions?.includes('companies:read');
+    if (hasFullAccess) return this.companiesService.findOneCompany(id);
+    if (user?.clientId != null) {
+      const company = await this.companiesService.findOneCompany(id);
+      if (company.clientId !== user.clientId) throw new ForbiddenException('Access denied');
+      return company;
+    }
+    throw new ForbiddenException('Insufficient permissions');
   }
 
   @Post()

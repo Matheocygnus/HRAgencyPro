@@ -14,7 +14,10 @@ import { heroName as getHeroName } from '../../../types/invoice.types'
 import { InvoiceFormDialog } from '../../../features/invoices/components/InvoiceFormDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
+import { guardAllRoles } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/invoices')({
+  beforeLoad: guardAllRoles(),
   component: InvoicesPage,
 })
 

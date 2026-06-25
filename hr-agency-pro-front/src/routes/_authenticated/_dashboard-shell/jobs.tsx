@@ -14,7 +14,10 @@ import { JobApplicationFormDialog } from '../../../features/jobs/components/JobA
 import { JobRequestFormDialog } from '../../../features/jobs/components/JobRequestFormDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
+import { guardClientOrRecruiter } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/jobs')({
+  beforeLoad: guardClientOrRecruiter(),
   component: JobsPage,
 })
 

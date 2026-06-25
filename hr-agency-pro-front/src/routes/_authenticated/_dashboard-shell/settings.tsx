@@ -11,7 +11,10 @@ import { api } from '../../../lib/api'
 import { useAuthContext } from '../../../features/auth/auth-context'
 import { useToast } from '../../../lib/toast'
 
+import { guardRoute } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/settings')({
+  beforeLoad: guardRoute('settings'),
   component: SettingsPage,
 })
 

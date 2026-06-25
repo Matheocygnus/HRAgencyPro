@@ -11,7 +11,10 @@ import type { Interview } from '../../../types/interview.types'
 import { InterviewFormDialog } from '../../../features/interviews/components/InterviewFormDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
+import { guardClientOrRecruiter } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/interviews')({
+  beforeLoad: guardClientOrRecruiter(),
   component: InterviewsPage,
 })
 

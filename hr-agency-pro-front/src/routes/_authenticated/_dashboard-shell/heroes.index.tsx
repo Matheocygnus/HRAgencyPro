@@ -11,7 +11,10 @@ import type { Hero } from '../../../types/hero.types'
 import { HeroFormDialog } from '../../../features/heroes/components/HeroFormDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
+import { guardHerosList } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/heroes/')({
+  beforeLoad: guardHerosList(),
   component: HeroesList,
 })
 

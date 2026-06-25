@@ -11,7 +11,10 @@ import type { Company } from '../../../types/company.types'
 import type { Hero } from '../../../types/hero.types'
 import type { Contract } from '../../../types/contract.types'
 
+import { guardCompanyDetail } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/companies/$id')({
+  beforeLoad: guardCompanyDetail(),
   component: CompanyDetail,
 })
 
@@ -22,7 +25,7 @@ const statusColor: Record<string, 'default' | 'primary' | 'success' | 'warning' 
 
 export function CompanyDetail() {
   const { can } = usePermissions()
-  if (!can('companies')) return <AccessDenied />
+  if (!can('companies') && !can('client_dashboard')) return <AccessDenied />
   const { id } = Route.useParams()
   const companyId = Number(id)
 

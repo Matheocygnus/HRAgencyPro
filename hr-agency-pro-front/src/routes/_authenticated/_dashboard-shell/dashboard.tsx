@@ -8,7 +8,10 @@ import { api } from '../../../lib/api'
 import { clientsApi } from '../../../api/clients.api'
 import { useAuthContext } from '../../../features/auth/auth-context'
 
+import { guardRoute } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/dashboard')({
+  beforeLoad: guardRoute('dashboard'),
   component: Dashboard,
 })
 
