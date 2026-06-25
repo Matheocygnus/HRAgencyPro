@@ -24,12 +24,8 @@ export class HeroesController {
   @Get()
   @RequirePermissions('heroes:read')
   findAll(@CurrentUser() user: any) {
-    const permissions: string[] = user?.permissions ?? [];
-    const hasFullAccess = permissions.includes('heroes') || permissions.includes('*');
-    if (hasFullAccess) return this.heroesService.findAll();
-    const clientId: number | undefined = user?.clientId ?? undefined;
-    if (!clientId) return [];
-    return this.heroesService.findAll(clientId);
+    if (user?.clientId) return this.heroesService.findAll(user.clientId);
+    return this.heroesService.findAll();
   }
 
   @Get(':id')

@@ -67,6 +67,7 @@ export function InvoiceFormDialog({
   })
 
   const selectedContractId = watch('contractId')
+  const isLocked = !!selectedContractId
 
   const ok = (n: keyof FormValues) => !!dirtyFields[n] && !errors[n]
   const cls = (n: keyof FormValues) => `input w-full${ok(n) ? ' input-valid' : ''}`
@@ -124,6 +125,7 @@ export function InvoiceFormDialog({
     setValue('heroId', contract.heroId)
     setValue('clientId', contract.clientId)
     setValue('companyId', contract.companyId)
+    if (contract.compensation) setValue('amount', contract.compensation)
   }, [selectedContractId, contracts, setValue])
 
   function handleFormSubmit(data: FormValues) {
@@ -174,8 +176,8 @@ export function InvoiceFormDialog({
                     <option key={c.id} value={c.id}>#{c.id} — {c.title}</option>
                   ))}
                 </select>
-                {selectedContractId && (
-                  <p className="text-xs text-muted mt-1">Hero, client and company are populated from the contract.</p>
+                {isLocked && (
+                  <p className="text-xs text-muted mt-1">Client, hero and company are locked to this contract.</p>
                 )}
               </TextField>
 
@@ -191,6 +193,7 @@ export function InvoiceFormDialog({
                       onChange={v => field.onChange(v ?? 0)}
                       placeholder="Search client..."
                       isInvalid={!!errors.clientId}
+                      disabled={isLocked}
                     />
                   )}
                 />
@@ -212,6 +215,7 @@ export function InvoiceFormDialog({
                       onChange={v => field.onChange(v ?? 0)}
                       placeholder="Search hero..."
                       isInvalid={!!errors.heroId}
+                      disabled={isLocked}
                     />
                   )}
                 />
@@ -220,7 +224,11 @@ export function InvoiceFormDialog({
 
               <TextField isInvalid={!!errors.companyId}>
                 <Label className="field-required">Company</Label>
-                <select {...register('companyId')} className={cls('companyId')}>
+                <select
+                  {...register('companyId')}
+                  disabled={isLocked}
+                  className={`${cls('companyId')}${isLocked ? ' opacity-60 cursor-not-allowed' : ''}`}
+                >
                   <option value="">Select company...</option>
                   {companies.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -230,6 +238,7 @@ export function InvoiceFormDialog({
               <TextField isInvalid={!!errors.amount}>
                 <Label className="field-required">Amount (USD)</Label>
                 <input {...register('amount')} type="number" step="0.01" min="0.01" className={cls('amount')} placeholder="1000.00" />
+                {isLocked && <p className="text-xs text-muted mt-1">Pre-filled from contract compensation. Editable for adjustments.</p>}
                 {errors.amount && <p className="text-xs text-danger mt-1">{errors.amount.message}</p>}
               </TextField>
 

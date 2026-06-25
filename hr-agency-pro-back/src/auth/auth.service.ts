@@ -49,6 +49,7 @@ export class AuthService {
         lastName: true,
         roleId: true,
         clientId: true,
+        heroId: true,
       },
       relations: { role: true },
     });
@@ -65,7 +66,7 @@ export class AuthService {
     const permissions = user.role?.permissions || [];
 
     const accessToken = this.jwtService.sign(
-      { sub: user.id, username: user.username, roleId: user.roleId, permissions, clientId: user.clientId ?? null },
+      { sub: user.id, username: user.username, roleId: user.roleId, permissions, clientId: user.clientId ?? null, heroId: user.heroId ?? null },
       {
         secret: this.configService.get<string>('jwt.accessSecret'),
         expiresIn: this.configService.get<string>('jwt.accessExpires') as StringValue,

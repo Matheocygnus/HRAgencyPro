@@ -13,6 +13,7 @@ interface SearchableSelectProps {
   placeholder?: string
   isInvalid?: boolean
   disabled?: boolean
+  dropUp?: boolean
 }
 
 export function SearchableSelect({
@@ -22,6 +23,7 @@ export function SearchableSelect({
   placeholder = 'Search...',
   isInvalid = false,
   disabled = false,
+  dropUp = false,
 }: SearchableSelectProps) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -101,7 +103,7 @@ export function SearchableSelect({
       />
       {open && (
         <ul
-          className="searchable-select-dropdown absolute z-[9999] mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-divider shadow-2xl"
+          className={`searchable-select-dropdown absolute z-[9999] max-h-56 w-full overflow-y-auto rounded-lg border border-divider shadow-2xl ${dropUp ? 'bottom-full mb-1' : 'mt-1'}`}
           style={{ backgroundColor: 'var(--surface, oklch(0.20 0.008 264))' }}
         >
           {filtered.length > 0 ? (

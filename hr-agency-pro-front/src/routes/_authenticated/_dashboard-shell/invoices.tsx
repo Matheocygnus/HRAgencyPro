@@ -35,6 +35,7 @@ function isEffectivelyOverdue(invoice: Invoice): boolean {
 export function InvoicesPage() {
   const { can } = usePermissions()
   const { user } = useAuthContext()
+  const isHero = can('hero_dashboard')
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<StatusTab>('all')
   const [search, setSearch] = useState('')
@@ -46,7 +47,7 @@ export function InvoicesPage() {
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
     queryKey: ['invoices', user?.id],
     queryFn: () => invoicesApi.list(),
-    enabled: can('invoices') || can('client_dashboard'),
+    enabled: can('invoices') || can('client_dashboard') || can('invoices:read'),
   })
 
   const { data: clients = [] } = useQuery({
@@ -64,7 +65,7 @@ export function InvoicesPage() {
   const { data: heroes = [] } = useQuery({
     queryKey: ['heroes'],
     queryFn: () => heroesApi.list(),
-    enabled: can('invoices') || can('client_dashboard'),
+    enabled: (can('invoices') || can('client_dashboard')) && !isHero,
   })
 
   const clientMap = useMemo(() => {
@@ -77,7 +78,7 @@ export function InvoicesPage() {
     [heroes]
   )
 
-  if (!can('invoices') && !can('client_dashboard')) return <AccessDenied />
+  if (!can('invoices') && !can('client_dashboard') && !can('invoices:read')) return <AccessDenied />
 
   const filtered = invoices
     .filter(i => {
@@ -122,8 +123,12 @@ export function InvoicesPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Invoices</h1>
-          <p className="text-xs text-muted md:text-sm">Track and manage billing invoices</p>
+          <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
+            {isHero ? 'My Invoices' : 'Invoices'}
+          </h1>
+          <p className="text-xs text-muted md:text-sm">
+            {isHero ? 'Your billing invoices' : 'Track and manage billing invoices'}
+          </p>
         </div>
         {can('invoices') && (
           <Button color="primary" size="sm" startContent={<Plus className="size-4" />} onPress={() => setDialogOpen(true)}>
@@ -142,7 +147,7 @@ export function InvoicesPage() {
         >
           <SearchField.Group>
             <SearchField.SearchIcon />
-            <SearchField.Input placeholder={can('invoices') ? 'Search by client, invoice number, amount...' : 'Search by hero or invoice ID'} />
+            <SearchField.Input placeholder={can('invoices') ? 'Search by client, invoice number, amount...' : isHero ? 'Search by invoice ID...' : 'Search by hero or invoice ID'} />
             <SearchField.ClearButton />
           </SearchField.Group>
         </SearchField>
@@ -220,7 +225,8 @@ export function InvoicesPage() {
                 <Table.Content aria-label="Invoices table" data-testid="invoices-table">
                   <Table.Header>
                     <Table.Column isRowHeader>Invoice #</Table.Column>
-                    <Table.Column>Hero</Table.Column>
+                    <Table.Column>Company</Table.Column>
+                    {!isHero && <Table.Column>Hero</Table.Column>}
                     <Table.Column>Amount</Table.Column>
                     <Table.Column>Status</Table.Column>
                     <Table.Column>Due Date</Table.Column>
@@ -234,7 +240,8 @@ export function InvoicesPage() {
                       return (
                         <Table.Row key={invoice.id} id={invoice.id} data-testid={`invoice-row-${invoice.id}`} className={overdue ? 'bg-danger/10' : undefined}>
                           <Table.Cell><span className="font-mono font-medium">{invoice.invoiceNumber ?? `#${invoice.id}`}</span></Table.Cell>
-                          <Table.Cell>{getHeroName(invoice) || heroMap[invoice.heroId] || '—'}</Table.Cell>
+                          <Table.Cell>{invoice.company?.name ?? '—'}</Table.Cell>
+                          {!isHero && <Table.Cell>{getHeroName(invoice) || heroMap[invoice.heroId] || '—'}</Table.Cell>}
                           <Table.Cell>${invoice.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Table.Cell>
                           <Table.Cell>
                             <Chip size="sm" variant="flat" color={overdue ? 'danger' : (statusColor[invoice.status] ?? 'default')}>
@@ -292,8 +299,7 @@ export function InvoicesPage() {
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                   <dt className="text-muted">Invoice #</dt>
                   <dd className="font-medium">{viewTarget.invoiceNumber ?? '—'}</dd>
-                  <dt className="text-muted">Hero</dt>
-                  <dd>{heroMap[viewTarget.heroId] ?? '—'}</dd>
+                  {!isHero && <><dt className="text-muted">Hero</dt><dd>{heroMap[viewTarget.heroId] ?? '—'}</dd></>}
                   <dt className="text-muted">Amount</dt>
                   <dd className="font-medium">${viewTarget.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</dd>
                   <dt className="text-muted">Status</dt>

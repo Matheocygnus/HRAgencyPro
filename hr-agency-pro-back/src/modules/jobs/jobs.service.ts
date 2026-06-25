@@ -40,7 +40,7 @@ export class JobsService {
   // ---- Job Openings ----
 
   findAllOpenings(): Promise<JobOpening[]> {
-    return this.jobOpeningRepository.find();
+    return this.jobOpeningRepository.find({ order: { createdAt: 'DESC' } });
   }
 
   async findOneOpening(id: number): Promise<JobOpening> {

@@ -12,10 +12,13 @@ export class InvoicesService {
     private readonly invoiceRepository: Repository<Invoice>,
   ) {}
 
-  findAll(filters?: { clientId?: number }): Promise<Invoice[]> {
+  findAll(filters?: { clientId?: number; heroId?: number }): Promise<Invoice[]> {
+    const where: Partial<Invoice> = {};
+    if (filters?.clientId) where.clientId = filters.clientId;
+    if (filters?.heroId) where.heroId = filters.heroId;
     return this.invoiceRepository.find({
-      where: filters?.clientId ? { clientId: filters.clientId } : undefined,
-      relations: { hero: { prospect: true } },
+      where: Object.keys(where).length ? where : undefined,
+      relations: { hero: { prospect: true }, company: true },
     });
   }
 

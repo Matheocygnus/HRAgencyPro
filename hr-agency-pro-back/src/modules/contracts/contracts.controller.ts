@@ -18,6 +18,7 @@ import { ContractsService } from './contracts.service';
 import { CreateContractDto } from './dto/create-contract.dto';
 import { UpdateContractDto } from './dto/update-contract.dto';
 import { RequirePermissions } from '../../common/decorators/require-permissions.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('contracts')
 @ApiBearerAuth()
@@ -28,11 +29,14 @@ export class ContractsController {
   @Get()
   @RequirePermissions('contracts:read')
   findAll(
+    @CurrentUser() user: any,
     @Query('heroId') heroId?: string,
     @Query('clientId') clientId?: string,
   ) {
+    // Hero role: enforce own heroId from JWT — never trust query params for scoping
+    const effectiveHeroId = user.heroId != null ? user.heroId : (heroId ? +heroId : undefined);
     return this.contractsService.findAll({
-      heroId: heroId ? +heroId : undefined,
+      heroId: effectiveHeroId,
       clientId: clientId ? +clientId : undefined,
     });
   }

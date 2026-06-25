@@ -19,6 +19,13 @@ const statusColor: Record<string, 'default' | 'primary' | 'success' | 'warning' 
   scheduled: 'primary', completed: 'success', cancelled: 'danger',
 }
 
+function formatScheduledDate(dateStr: string): string {
+  const d = new Date(dateStr)
+  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+  return `${date} - ${time}`
+}
+
 export function InterviewsPage() {
   const { can } = usePermissions()
   if (!can('interviews')) return <AccessDenied />
@@ -135,7 +142,7 @@ export function InterviewsPage() {
                       <Table.Cell><span className="font-medium">{interview.id}</span></Table.Cell>
                       <Table.Cell>{prospectMap[interview.prospectId] ?? '—'}</Table.Cell>
                       <Table.Cell>{interview.title ?? '—'}</Table.Cell>
-                      <Table.Cell>{interview.scheduledDate ? new Date(interview.scheduledDate).toLocaleString() : '—'}</Table.Cell>
+                      <Table.Cell>{interview.scheduledDate ? formatScheduledDate(interview.scheduledDate) : '—'}</Table.Cell>
                       <Table.Cell>{interview.duration ? `${interview.duration}min` : '—'}</Table.Cell>
                       <Table.Cell>
                         <Chip size="sm" variant="flat" color={statusColor[interview.status] ?? 'default'}>

@@ -24,6 +24,7 @@ import { Route as AuthenticatedDashboardShellJobsRouteImport } from './routes/_a
 import { Route as AuthenticatedDashboardShellJobRequestsRouteImport } from './routes/_authenticated/_dashboard-shell/job-requests'
 import { Route as AuthenticatedDashboardShellInvoicesRouteImport } from './routes/_authenticated/_dashboard-shell/invoices'
 import { Route as AuthenticatedDashboardShellInterviewsRouteImport } from './routes/_authenticated/_dashboard-shell/interviews'
+import { Route as AuthenticatedDashboardShellHeroProfileRouteImport } from './routes/_authenticated/_dashboard-shell/hero-profile'
 import { Route as AuthenticatedDashboardShellHeroDashboardRouteImport } from './routes/_authenticated/_dashboard-shell/hero-dashboard'
 import { Route as AuthenticatedDashboardShellDashboardRouteImport } from './routes/_authenticated/_dashboard-shell/dashboard'
 import { Route as AuthenticatedDashboardShellContractsRouteImport } from './routes/_authenticated/_dashboard-shell/contracts'
@@ -117,6 +118,12 @@ const AuthenticatedDashboardShellInterviewsRoute =
     path: '/interviews',
     getParentRoute: () => AuthenticatedDashboardShellRoute,
   } as any)
+const AuthenticatedDashboardShellHeroProfileRoute =
+  AuthenticatedDashboardShellHeroProfileRouteImport.update({
+    id: '/hero-profile',
+    path: '/hero-profile',
+    getParentRoute: () => AuthenticatedDashboardShellRoute,
+  } as any)
 const AuthenticatedDashboardShellHeroDashboardRoute =
   AuthenticatedDashboardShellHeroDashboardRouteImport.update({
     id: '/hero-dashboard',
@@ -175,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/contracts': typeof AuthenticatedDashboardShellContractsRoute
   '/dashboard': typeof AuthenticatedDashboardShellDashboardRoute
   '/hero-dashboard': typeof AuthenticatedDashboardShellHeroDashboardRoute
+  '/hero-profile': typeof AuthenticatedDashboardShellHeroProfileRoute
   '/interviews': typeof AuthenticatedDashboardShellInterviewsRoute
   '/invoices': typeof AuthenticatedDashboardShellInvoicesRoute
   '/job-requests': typeof AuthenticatedDashboardShellJobRequestsRoute
@@ -198,6 +206,7 @@ export interface FileRoutesByTo {
   '/contracts': typeof AuthenticatedDashboardShellContractsRoute
   '/dashboard': typeof AuthenticatedDashboardShellDashboardRoute
   '/hero-dashboard': typeof AuthenticatedDashboardShellHeroDashboardRoute
+  '/hero-profile': typeof AuthenticatedDashboardShellHeroProfileRoute
   '/interviews': typeof AuthenticatedDashboardShellInterviewsRoute
   '/invoices': typeof AuthenticatedDashboardShellInvoicesRoute
   '/job-requests': typeof AuthenticatedDashboardShellJobRequestsRoute
@@ -224,6 +233,7 @@ export interface FileRoutesById {
   '/_authenticated/_dashboard-shell/contracts': typeof AuthenticatedDashboardShellContractsRoute
   '/_authenticated/_dashboard-shell/dashboard': typeof AuthenticatedDashboardShellDashboardRoute
   '/_authenticated/_dashboard-shell/hero-dashboard': typeof AuthenticatedDashboardShellHeroDashboardRoute
+  '/_authenticated/_dashboard-shell/hero-profile': typeof AuthenticatedDashboardShellHeroProfileRoute
   '/_authenticated/_dashboard-shell/interviews': typeof AuthenticatedDashboardShellInterviewsRoute
   '/_authenticated/_dashboard-shell/invoices': typeof AuthenticatedDashboardShellInvoicesRoute
   '/_authenticated/_dashboard-shell/job-requests': typeof AuthenticatedDashboardShellJobRequestsRoute
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/contracts'
     | '/dashboard'
     | '/hero-dashboard'
+    | '/hero-profile'
     | '/interviews'
     | '/invoices'
     | '/job-requests'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/contracts'
     | '/dashboard'
     | '/hero-dashboard'
+    | '/hero-profile'
     | '/interviews'
     | '/invoices'
     | '/job-requests'
@@ -297,6 +309,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_dashboard-shell/contracts'
     | '/_authenticated/_dashboard-shell/dashboard'
     | '/_authenticated/_dashboard-shell/hero-dashboard'
+    | '/_authenticated/_dashboard-shell/hero-profile'
     | '/_authenticated/_dashboard-shell/interviews'
     | '/_authenticated/_dashboard-shell/invoices'
     | '/_authenticated/_dashboard-shell/job-requests'
@@ -426,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardShellInterviewsRouteImport
       parentRoute: typeof AuthenticatedDashboardShellRoute
     }
+    '/_authenticated/_dashboard-shell/hero-profile': {
+      id: '/_authenticated/_dashboard-shell/hero-profile'
+      path: '/hero-profile'
+      fullPath: '/hero-profile'
+      preLoaderRoute: typeof AuthenticatedDashboardShellHeroProfileRouteImport
+      parentRoute: typeof AuthenticatedDashboardShellRoute
+    }
     '/_authenticated/_dashboard-shell/hero-dashboard': {
       id: '/_authenticated/_dashboard-shell/hero-dashboard'
       path: '/hero-dashboard'
@@ -491,6 +511,7 @@ interface AuthenticatedDashboardShellRouteChildren {
   AuthenticatedDashboardShellContractsRoute: typeof AuthenticatedDashboardShellContractsRoute
   AuthenticatedDashboardShellDashboardRoute: typeof AuthenticatedDashboardShellDashboardRoute
   AuthenticatedDashboardShellHeroDashboardRoute: typeof AuthenticatedDashboardShellHeroDashboardRoute
+  AuthenticatedDashboardShellHeroProfileRoute: typeof AuthenticatedDashboardShellHeroProfileRoute
   AuthenticatedDashboardShellInterviewsRoute: typeof AuthenticatedDashboardShellInterviewsRoute
   AuthenticatedDashboardShellInvoicesRoute: typeof AuthenticatedDashboardShellInvoicesRoute
   AuthenticatedDashboardShellJobRequestsRoute: typeof AuthenticatedDashboardShellJobRequestsRoute
@@ -518,6 +539,8 @@ const AuthenticatedDashboardShellRouteChildren: AuthenticatedDashboardShellRoute
       AuthenticatedDashboardShellDashboardRoute,
     AuthenticatedDashboardShellHeroDashboardRoute:
       AuthenticatedDashboardShellHeroDashboardRoute,
+    AuthenticatedDashboardShellHeroProfileRoute:
+      AuthenticatedDashboardShellHeroProfileRoute,
     AuthenticatedDashboardShellInterviewsRoute:
       AuthenticatedDashboardShellInterviewsRoute,
     AuthenticatedDashboardShellInvoicesRoute:

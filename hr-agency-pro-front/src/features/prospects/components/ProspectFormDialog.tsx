@@ -1,8 +1,11 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useQuery } from '@tanstack/react-query'
 import { Modal, Button, Label, TextField } from '@heroui/react'
+import { clientsApi } from '../../../api/clients.api'
+import { SearchableSelect } from '../../../components/SearchableSelect'
 import type { Prospect } from '../../../types/prospect.types'
 
 const schema = z.object({
@@ -11,6 +14,7 @@ const schema = z.object({
   email: z.string().email('Invalid email'),
   phone: z.string().regex(/^[0-9+\-\s\(\)]*$/, 'Only numbers and phone characters allowed').optional(),
   position: z.string().optional(),
+  clientId: z.coerce.number().optional(),
   status: z.enum([
     'sourcing',
     'contacted',
@@ -18,7 +22,9 @@ const schema = z.object({
     'client_review',
     'budget',
     'contract',
+    'rejected',
   ]),
+  rejectionReason: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -36,20 +42,34 @@ export function ProspectFormDialog({ open, onClose, onSubmit, defaultValues, tit
     register,
     handleSubmit,
     reset,
+    control,
+    setValue,
     formState: { errors, dirtyFields },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues ? { status: 'sourcing', ...defaultValues } as FormValues : { status: 'sourcing' },
+    defaultValues: defaultValues ? { status: 'sourcing', rejectionReason: '', ...defaultValues } as FormValues : { status: 'sourcing', rejectionReason: '' },
   })
+
+  const selectedStatus = useWatch({ control, name: 'status' })
 
   const ok = (n: keyof FormValues) => !!dirtyFields[n] && !errors[n]
   const cls = (n: keyof FormValues) => `input w-full${ok(n) ? ' input-valid' : ''}`
 
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => clientsApi.list(),
+    enabled: open,
+  })
+
   useEffect(() => {
     if (open) {
-      reset(defaultValues ? { status: 'sourcing', ...defaultValues } as FormValues : { status: 'sourcing' })
+      reset(defaultValues ? { status: 'sourcing', rejectionReason: '', ...defaultValues } as FormValues : { status: 'sourcing', rejectionReason: '' })
     }
   }, [open])
+
+  useEffect(() => {
+    if (selectedStatus !== 'rejected') setValue('rejectionReason', '')
+  }, [selectedStatus, setValue])
 
   function handleFormSubmit(data: FormValues) {
     onSubmit(data as Partial<Prospect>)
@@ -64,7 +84,7 @@ export function ProspectFormDialog({ open, onClose, onSubmit, defaultValues, tit
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>
           </Modal.Header>
-          <Modal.Body>
+          <Modal.Body className="overflow-y-auto max-h-[60vh]">
             <form
               id="prospect-form"
               onSubmit={handleSubmit(handleFormSubmit)}
@@ -117,6 +137,23 @@ export function ProspectFormDialog({ open, onClose, onSubmit, defaultValues, tit
               </TextField>
 
               <TextField>
+                <Label>Client</Label>
+                <Controller
+                  control={control}
+                  name="clientId"
+                  render={({ field }) => (
+                    <SearchableSelect
+                      options={clients.map((c: any) => ({ value: c.id, label: c.name }))}
+                      value={field.value || undefined}
+                      onChange={v => field.onChange(v ?? undefined)}
+                      placeholder="Assign to client (optional)..."
+                      dropUp
+                    />
+                  )}
+                />
+              </TextField>
+
+              <TextField>
                 <Label>Status</Label>
                 <select {...register('status')} className={cls('status')}>
                   <option value="sourcing">Sourcing</option>
@@ -125,8 +162,21 @@ export function ProspectFormDialog({ open, onClose, onSubmit, defaultValues, tit
                   <option value="client_review">Client Interview</option>
                   <option value="budget">Budget / Negotiation</option>
                   <option value="contract">Contract & Hire</option>
+                  <option value="rejected">Rejected</option>
                 </select>
               </TextField>
+
+              {selectedStatus === 'rejected' && (
+                <TextField>
+                  <Label>Rejection Reason</Label>
+                  <textarea
+                    {...register('rejectionReason')}
+                    rows={6}
+                    className={`${cls('rejectionReason')} resize-none`}
+                    placeholder="Explain why this prospect was rejected..."
+                  />
+                </TextField>
+              )}
             </form>
           </Modal.Body>
           <Modal.Footer>

@@ -120,7 +120,17 @@ export function HeroesList() {
                         <span className="font-medium">{hero.firstName} {hero.lastName}</span>
                       </Table.Cell>
                       <Table.Cell>{hero.email}</Table.Cell>
-                      <Table.Cell>{hero.skills?.join(', ') ?? '—'}</Table.Cell>
+                      <Table.Cell>
+                        {hero.skills?.length ? (
+                          <div className="flex flex-wrap gap-1">
+                            {hero.skills.map(skill => (
+                              <Chip key={skill} size="sm" variant="flat" color="primary">{skill}</Chip>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted text-sm">—</span>
+                        )}
+                      </Table.Cell>
                       <Table.Cell>
                         <div className="flex gap-1">
                           <Button

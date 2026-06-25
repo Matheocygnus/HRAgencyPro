@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Hero } from '../../heroes/entities/hero.entity';
+import { Company } from '../../companies/entities/company.entity';
 
 @Entity('invoices')
 export class Invoice {
@@ -31,6 +32,10 @@ export class Invoice {
 
   @Column({ name: 'company_id' })
   companyId: number;
+
+  @ManyToOne(() => Company, { eager: false, nullable: true })
+  @JoinColumn({ name: 'company_id' })
+  company: Company;
 
   @Column({ type: 'double precision' })
   amount: number;

@@ -49,6 +49,15 @@ async function bootstrap() {
         'jobs:create',      // ability to create job requests
       ],
     },
+    {
+      name: 'hero',
+      permissions: [
+        'hero_dashboard',   // hero portal home screen
+        'heroes:read',      // own profile only (scoped by heroId in JWT)
+        'contracts:read',   // own contracts only (scoped by heroId in JWT)
+        'invoices:read',    // own invoices only (scoped by heroId in JWT)
+      ],
+    },
   ];
 
   for (const def of roleDefs) {
@@ -85,6 +94,30 @@ async function bootstrap() {
       }),
     );
     console.log('User admin created');
+  }
+
+  const heroRole = await roleRepo.findOne({ where: { name: 'hero' } });
+  if (heroRole) {
+    const TEST_HERO_ID = 63; // Matheo Pacent2
+    const heroPassword = await hashPassword('hero123');
+    const existingHero = await userRepo.findOne({ where: { username: 'test.hero' } });
+    if (existingHero) {
+      await userRepo.update(existingHero.id, { heroId: TEST_HERO_ID, roleId: heroRole.id, password: heroPassword });
+      console.log(`User test.hero updated (heroId: ${TEST_HERO_ID})`);
+    } else {
+      await userRepo.save(
+        userRepo.create({
+          username: 'test.hero',
+          email: 'test.hero@test.com',
+          password: heroPassword,
+          firstName: 'Test',
+          lastName: 'Hero',
+          roleId: heroRole.id,
+          heroId: TEST_HERO_ID,
+        }),
+      );
+      console.log(`User test.hero created (heroId: ${TEST_HERO_ID})`);
+    }
   }
 
   await app.close();

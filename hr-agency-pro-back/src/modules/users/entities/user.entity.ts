@@ -36,6 +36,9 @@ export class User {
   @Column({ name: 'client_id', type: 'int', nullable: true })
   clientId: number;
 
+  @Column({ name: 'hero_id', type: 'int', nullable: true })
+  heroId: number;
+
   @Column({ name: 'role_id' })
   roleId: number;
 

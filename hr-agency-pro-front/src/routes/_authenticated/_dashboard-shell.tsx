@@ -5,7 +5,7 @@ import { Avatar, Button } from '@heroui/react'
 import {
   LayoutDashboard, Building2, User, UserSearch, Users, Database,
   Shield, Building, FileText, Receipt, Calendar, Briefcase,
-  ClipboardList, UserCog, ShieldCheck, Settings,
+  ClipboardList, UserCog, ShieldCheck, Settings, UserRound,
 } from 'lucide-react'
 import { usePermissions } from '../../features/auth/use-permissions'
 import { useAuth } from '../../features/auth/use-auth'
@@ -19,6 +19,7 @@ const ROUTE_ICONS: Record<string, React.ElementType> = {
   '/dashboard': LayoutDashboard,
   '/client-dashboard': Building2,
   '/hero-dashboard': User,
+  '/hero-profile': UserRound,
   '/prospect-dashboard': UserSearch,
   '/prospects': Users,
   '/prospect-database': Database,
@@ -37,7 +38,12 @@ const ROUTE_ICONS: Record<string, React.ElementType> = {
 function SidebarContent({ currentPath }: { currentPath: string }) {
   const { can } = usePermissions()
   const { isOpen } = useSidebar()
-  const visibleItems = navigationItems.filter(item => can(item.permission))
+  const visibleItems = navigationItems.filter(item => {
+    if (!can(item.permission)) return false
+    if (item.hiddenFor?.some(p => can(p))) return false
+    if (item.visibleFor && !item.visibleFor.some(p => can(p))) return false
+    return true
+  })
 
   return (
     <>
@@ -63,7 +69,7 @@ function SidebarContent({ currentPath }: { currentPath: string }) {
               const Icon = ROUTE_ICONS[item.to] ?? LayoutDashboard
               return (
                 <Sidebar.MenuItem
-                  key={item.to}
+                  key={`${item.label}-${item.to}`}
                   href={item.to}
                   isCurrent={currentPath === item.to}
                   textValue={item.label}
@@ -93,7 +99,7 @@ function SidebarContent({ currentPath }: { currentPath: string }) {
               const Icon = ROUTE_ICONS[item.to] ?? LayoutDashboard
               return (
                 <Sidebar.MenuItem
-                  key={item.to}
+                  key={`${item.label}-${item.to}`}
                   href={item.to}
                   isCurrent={currentPath === item.to}
                   textValue={item.label}

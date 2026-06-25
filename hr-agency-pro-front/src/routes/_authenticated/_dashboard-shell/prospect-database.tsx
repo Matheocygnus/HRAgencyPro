@@ -26,6 +26,8 @@ import { companiesApi } from '../../../api/companies.api'
 import { useToast } from '../../../lib/toast'
 import type { Prospect } from '../../../types/prospect.types'
 import type { Company } from '../../../types/company.types'
+import { ProspectFormDialog } from '../../../features/prospects/components/ProspectFormDialog'
+import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/prospect-database')({
   component: ProspectDatabase,
@@ -52,6 +54,8 @@ export function ProspectDatabase() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [roleFilters, setRoleFilters] = useState<string[]>([])
   const [statusFilter, setStatusFilter] = useState('')
+  const [editTarget, setEditTarget] = useState<Prospect | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -97,6 +101,19 @@ export function ProspectDatabase() {
   const filteredCompanies = companies.filter(c =>
     c.name.toLowerCase().includes(debouncedSearch.toLowerCase()),
   )
+
+  async function handleUpdate(data: Partial<Prospect>) {
+    if (!editTarget) return
+    await prospectsApi.update(editTarget.id, data)
+    queryClient.invalidateQueries({ queryKey: ['prospects'] })
+    setEditTarget(null)
+  }
+
+  async function handleDelete(id: number) {
+    await prospectsApi.remove(id)
+    queryClient.invalidateQueries({ queryKey: ['prospects'] })
+    setDeleteTarget(null)
+  }
 
   async function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -237,8 +254,8 @@ export function ProspectDatabase() {
                     <Table.Column isRowHeader>Name</Table.Column>
                     <Table.Column>Email</Table.Column>
                     <Table.Column>Status</Table.Column>
-                    <Table.Column>Company</Table.Column>
                     <Table.Column>Rejection Reason</Table.Column>
+                    <Table.Column>Actions</Table.Column>
                   </Table.Header>
                   <Table.Body
                     items={filteredProspects}
@@ -263,12 +280,17 @@ export function ProspectDatabase() {
                               {p.status}
                             </Chip>
                           </Table.Cell>
-                          <Table.Cell>{p.targetCompany ?? '—'}</Table.Cell>
                           <Table.Cell>
                             {hasReason
                               ? <ExpandableCell text={p.rejectionReason!} />
                               : <span className="text-muted">—</span>
                             }
+                          </Table.Cell>
+                          <Table.Cell>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" color="primary" onPress={() => setEditTarget(p)}>Edit</Button>
+                              <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteTarget(p.id)}>Delete</Button>
+                            </div>
                           </Table.Cell>
                         </Table.Row>
                       )
@@ -311,6 +333,23 @@ export function ProspectDatabase() {
           </Card.Content>
         </Card>
       )}
+      {editTarget && (
+        <ProspectFormDialog
+          open
+          onClose={() => setEditTarget(null)}
+          onSubmit={handleUpdate}
+          defaultValues={editTarget}
+          title="Edit Prospect"
+        />
+      )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Prospect"
+        description="This action cannot be undone."
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => { if (deleteTarget !== null) handleDelete(deleteTarget) }}
+      />
     </div>
   )
 }

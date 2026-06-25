@@ -3,19 +3,15 @@ import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
 import { useQuery } from '@tanstack/react-query'
 import { KPI } from '@heroui-pro/react'
-import { Tabs, Chip, Separator, ProgressBar, Skeleton, Card } from '@heroui/react'
+import { Tabs, Chip, Separator, ProgressBar, Skeleton, Card, Button } from '@heroui/react'
 import { api } from '../../../lib/api'
 import { useAuthContext } from '../../../features/auth/auth-context'
+import { heroesApi } from '../../../api/heroes.api'
+import type { Hero } from '../../../types/hero.types'
 
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/hero-dashboard')({
   component: HeroDashboard,
 })
-
-interface Hero {
-  id: number
-  name: string
-  title: string
-}
 
 interface Contract {
   id: number
@@ -23,26 +19,26 @@ interface Contract {
   lengthMonths: number
   status: string
   startDate?: string
-  clientName?: string
+  company?: { id: number; name: string }
 }
 
 function contractProgress(contract: Contract): number {
-  if (!contract.startDate) return 0
+  if (!contract.startDate || !contract.lengthMonths) return 0
   const start = new Date(contract.startDate).getTime()
   const now = Date.now()
   const totalMs = contract.lengthMonths * 30 * 24 * 60 * 60 * 1000
-  return Math.min(100, Math.round(((now - start) / totalMs) * 100))
+  if (totalMs <= 0) return 0
+  return Math.min(100, Math.max(0, Math.round(((now - start) / totalMs) * 100)))
 }
 
 export function HeroDashboard() {
   const { can } = usePermissions()
-  if (!can('hero_dashboard')) return <AccessDenied />
   const { user } = useAuthContext()
   const heroId = user?.heroId
 
   const heroQuery = useQuery<Hero>({
     queryKey: ['heroes', heroId],
-    queryFn: () => api.get<Hero>(`/heroes/${heroId}`).then(r => r.data),
+    queryFn: () => heroesApi.get(heroId!),
     enabled: heroId != null,
   })
 
@@ -51,6 +47,8 @@ export function HeroDashboard() {
     queryFn: () => api.get<Contract[]>('/contracts', { params: { heroId } }).then(r => r.data),
     enabled: heroId != null,
   })
+
+  if (!can('hero_dashboard')) return <AccessDenied />
 
   const hero = heroQuery.data
   const contracts = contractsQuery.data ?? []
@@ -71,9 +69,9 @@ export function HeroDashboard() {
           ) : (
             <>
               <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
-                {hero?.name ?? 'Hero Dashboard'}
+                {hero ? `${hero.firstName} ${hero.lastName}`.trim() || 'Hero Dashboard' : 'Hero Dashboard'}
               </h1>
-              <p className="text-xs text-muted md:text-sm">{hero?.title ?? ''}</p>
+              <p className="text-xs text-muted md:text-sm">{hero?.email ?? ''}</p>
             </>
           )}
         </div>
@@ -109,6 +107,32 @@ export function HeroDashboard() {
         </div>
       )}
 
+      {/* Deel Account card */}
+      <Card>
+        <Card.Header className="flex-row items-center justify-between">
+          <div>
+            <Card.Title>Deel Account</Card.Title>
+            <Card.Description>Payment and compliance setup</Card.Description>
+          </div>
+          <Chip color="warning" variant="flat" size="sm">Pending Setup</Chip>
+        </Card.Header>
+        <Card.Content>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted">Status</span>
+              <span className="font-medium text-warning-600">Not connected</span>
+            </div>
+            <Separator />
+            <p className="text-xs text-muted">
+              Connect your Deel account to receive payments and manage compliance documents.
+            </p>
+            <Button size="sm" variant="flat" isDisabled>
+              Connect Deel Account
+            </Button>
+          </div>
+        </Card.Content>
+      </Card>
+
       {/* Contract detail section */}
       <Card>
         <Card.Header>
@@ -132,7 +156,7 @@ export function HeroDashboard() {
                   <>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Client</span>
-                      <span className="text-sm text-muted">{activeContract.clientName ?? '—'}</span>
+                      <span className="text-sm text-muted">{activeContract.company?.name ?? '—'}</span>
                     </div>
                     <Separator />
                     <div className="flex items-center justify-between">
@@ -142,7 +166,7 @@ export function HeroDashboard() {
                     <Separator />
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Duration</span>
-                      <span className="text-sm text-muted">{activeContract.lengthMonths} months</span>
+                      <span className="text-sm text-muted">{activeContract.lengthMonths ?? 'N/A'} months</span>
                     </div>
                   </>
                 ) : (
@@ -169,7 +193,7 @@ export function HeroDashboard() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-muted">Duration</p>
-                      <p className="font-medium">{activeContract.lengthMonths} months</p>
+                      <p className="font-medium">{activeContract.lengthMonths ?? 'N/A'} months</p>
                     </div>
                     <div>
                       <p className="text-muted">Status</p>

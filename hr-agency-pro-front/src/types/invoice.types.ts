@@ -17,6 +17,7 @@ export interface Invoice {
   dueDate: string
   paidDate?: string
   createdAt: string
+  company?: { id: number; name: string }
 }
 
 export function heroName(invoice: Invoice): string {

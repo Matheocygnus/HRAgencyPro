@@ -27,6 +27,8 @@ export class InvoicesController {
     const permissions: string[] = user?.permissions ?? []
     const hasFullAccess = permissions.includes('invoices') || permissions.includes('*')
     if (hasFullAccess) return this.invoicesService.findAll()
+    // Hero role: scope to their own heroId from JWT — never trust query params
+    if (user?.heroId != null) return this.invoicesService.findAll({ heroId: user.heroId })
     // Client role: scope to their clientId; if not set, return nothing (never leak)
     const clientId: number | undefined = user?.clientId ?? undefined
     if (!clientId) return []
