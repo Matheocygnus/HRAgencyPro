@@ -57,6 +57,18 @@ export class JobOpeningsController {
     return this.jobsService.generateFromRequest(requestId);
   }
 
+  @Post('enhance-from-request')
+  @RequirePermissions('jobs:create')
+  enhanceFromRequest(@Body('jobRequestId', ParseIntPipe) jobRequestId: number) {
+    return this.jobsService.enhanceFromRequest(jobRequestId);
+  }
+
+  @Get('gemini-status')
+  @RequirePermissions('jobs:read')
+  geminiStatus() {
+    return this.jobsService.geminiStatus();
+  }
+
   @Patch(':id')
   @RequirePermissions('jobs:update')
   update(

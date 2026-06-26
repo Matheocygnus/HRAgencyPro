@@ -51,7 +51,7 @@ const statusColor: Record<string, 'default' | 'primary' | 'success' | 'warning' 
   new: 'default', screened: 'primary', cv_sent: 'primary',
   interview_scheduled: 'warning', offer_agreed: 'warning',
   hired: 'success', rejected: 'danger',
-  pending: 'warning', converted: 'primary', rejected: 'danger',
+  pending: 'warning', approved: 'success', converted: 'primary',
 }
 
 export function JobsPage() {

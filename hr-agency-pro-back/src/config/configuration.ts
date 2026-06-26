@@ -19,10 +19,10 @@ export default () => ({
     secretKey: process.env.STRIPE_SECRET_KEY || '',
   },
   email: {
-    host: process.env.EMAIL_HOST || '',
+    host: process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT || '587', 10),
-    user: process.env.EMAIL_USER || '',
-    pass: process.env.EMAIL_PASS || '',
+    user: process.env.EMAIL_USER || process.env.SMTP_EMAIL || '',
+    pass: process.env.EMAIL_PASS || process.env.SMTP_PASSWORD || '',
     from: process.env.EMAIL_FROM || 'Remote Hero <noreply@remotehero.com>',
     rhRecipient: process.env.RH_RECIPIENT_EMAIL || 'matheo@cygnusdevs.com',
   },

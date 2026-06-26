@@ -21,6 +21,12 @@ export const jobsApi = {
       api.patch<JobApplication>(`/job-applications/${id}`, data).then(r => r.data),
     remove: (id: number) => api.delete(`/job-applications/${id}`).then(r => r.data),
   },
+  enhance: {
+    fromRequest: (jobRequestId: number) =>
+      api.post<{ enhancedText: string; debug?: string }>('/job-openings/enhance-from-request', { jobRequestId }).then(r => r.data),
+    geminiStatus: () =>
+      api.get<{ configured: boolean; keyPrefix: string; testResult?: string; error?: string }>('/job-openings/gemini-status').then(r => r.data),
+  },
   requests: {
     list: (params?: { clientId?: number }) =>
       api.get<JobRequest[]>('/job-requests', { params }).then(r => r.data),

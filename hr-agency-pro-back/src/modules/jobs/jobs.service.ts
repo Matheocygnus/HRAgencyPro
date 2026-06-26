@@ -37,6 +37,26 @@ export class JobsService {
     private readonly configService: ConfigService,
   ) {}
 
+  // ---- Gemini diagnostics ----
+
+  async geminiStatus(): Promise<{ configured: boolean; keyPrefix: string; testResult?: string; error?: string }> {
+    const apiKey = this.configService.get<string>('gemini.apiKey');
+    if (!apiKey) {
+      return { configured: false, keyPrefix: 'none', error: 'GEMINI_API_KEY is not set' };
+    }
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { GoogleGenerativeAI } = require('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const result = await model.generateContent('Say "Gemini OK" and nothing else.');
+      return { configured: true, keyPrefix: apiKey.slice(0, 8) + '...', testResult: result.response.text().trim() };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { configured: true, keyPrefix: apiKey.slice(0, 8) + '...', error: message };
+    }
+  }
+
   // ---- Job Openings ----
 
   findAllOpenings(): Promise<JobOpening[]> {
@@ -236,7 +256,7 @@ Return ONLY the JSON, no markdown, no explanation.
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { GoogleGenerativeAI } = require('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
       const result = await model.generateContent(prompt);
       const text: string = result.response.text().trim();
       const clean = text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
@@ -244,6 +264,65 @@ Return ONLY the JSON, no markdown, no explanation.
     } catch (err) {
       this.logger.error('Gemini generation failed', err);
       return this.mockJobPost(request);
+    }
+  }
+
+  async enhanceFromRequest(requestId: number): Promise<{ enhancedText: string; debug?: string }> {
+    const request = await this.findOneRequest(requestId);
+    const apiKey = this.configService.get<string>('gemini.apiKey');
+
+    this.logger.log(`[enhance] requestId=${requestId} apiKey=${apiKey ? `set (${apiKey.slice(0, 6)}...)` : 'MISSING'}`);
+
+    if (!apiKey) {
+      this.logger.warn('GEMINI_API_KEY not configured — returning raw fallback');
+      return {
+        enhancedText: `# ${request.title}\n\n${request.description ?? ''}\n\n## Requirements\n${request.requirements ?? ''}`,
+        debug: 'GEMINI_API_KEY is not set in environment',
+      };
+    }
+
+    const budget = request.notes ?? 'Competitive — details shared during the interview process';
+    const startDate = request.startDate ?? 'To be defined';
+    const goodToHave = request.niceToHaveSkills ?? 'Not specified';
+
+    const prompt = `Actúa como un Tech Recruiter Senior y un Copywriter experto en reclutamiento B2B.
+Tu tarea es tomar los datos crudos de una solicitud de empleo enviada por un cliente y transformarlos en una oferta de trabajo altamente atractiva, persuasiva y profesional.
+
+Reglas de redacción:
+- Usa un tono moderno, entusiasta y humano.
+- Utiliza emojis estratégicos para hacer la lectura ágil, pero mantén la profesionalidad.
+- Devuelve la respuesta estrictamente en formato Markdown limpio.
+- NO incluyas saludos, introducciones tuyas ni texto extra. Devuelve ÚNICAMENTE el contenido listo para ser publicado.
+
+Estructura obligatoria de la oferta:
+1. Título Atractivo: Basado en el rol solicitado.
+2. El Gancho (Hook): Un párrafo corto (2-3 líneas) que enamore al candidato y explique el impacto del rol.
+3. Tus Responsabilidades: Viñetas claras sobre el día a día.
+4. Lo que buscamos en ti: Separando claramente los requisitos excluyentes (Must-have) de los deseables (Good-to-have).
+5. Nuestra Propuesta: Incluye el presupuesto (Budget) de forma transparente y atractiva.
+
+Datos crudos del cliente a procesar:
+Título del Rol: ${request.title}
+Presupuesto Mensual: ${budget}
+Fecha de Inicio Estimada: ${startDate}
+Responsabilidades: ${request.description ?? ''}
+Requisitos Excluyentes: ${request.requirements ?? ''}
+Requisitos Deseables: ${goodToHave}`;
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { GoogleGenerativeAI } = require('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const result = await model.generateContent(prompt);
+      return { enhancedText: result.response.text().trim() };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Gemini enhancement failed: ${message}`, err);
+      return {
+        enhancedText: `# ${request.title}\n\n${request.description ?? ''}\n\n## Requirements\n${request.requirements ?? ''}`,
+        debug: `Gemini call failed: ${message}`,
+      };
     }
   }
 

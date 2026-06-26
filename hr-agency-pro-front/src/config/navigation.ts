@@ -23,6 +23,7 @@ export const navigationItems: NavItem[] = [
   { label: 'Invoices', to: '/invoices', permission: 'invoices' },
   { label: 'Interviews', to: '/interviews', permission: 'interviews' },
   { label: 'Jobs', to: '/jobs', permission: 'jobs' },
+  { label: 'Shopping', to: '/job-requests', permission: 'job-requests' },
   { label: 'Users', to: '/users', permission: 'users' },
   { label: 'Roles', to: '/roles', permission: 'roles' },
   { label: 'Settings', to: '/settings', permission: 'settings' },

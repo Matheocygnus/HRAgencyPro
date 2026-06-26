@@ -4,15 +4,14 @@ import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Table, Chip, Button, Card, Skeleton } from '@heroui/react'
-import { Plus, ShoppingBag, Sparkles } from 'lucide-react'
+import { Plus, ShoppingBag } from 'lucide-react'
 import { hasPermission } from '../../../lib/permissions'
 import { jobsApi } from '../../../api/jobs.api'
-import { api } from '../../../lib/api'
 import { useAuth } from '../../../features/auth/use-auth'
 import type { JobRequest } from '../../../types/job.types'
 import { JobRequestFormDialog } from '../../../features/jobs/components/JobRequestFormDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
-import { GenerateJobPostDialog, type GeneratedJobPost } from '../../../features/jobs/components/GenerateJobPostDialog'
+import { GenerateJobPostDialog } from '../../../features/jobs/components/GenerateJobPostDialog'
 
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/job-requests')({
   beforeLoad: ({ context }) => {
@@ -24,7 +23,7 @@ export const Route = createFileRoute('/_authenticated/_dashboard-shell/job-reque
 })
 
 const statusColor: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'danger'> = {
-  pending: 'warning', approved: 'success', rejected: 'danger',
+  pending: 'warning', approved: 'success', rejected: 'danger', converted: 'primary',
 }
 
 export function JobRequestsPage() {
@@ -39,7 +38,7 @@ export function JobRequestsPage() {
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
   const [editTarget, setEditTarget] = useState<JobRequest | null>(null)
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
-  const [generatedPost, setGeneratedPost] = useState<GeneratedJobPost | null>(null)
+  const [enhancedData, setEnhancedData] = useState<{ text: string; requestTitle: string; requestId: number; debug?: string } | null>(null)
 
   const { data: requests = [], isLoading } = useQuery<JobRequest[]>({
     queryKey: ['job-requests', { clientId }],
@@ -52,24 +51,32 @@ export function JobRequestsPage() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['job-requests'] }),
   })
 
-  const generateMutation = useMutation({
-    mutationFn: (requestId: number) =>
-      api.post<GeneratedJobPost>(`/job-openings/generate-from-request/${requestId}`).then(r => r.data),
-    onSuccess: (data) => {
-      setGeneratedPost(data)
-    },
+  const enhanceMutation = useMutation({
+    mutationFn: ({ requestId, requestTitle }: { requestId: number; requestTitle: string }) =>
+      jobsApi.enhance.fromRequest(requestId).then(res => ({
+        text: res.enhancedText,
+        requestTitle,
+        debug: res.debug,
+      })),
+    onSuccess: (data, variables) => setEnhancedData({ ...data, requestId: variables.requestId }),
   })
 
   const publishMutation = useMutation({
-    mutationFn: (data: Partial<GeneratedJobPost>) =>
+    mutationFn: (data: { title: string; description: string }) =>
       jobsApi.openings.create({ ...data, status: 'active' }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['job-openings'] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['job-openings'] })
+      if (enhancedData?.requestId) {
+        void jobsApi.requests.update(enhancedData.requestId, { status: 'converted' } as Partial<JobRequest>)
+          .then(() => queryClient.invalidateQueries({ queryKey: ['job-requests'] }))
+      }
+    },
   })
 
-  function handleGenerate(requestId: number) {
-    setGeneratedPost(null)
+  function handleGenerate(requestId: number, requestTitle: string) {
+    setEnhancedData(null)
     setGenerateDialogOpen(true)
-    generateMutation.mutate(requestId)
+    enhanceMutation.mutate({ requestId, requestTitle })
   }
 
   async function handleCreate(data: Partial<JobRequest> & Record<string, unknown>) {
@@ -169,7 +176,7 @@ export function JobRequestsPage() {
                           </Chip>
                         </Table.Cell>
                         <Table.Cell>
-                          {(r as any).salary ? `$${(r as any).salary}` : '—'}
+                          {r.notes ?? '—'}
                         </Table.Cell>
                         <Table.Cell>{new Date(r.createdAt).toLocaleDateString()}</Table.Cell>
                         <Table.Cell>
@@ -195,10 +202,10 @@ export function JobRequestsPage() {
                             {isRecruiter && r.status === 'approved' && (
                               <Button
                                 size="sm" variant="flat" color="primary"
-                                startContent={<Sparkles className="size-3" />}
-                                onPress={() => handleGenerate(r.id)}
+                                isLoading={enhanceMutation.isPending && enhanceMutation.variables?.requestId === r.id}
+                                onPress={() => handleGenerate(r.id, r.title)}
                               >
-                                Generate Job Post
+                                ✨ Enhance with AI
                               </Button>
                             )}
                             {!isRecruiter && r.status === 'pending' && (
@@ -246,9 +253,11 @@ export function JobRequestsPage() {
 
       <GenerateJobPostDialog
         open={generateDialogOpen}
-        onClose={() => { setGenerateDialogOpen(false); setGeneratedPost(null) }}
-        generated={generatedPost}
-        isGenerating={generateMutation.isPending}
+        onClose={() => { setGenerateDialogOpen(false); setEnhancedData(null) }}
+        requestTitle={enhancedData?.requestTitle ?? enhanceMutation.variables?.requestTitle ?? ''}
+        enhancedText={enhancedData?.text ?? null}
+        isEnhancing={enhanceMutation.isPending}
+        debugError={enhancedData?.debug}
         onPublish={(data) => publishMutation.mutate(data)}
       />
     </div>
