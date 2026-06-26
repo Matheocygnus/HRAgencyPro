@@ -13,11 +13,22 @@ export class InvoicesService {
   ) {}
 
   findAll(filters?: { clientId?: number; heroId?: number }): Promise<Invoice[]> {
-    const where: Partial<Invoice> = {};
-    if (filters?.clientId) where.clientId = filters.clientId;
-    if (filters?.heroId) where.heroId = filters.heroId;
+    if (filters?.clientId) {
+      return this.invoiceRepository
+        .createQueryBuilder('invoice')
+        .leftJoinAndSelect('invoice.hero', 'hero')
+        .leftJoinAndSelect('hero.prospect', 'prospect')
+        .leftJoinAndSelect('invoice.company', 'company')
+        .where('company.clientId = :clientId', { clientId: filters.clientId })
+        .getMany();
+    }
+    if (filters?.heroId) {
+      return this.invoiceRepository.find({
+        where: { heroId: filters.heroId },
+        relations: { hero: { prospect: true }, company: true },
+      });
+    }
     return this.invoiceRepository.find({
-      where: Object.keys(where).length ? where : undefined,
       relations: { hero: { prospect: true }, company: true },
     });
   }

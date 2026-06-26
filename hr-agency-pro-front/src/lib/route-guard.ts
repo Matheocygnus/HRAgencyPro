@@ -11,11 +11,11 @@ export function guardRoute(permission: string) {
   }
 }
 
-// Heroes list: heroes and clients must never see the global roster — agency-level only.
+// Heroes list: heroes are blocked. Clients can access — backend filters by clientId automatically.
 export function guardHerosList() {
   return ({ context }: any) => {
     const permissions: string[] = context?.permissions ?? []
-    if (permissions.includes('hero_dashboard') || permissions.includes('client_dashboard')) {
+    if (permissions.includes('hero_dashboard')) {
       throw redirect({ to: getRoleLanding(permissions) as any })
     }
     if (!hasPermission(permissions, 'heroes:read')) {

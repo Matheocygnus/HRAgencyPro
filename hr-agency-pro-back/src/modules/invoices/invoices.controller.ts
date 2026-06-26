@@ -25,7 +25,7 @@ export class InvoicesController {
   @RequirePermissions('invoices:read')
   findAll(@CurrentUser() user: any) {
     const permissions: string[] = user?.permissions ?? []
-    const hasFullAccess = permissions.includes('invoices') || permissions.includes('*')
+    const hasFullAccess = permissions.includes('dashboard') || permissions.includes('*')
     if (hasFullAccess) return this.invoicesService.findAll()
     // Hero role: scope to their own heroId from JWT — never trust query params
     if (user?.heroId != null) return this.invoicesService.findAll({ heroId: user.heroId })
