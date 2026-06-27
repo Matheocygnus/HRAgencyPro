@@ -140,7 +140,7 @@ export function InvoiceFormDialog({
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-md" data-testid="invoice-form-dialog">
+        <Modal.Dialog className="sm:max-w-md" data-testid="invoice-form-dialog" aria-label={title}>
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>
           </Modal.Header>

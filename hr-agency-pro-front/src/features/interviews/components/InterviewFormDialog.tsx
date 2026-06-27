@@ -97,6 +97,7 @@ export function InterviewFormDialog({
         <Modal.Dialog
           className="sm:max-w-md"
           data-testid="interview-form-dialog"
+          aria-label={title}
         >
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>

@@ -76,7 +76,7 @@ export function JobOpeningFormDialog({ open, onClose, onSubmit, initial }: JobOp
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-md">
+        <Modal.Dialog className="sm:max-w-md" aria-label={initial ? 'Edit Job Opening' : 'Add Job Opening'}>
           <Modal.Header>
             <Modal.Heading>{initial ? 'Edit Job Opening' : 'Add Job Opening'}</Modal.Heading>
           </Modal.Header>

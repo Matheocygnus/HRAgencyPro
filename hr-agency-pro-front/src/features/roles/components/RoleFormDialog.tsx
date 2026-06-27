@@ -91,6 +91,7 @@ export function RoleFormDialog({
         <Modal.Dialog
           className="sm:max-w-lg"
           data-testid="role-form-dialog"
+          aria-label={title}
         >
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>

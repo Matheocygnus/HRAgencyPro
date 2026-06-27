@@ -80,7 +80,7 @@ export function ProspectFormDialog({ open, onClose, onSubmit, defaultValues, tit
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-md">
+        <Modal.Dialog className="sm:max-w-md" aria-label={title}>
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>
           </Modal.Header>

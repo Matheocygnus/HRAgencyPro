@@ -54,7 +54,7 @@ export function CompanyFormDialog({ open, onClose, onSubmit, clients, defaultVal
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-md">
+        <Modal.Dialog className="sm:max-w-md" aria-label={title}>
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>
           </Modal.Header>

@@ -41,7 +41,7 @@ export function GenerateJobPostDialog({
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-2xl">
+        <Modal.Dialog className="sm:max-w-2xl" aria-label="Enhance with AI">
           <Modal.Header>
             <div className="flex items-center gap-2">
               <Sparkles className="size-5 text-primary" />

@@ -118,7 +118,7 @@ export function HeroFormDialog({ open, onClose, onSubmit, defaultValues, isEditi
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-md">
+        <Modal.Dialog className="sm:max-w-md" aria-label={resolvedTitle}>
           <Modal.Header>
             <Modal.Heading>{resolvedTitle}</Modal.Heading>
           </Modal.Header>

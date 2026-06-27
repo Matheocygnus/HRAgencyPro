@@ -117,7 +117,7 @@ export function PromoteToHeroDialog({ open, prospect, onClose, onSuccess }: Prom
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-md">
+        <Modal.Dialog className="sm:max-w-md" aria-label={done ? 'Hero Created!' : 'Promote to Hero'}>
           <Modal.Header>
             <Modal.Heading>{done ? 'Hero Created!' : 'Promote to Hero'}</Modal.Heading>
             {prospect && !done && (

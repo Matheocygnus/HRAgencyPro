@@ -214,7 +214,7 @@ export function HeroRequestDialog({ open, onClose, onSubmit, isSubmitting, defau
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-lg">
+        <Modal.Dialog className="sm:max-w-lg" aria-label="New Hero Request">
           <Modal.Header>
             <Modal.Heading>New Hero Request</Modal.Heading>
             <p className="mt-0.5 text-sm text-muted">

@@ -91,7 +91,7 @@ export function ApplyDialog({ jobOpeningId, jobTitle, onClose, onSubmit }: Apply
   return (
     <Modal.Backdrop isOpen onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-2xl" data-testid="apply-dialog">
+        <Modal.Dialog className="sm:max-w-2xl" data-testid="apply-dialog" aria-label="Apply for Position">
           <Modal.CloseTrigger />
           <Modal.Header>
             <Modal.Heading>Apply for {jobTitle}</Modal.Heading>

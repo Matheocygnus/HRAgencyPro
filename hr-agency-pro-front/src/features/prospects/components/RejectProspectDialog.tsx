@@ -40,7 +40,7 @@ export function RejectProspectDialog({ open, prospect, onClose, onConfirm }: Rej
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-md">
+        <Modal.Dialog className="sm:max-w-md" aria-label="Stop Selection Process">
           <Modal.Header>
             <Modal.Heading>Stop Selection Process</Modal.Heading>
             {prospect && (

@@ -117,6 +117,7 @@ export function ContractFormDialog({
         <Modal.Dialog
           className="sm:max-w-lg"
           data-testid="contract-form-dialog"
+          aria-label={title}
         >
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>

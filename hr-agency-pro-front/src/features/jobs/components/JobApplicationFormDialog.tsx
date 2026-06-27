@@ -150,7 +150,7 @@ function CreateForm({ open, onClose, onSubmit, openings, prospects, schema }: {
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-md">
+        <Modal.Dialog className="sm:max-w-md" aria-label="Add Application">
           <Modal.Header>
             <Modal.Heading>Add Application</Modal.Heading>
           </Modal.Header>
@@ -262,7 +262,7 @@ function EditForm({ open, onClose, onSubmit, initial, schema }: {
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-md">
+        <Modal.Dialog className="sm:max-w-md" aria-label="Edit Application">
           <Modal.Header>
             <Modal.Heading>Edit Application</Modal.Heading>
           </Modal.Header>

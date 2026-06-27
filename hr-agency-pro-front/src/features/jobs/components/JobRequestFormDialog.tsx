@@ -78,7 +78,7 @@ export function JobRequestFormDialog({ open, onClose, onSubmit, defaultValues, t
   return (
     <Modal.Backdrop isOpen={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <Modal.Container>
-        <Modal.Dialog className="sm:max-w-lg" data-testid="job-request-form-dialog">
+        <Modal.Dialog className="sm:max-w-lg" data-testid="job-request-form-dialog" aria-label={title}>
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>
           </Modal.Header>
