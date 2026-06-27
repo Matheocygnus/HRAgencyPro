@@ -16,6 +16,7 @@ function ExpandableCell({ text }: { text: string }) {
   )
 }
 import { createFileRoute } from '@tanstack/react-router'
+import { TabScrollShadow } from '../../../components/TabScrollShadow'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -237,12 +238,14 @@ export function ProspectDatabase() {
           onSelectionChange={k => setActiveTab(k as ActiveTab)}
           size="sm"
         >
-          <Tabs.ListContainer>
-            <Tabs.List aria-label="Prospect database sections">
-              <Tabs.Tab id="prospects">Prospects<Tabs.Indicator /></Tabs.Tab>
-              <Tabs.Tab id="companies">Companies<Tabs.Indicator /></Tabs.Tab>
-            </Tabs.List>
-          </Tabs.ListContainer>
+          <TabScrollShadow>
+            <Tabs.ListContainer className="!overflow-x-visible">
+              <Tabs.List aria-label="Prospect database sections">
+                <Tabs.Tab id="prospects">Prospects<Tabs.Indicator /></Tabs.Tab>
+                <Tabs.Tab id="companies">Companies<Tabs.Indicator /></Tabs.Tab>
+              </Tabs.List>
+            </Tabs.ListContainer>
+          </TabScrollShadow>
         </Tabs>
       </div>
 

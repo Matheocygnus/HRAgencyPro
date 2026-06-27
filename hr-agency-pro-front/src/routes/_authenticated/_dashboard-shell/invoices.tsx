@@ -4,7 +4,9 @@ import { usePermissions } from '../../../features/auth/use-permissions'
 import { useAuthContext } from '../../../features/auth/auth-context'
 import { AccessDenied } from '../../../components/AccessDenied'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Table, Chip, Button, Card, SearchField, Tabs, Skeleton, Modal } from '@heroui/react'
+import { Table, Chip, Button, Card, SearchField, Tabs, Skeleton } from '@heroui/react'
+import { TabScrollShadow } from '../../../components/TabScrollShadow'
+import { Sheet } from '@heroui-pro/react'
 import { Plus } from 'lucide-react'
 import { invoicesApi } from '../../../api/invoices.api'
 import { clientsApi } from '../../../api/clients.api'
@@ -141,7 +143,7 @@ export function InvoicesPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
         <SearchField
           className="w-full sm:w-64"
           value={search}
@@ -159,13 +161,15 @@ export function InvoicesPage() {
           onSelectionChange={k => setActiveTab(k as StatusTab)}
           size="sm"
         >
-          <Tabs.ListContainer>
-            <Tabs.List aria-label="Invoice status">
-              {STATUS_TABS.map(tab => (
-                <Tabs.Tab key={tab} id={tab}>{tab}<Tabs.Indicator /></Tabs.Tab>
-              ))}
-            </Tabs.List>
-          </Tabs.ListContainer>
+          <TabScrollShadow>
+            <Tabs.ListContainer className="max-md:!overflow-x-visible">
+              <Tabs.List aria-label="Invoice status" className="max-md:!w-max max-md:*:!w-auto max-md:*:!shrink-0">
+                {STATUS_TABS.map(tab => (
+                  <Tabs.Tab key={tab} id={tab}>{tab}<Tabs.Indicator /></Tabs.Tab>
+                ))}
+              </Tabs.List>
+            </Tabs.ListContainer>
+          </TabScrollShadow>
         </Tabs>
       </div>
 
@@ -178,11 +182,11 @@ export function InvoicesPage() {
         </div>
       ) : (
       <Card>
-        <Card.Content className="p-0">
+        <Card.Content className="p-0 overflow-x-auto">
           {can('invoices') ? (
             <Table>
               <Table.ScrollContainer>
-                <Table.Content aria-label="Invoices table" data-testid="invoices-table">
+                <Table.Content aria-label="Invoices table" data-testid="invoices-table" className="min-w-[700px]">
                   <Table.Header>
                     <Table.Column isRowHeader>Invoice #</Table.Column>
                     <Table.Column>Client</Table.Column>
@@ -225,7 +229,7 @@ export function InvoicesPage() {
           ) : (
             <Table>
               <Table.ScrollContainer>
-                <Table.Content aria-label="Invoices table" data-testid="invoices-table">
+                <Table.Content aria-label="Invoices table" data-testid="invoices-table" className="min-w-[700px]">
                   <Table.Header>
                     <Table.Column isRowHeader>Invoice #</Table.Column>
                     <Table.Column>Company</Table.Column>
@@ -292,37 +296,43 @@ export function InvoicesPage() {
       />
 
       {viewTarget && (
-        <Modal.Backdrop isOpen onOpenChange={(isOpen) => { if (!isOpen) setViewTarget(null) }}>
-          <Modal.Container>
-            <Modal.Dialog className="sm:max-w-sm">
-              <Modal.Header>
-                <Modal.Heading>Invoice Details</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  <dt className="text-muted">Invoice #</dt>
-                  <dd className="font-medium">{viewTarget.invoiceNumber ?? '—'}</dd>
-                  {!isHero && <><dt className="text-muted">Hero</dt><dd>{heroMap[viewTarget.heroId] ?? '—'}</dd></>}
-                  <dt className="text-muted">Amount</dt>
-                  <dd className="font-medium">${viewTarget.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</dd>
-                  <dt className="text-muted">Status</dt>
-                  <dd>
-                    <Chip size="sm" variant="flat" color={statusColor[viewTarget.status] ?? 'default'}>
-                      {viewTarget.status}
-                    </Chip>
-                  </dd>
-                  <dt className="text-muted">Due Date</dt>
-                  <dd>{viewTarget.dueDate ?? '—'}</dd>
-                  <dt className="text-muted">Paid Date</dt>
-                  <dd>{viewTarget.paidDate ?? '—'}</dd>
-                </dl>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="secondary" slot="close">Close</Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
+        <Sheet isOpen onOpenChange={(isOpen) => { if (!isOpen) setViewTarget(null) }}>
+          <Sheet.Backdrop>
+            <Sheet.Content className="mx-auto max-w-[420px]">
+              <Sheet.Dialog>
+                <Sheet.Handle />
+                <Sheet.CloseTrigger />
+                <Sheet.Header>
+                  <Sheet.Heading>Invoice Details</Sheet.Heading>
+                </Sheet.Header>
+                <Sheet.Body className="p-5">
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                    <dt className="text-muted">Invoice #</dt>
+                    <dd className="font-medium">{viewTarget.invoiceNumber ?? '—'}</dd>
+                    {!isHero && <><dt className="text-muted">Hero</dt><dd>{heroMap[viewTarget.heroId] ?? '—'}</dd></>}
+                    <dt className="text-muted">Amount</dt>
+                    <dd className="font-medium">${viewTarget.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</dd>
+                    <dt className="text-muted">Status</dt>
+                    <dd>
+                      <Chip size="sm" variant="flat" color={statusColor[viewTarget.status] ?? 'default'}>
+                        {viewTarget.status}
+                      </Chip>
+                    </dd>
+                    <dt className="text-muted">Due Date</dt>
+                    <dd>{viewTarget.dueDate ?? '—'}</dd>
+                    <dt className="text-muted">Paid Date</dt>
+                    <dd>{viewTarget.paidDate ?? '—'}</dd>
+                  </dl>
+                </Sheet.Body>
+                <Sheet.Footer>
+                  <Sheet.Close>
+                    <Button variant="secondary">Close</Button>
+                  </Sheet.Close>
+                </Sheet.Footer>
+              </Sheet.Dialog>
+            </Sheet.Content>
+          </Sheet.Backdrop>
+        </Sheet>
       )}
     </div>
   )

@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
+import { TabScrollShadow } from '../../../components/TabScrollShadow'
 import { useQuery } from '@tanstack/react-query'
 import { KPI } from '@heroui-pro/react'
 import { Tabs, Table, Chip, Skeleton, Card } from '@heroui/react'
@@ -119,21 +120,23 @@ export function ProspectDashboard() {
         </Card.Header>
         <Card.Content>
           <Tabs defaultSelectedKey="overview">
-            <Tabs.ListContainer>
-              <Tabs.List aria-label="Prospect dashboard tabs">
-                <Tabs.Tab id="overview">Overview<Tabs.Indicator /></Tabs.Tab>
-                <Tabs.Tab id="interviews">
-                  Interviews
-                  {interviews.length > 0 && (
-                    <Chip size="sm" variant="flat" color="primary" className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">
-                      {interviews.length}
-                    </Chip>
-                  )}
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                <Tabs.Tab id="documents">Documents<Tabs.Indicator /></Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
+            <TabScrollShadow>
+              <Tabs.ListContainer className="!overflow-x-visible">
+                <Tabs.List aria-label="Prospect dashboard tabs">
+                  <Tabs.Tab id="overview">Overview<Tabs.Indicator /></Tabs.Tab>
+                  <Tabs.Tab id="interviews">
+                    Interviews
+                    {interviews.length > 0 && (
+                      <Chip size="sm" variant="flat" color="primary" className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">
+                        {interviews.length}
+                      </Chip>
+                    )}
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
+                  <Tabs.Tab id="documents">Documents<Tabs.Indicator /></Tabs.Tab>
+                </Tabs.List>
+              </Tabs.ListContainer>
+            </TabScrollShadow>
 
             <Tabs.Panel id="overview" className="pt-3">
               {prospect ? (

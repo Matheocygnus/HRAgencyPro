@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
+import { TabScrollShadow } from '../../../components/TabScrollShadow'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -246,13 +247,15 @@ export function SettingsPage() {
         onSelectionChange={k => setActiveTab(k as ActiveTab)}
         size="sm"
       >
-        <Tabs.ListContainer>
-          <Tabs.List aria-label="Settings sections">
-            {tabs.map(tab => (
-              <Tabs.Tab key={tab.key} id={tab.key}>{tab.label}<Tabs.Indicator /></Tabs.Tab>
-            ))}
-          </Tabs.List>
-        </Tabs.ListContainer>
+        <TabScrollShadow>
+          <Tabs.ListContainer className="!overflow-x-visible">
+            <Tabs.List aria-label="Settings sections">
+              {tabs.map(tab => (
+                <Tabs.Tab key={tab.key} id={tab.key}>{tab.label}<Tabs.Indicator /></Tabs.Tab>
+              ))}
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </TabScrollShadow>
       </Tabs>
 
       {activeTab === 'profile' && <ProfileTab user={user} />}

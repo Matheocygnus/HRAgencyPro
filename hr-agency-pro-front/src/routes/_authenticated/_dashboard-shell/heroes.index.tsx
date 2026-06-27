@@ -62,7 +62,7 @@ export function HeroesList() {
   }
 
   return (
-    <div data-testid="heroes-list" className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
+    <div data-testid="heroes-list" className="flex flex-col gap-4 p-4 md:gap-6 md:p-8">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -101,10 +101,10 @@ export function HeroesList() {
         </div>
       ) : (
       <Card>
-        <Card.Content className="p-0">
+        <Card.Content className="p-0 overflow-x-auto">
           <Table>
             <Table.ScrollContainer>
-              <Table.Content aria-label="Heroes table" data-testid="heroes-table">
+              <Table.Content aria-label="Heroes table" data-testid="heroes-table" className="min-w-[700px]">
                 <Table.Header>
                   <Table.Column isRowHeader>Name</Table.Column>
                   <Table.Column>Email</Table.Column>

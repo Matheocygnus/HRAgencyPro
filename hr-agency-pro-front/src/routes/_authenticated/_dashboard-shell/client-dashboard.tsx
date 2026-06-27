@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { KPI } from '@heroui-pro/react'
 import { Tabs, Table, Chip, Skeleton, Card, Avatar, Button } from '@heroui/react'
+import { TabScrollShadow } from '../../../components/TabScrollShadow'
 import { Plus, Building2, Users, FileText, CheckCircle, XCircle } from 'lucide-react'
 import { api } from '../../../lib/api'
 import { useAuthContext } from '../../../features/auth/auth-context'
@@ -253,8 +254,9 @@ export function ClientDashboard() {
         </Card.Header>
         <Card.Content>
           <Tabs defaultSelectedKey="overview">
-            <Tabs.ListContainer>
-              <Tabs.List aria-label="Client dashboard tabs">
+            <TabScrollShadow>
+              <Tabs.ListContainer className="max-md:!overflow-x-visible">
+                <Tabs.List aria-label="Client dashboard tabs" className="max-md:!w-max max-md:*:!w-auto max-md:*:!shrink-0">
                 <Tabs.Tab id="overview">Overview<Tabs.Indicator /></Tabs.Tab>
                 <Tabs.Tab id="heroes">
                   Heroes
@@ -293,7 +295,8 @@ export function ClientDashboard() {
                   <Tabs.Indicator />
                 </Tabs.Tab>
               </Tabs.List>
-            </Tabs.ListContainer>
+              </Tabs.ListContainer>
+            </TabScrollShadow>
 
             <Tabs.Panel id="overview" className="pt-4">
               {clientQuery.data ? (

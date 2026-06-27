@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table, Chip, Button, Card, Tabs, Skeleton } from '@heroui/react'
+import { TabScrollShadow } from '../../../components/TabScrollShadow'
 import { Plus, Search } from 'lucide-react'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
@@ -244,13 +245,15 @@ export function JobsPage() {
         onSelectionChange={k => setMainTab(k as MainTab)}
         size="sm"
       >
-        <Tabs.ListContainer>
-          <Tabs.List aria-label="Jobs sections">
-            <Tabs.Tab id="openings" data-testid="tab-job-openings">Job Openings<Tabs.Indicator /></Tabs.Tab>
-            <Tabs.Tab id="applications" data-testid="tab-job-applications">Job Applications<Tabs.Indicator /></Tabs.Tab>
-            <Tabs.Tab id="requests" data-testid="tab-job-requests">Job Requests<Tabs.Indicator /></Tabs.Tab>
-          </Tabs.List>
-        </Tabs.ListContainer>
+        <TabScrollShadow>
+          <Tabs.ListContainer className="max-md:!overflow-x-visible">
+            <Tabs.List aria-label="Jobs sections" className="max-md:!w-max max-md:*:!w-auto max-md:*:!shrink-0">
+              <Tabs.Tab id="openings" data-testid="tab-job-openings">Job Openings<Tabs.Indicator /></Tabs.Tab>
+              <Tabs.Tab id="applications" data-testid="tab-job-applications">Job Applications<Tabs.Indicator /></Tabs.Tab>
+              <Tabs.Tab id="requests" data-testid="tab-job-requests">Job Requests<Tabs.Indicator /></Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </TabScrollShadow>
       </Tabs>
 
       {/* Job Openings tab */}
@@ -394,17 +397,19 @@ export function JobsPage() {
                 onSelectionChange={k => { setAppStatusTab(k as AppStatusTab); setSelectedAppId(null) }}
                 size="sm"
               >
-                <Tabs.ListContainer>
-                  <Tabs.List aria-label="Application status">
-                    <Tabs.Tab id="all">All<Tabs.Indicator /></Tabs.Tab>
-                    {STATUS_STAGES.map(s => (
-                      <Tabs.Tab key={s} id={s}>
-                        {STATUS_LABELS[s]}
-                        <Tabs.Indicator />
-                      </Tabs.Tab>
-                    ))}
-                  </Tabs.List>
-                </Tabs.ListContainer>
+                <TabScrollShadow>
+                  <Tabs.ListContainer className="max-md:!overflow-x-visible">
+                    <Tabs.List aria-label="Application status" className="max-md:!w-max max-md:*:!w-auto max-md:*:!shrink-0">
+                      <Tabs.Tab id="all">All<Tabs.Indicator /></Tabs.Tab>
+                      {STATUS_STAGES.map(s => (
+                        <Tabs.Tab key={s} id={s}>
+                          {STATUS_LABELS[s]}
+                          <Tabs.Indicator />
+                        </Tabs.Tab>
+                      ))}
+                    </Tabs.List>
+                  </Tabs.ListContainer>
+                </TabScrollShadow>
               </Tabs>
             </div>
 

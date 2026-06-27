@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
+import { TabScrollShadow } from '../../../components/TabScrollShadow'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table, Chip, Button, Card, SearchField, Tabs, Skeleton } from '@heroui/react'
 import { Plus } from 'lucide-react'
@@ -95,7 +96,7 @@ export function ContractsPage() {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
         <SearchField
           className="w-full sm:w-64"
           value={search}
@@ -108,19 +109,21 @@ export function ContractsPage() {
             <SearchField.ClearButton />
           </SearchField.Group>
         </SearchField>
-        <Tabs
-          selectedKey={activeTab}
-          onSelectionChange={k => setActiveTab(k as StatusTab)}
-          size="sm"
-        >
-          <Tabs.ListContainer>
-            <Tabs.List aria-label="Contract status">
-              {(isHero ? HERO_STATUS_TABS : STATUS_TABS).map(tab => (
-                <Tabs.Tab key={tab} id={tab}>{tab}<Tabs.Indicator /></Tabs.Tab>
-              ))}
-            </Tabs.List>
-          </Tabs.ListContainer>
-        </Tabs>
+          <Tabs
+            selectedKey={activeTab}
+            onSelectionChange={k => setActiveTab(k as StatusTab)}
+            size="sm"
+          >
+            <TabScrollShadow>
+              <Tabs.ListContainer className="!overflow-x-visible">
+                <Tabs.List aria-label="Contract status" className="*:!w-auto *:!grow *:!px-1.5 *:!text-xs md:*:!w-full md:*:!grow-0 md:*:!px-4 md:*:!text-sm">
+                  {(isHero ? HERO_STATUS_TABS : STATUS_TABS).map(tab => (
+                    <Tabs.Tab key={tab} id={tab}>{tab}<Tabs.Indicator /></Tabs.Tab>
+                  ))}
+                </Tabs.List>
+              </Tabs.ListContainer>
+            </TabScrollShadow>
+          </Tabs>
       </div>
 
       {isLoading ? (
@@ -131,10 +134,10 @@ export function ContractsPage() {
         </div>
       ) : (
         <Card>
-          <Card.Content className="p-0">
+          <Card.Content className="p-0 overflow-x-auto">
             <Table>
               <Table.ScrollContainer>
-                <Table.Content aria-label="Contracts table" data-testid="contracts-table">
+                <Table.Content aria-label="Contracts table" data-testid="contracts-table" className="min-w-[700px]">
                   <Table.Header>
                     <Table.Column isRowHeader>ID</Table.Column>
                     {isRecruiter && <Table.Column>Hero</Table.Column>}

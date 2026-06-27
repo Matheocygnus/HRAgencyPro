@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { KPI } from '@heroui-pro/react'
 import { Tabs, Table, Chip, Skeleton, Card } from '@heroui/react'
+import { TabScrollShadow } from '../../../components/TabScrollShadow'
 import { CalendarDays, UserCheck, Building2, FileText } from 'lucide-react'
 import { api } from '../../../lib/api'
 import { clientsApi } from '../../../api/clients.api'
@@ -175,28 +176,30 @@ export function Dashboard() {
         </Card.Header>
         <Card.Content>
           <Tabs defaultSelectedKey="job-requests">
-            <Tabs.ListContainer>
-              <Tabs.List aria-label="Dashboard activity tabs">
-                <Tabs.Tab id="job-requests">
-                  Job Requests
-                  {jobRequests.length > 0 && (
-                    <Chip size="sm" variant="flat" color="primary" className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">
-                      {jobRequests.length}
-                    </Chip>
-                  )}
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-                <Tabs.Tab id="job-applications">
-                  Applications
-                  {jobApplications.length > 0 && (
-                    <Chip size="sm" variant="flat" color="primary" className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">
-                      {jobApplications.length}
-                    </Chip>
-                  )}
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
+            <TabScrollShadow>
+              <Tabs.ListContainer className="!overflow-x-visible">
+                <Tabs.List aria-label="Dashboard activity tabs">
+                  <Tabs.Tab id="job-requests">
+                    Job Requests
+                    {jobRequests.length > 0 && (
+                      <Chip size="sm" variant="flat" color="primary" className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">
+                        {jobRequests.length}
+                      </Chip>
+                    )}
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
+                  <Tabs.Tab id="job-applications">
+                    Applications
+                    {jobApplications.length > 0 && (
+                      <Chip size="sm" variant="flat" color="primary" className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">
+                        {jobApplications.length}
+                      </Chip>
+                    )}
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
+                </Tabs.List>
+              </Tabs.ListContainer>
+            </TabScrollShadow>
 
             <Tabs.Panel id="job-requests" className="pt-3">
               {jobRequestsQuery.isLoading ? (

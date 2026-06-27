@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
+import { TabScrollShadow } from '../../../components/TabScrollShadow'
 import { useQuery } from '@tanstack/react-query'
 import { KPI } from '@heroui-pro/react'
 import { Tabs, Chip, Separator, ProgressBar, Skeleton, Card, Button } from '@heroui/react'
@@ -143,12 +144,14 @@ export function HeroDashboard() {
         </Card.Header>
         <Card.Content>
           <Tabs defaultSelectedKey="overview">
-            <Tabs.ListContainer>
-              <Tabs.List aria-label="Hero dashboard tabs">
-                <Tabs.Tab id="overview">Overview<Tabs.Indicator /></Tabs.Tab>
-                <Tabs.Tab id="contract">Contract<Tabs.Indicator /></Tabs.Tab>
-              </Tabs.List>
-            </Tabs.ListContainer>
+            <TabScrollShadow>
+              <Tabs.ListContainer className="!overflow-x-visible">
+                <Tabs.List aria-label="Hero dashboard tabs">
+                  <Tabs.Tab id="overview">Overview<Tabs.Indicator /></Tabs.Tab>
+                  <Tabs.Tab id="contract">Contract<Tabs.Indicator /></Tabs.Tab>
+                </Tabs.List>
+              </Tabs.ListContainer>
+            </TabScrollShadow>
 
             <Tabs.Panel id="overview" className="pt-3">
               <div className="flex flex-col gap-4">

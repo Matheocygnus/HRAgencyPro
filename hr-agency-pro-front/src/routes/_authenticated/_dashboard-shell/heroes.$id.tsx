@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { useAuthContext } from '../../../features/auth/auth-context'
 import { AccessDenied } from '../../../components/AccessDenied'
+import { TabScrollShadow } from '../../../components/TabScrollShadow'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { Card, Tabs, Table, Chip, Skeleton, Button, Avatar, Modal, Label, TextField } from '@heroui/react'
 import { ArrowLeft, Mail, Phone, Pencil } from 'lucide-react'
@@ -237,13 +238,15 @@ export function HeroDetail() {
         onSelectionChange={k => setActiveTab(k as ActiveTab)}
         size="sm"
       >
-        <Tabs.ListContainer>
-          <Tabs.List aria-label="Hero detail tabs">
-            <Tabs.Tab id="overview">Overview<Tabs.Indicator /></Tabs.Tab>
-            <Tabs.Tab id="contract">Contracts<Tabs.Indicator /></Tabs.Tab>
-            {(isRecruiter || isHero) && <Tabs.Tab id="performance">Performance<Tabs.Indicator /></Tabs.Tab>}
-          </Tabs.List>
-        </Tabs.ListContainer>
+        <TabScrollShadow>
+          <Tabs.ListContainer className="!overflow-x-visible">
+            <Tabs.List aria-label="Hero detail tabs">
+              <Tabs.Tab id="overview">Overview<Tabs.Indicator /></Tabs.Tab>
+              <Tabs.Tab id="contract">Contracts<Tabs.Indicator /></Tabs.Tab>
+              {(isRecruiter || isHero) && <Tabs.Tab id="performance">Performance<Tabs.Indicator /></Tabs.Tab>}
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </TabScrollShadow>
 
         <Tabs.Panel id="overview" className="pt-3">
           <Card data-testid="hero-overview">
@@ -329,7 +332,7 @@ export function HeroDetail() {
       {can('prospects') && (
         <Modal.Backdrop isOpen={editSkillsOpen} onOpenChange={(isOpen) => { if (!isOpen) setEditSkillsOpen(false) }}>
           <Modal.Container>
-            <Modal.Dialog className="sm:max-w-md">
+            <Modal.Dialog className="sm:max-w-md" aria-label="Edit Skills">
               <Modal.Header>
                 <Modal.Heading>Edit Skills</Modal.Heading>
               </Modal.Header>

@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useRouter } from '@tanstack/react-router'
 import { useRouterState } from '@tanstack/react-router'
 import { AppLayout, Navbar, Sidebar, useSidebar } from '@heroui-pro/react'
 import { Avatar, Button } from '@heroui/react'
+import { Heading } from 'react-aria-components'
 import {
   LayoutDashboard, Building2, User, UserSearch, Users, Database,
   Shield, Building, FileText, Receipt, Calendar, Briefcase,
@@ -84,7 +85,8 @@ function SidebarContent({ currentPath }: { currentPath: string }) {
         </Sidebar.Content>
       </Sidebar>
 
-      <Sidebar.Mobile>
+      <Sidebar.Mobile aria-label="Navigation">
+        <Heading slot="title" className="sr-only">Navigation</Heading>
         <Sidebar.Header className="px-3 py-3">
           <a href="/" className="flex items-center gap-2 rounded-md transition-colors hover:text-[var(--accent)]">
             <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)] text-white">

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { usePermissions } from '../../../features/auth/use-permissions'
 import { AccessDenied } from '../../../components/AccessDenied'
+import { TabScrollShadow } from '../../../components/TabScrollShadow'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table, Chip, Button, Card, Tabs, Skeleton } from '@heroui/react'
 import { Plus, Pencil } from 'lucide-react'
@@ -106,12 +107,14 @@ export function ClientsPage() {
         onSelectionChange={k => setActiveTab(k as ActiveTab)}
         size="sm"
       >
-        <Tabs.ListContainer>
-          <Tabs.List aria-label="Clients or Companies">
-            <Tabs.Tab id="clients">Clients<Tabs.Indicator /></Tabs.Tab>
-            <Tabs.Tab id="companies">Companies<Tabs.Indicator /></Tabs.Tab>
-          </Tabs.List>
-        </Tabs.ListContainer>
+        <TabScrollShadow>
+          <Tabs.ListContainer className="!overflow-x-visible">
+            <Tabs.List aria-label="Clients or Companies">
+              <Tabs.Tab id="clients">Clients<Tabs.Indicator /></Tabs.Tab>
+              <Tabs.Tab id="companies">Companies<Tabs.Indicator /></Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </TabScrollShadow>
       </Tabs>
 
       {/* Clients table */}
