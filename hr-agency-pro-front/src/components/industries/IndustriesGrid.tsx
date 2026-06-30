@@ -1,5 +1,8 @@
+import { useState } from 'react'
+import { Button } from '@heroui/react'
 import { ChevronRight } from 'lucide-react'
 import { motion } from 'motion/react'
+import { GetStartedModal } from '../how-it-works/GetStartedModal'
 
 const industries = [
   {
@@ -65,6 +68,8 @@ const industries = [
 ]
 
 export function IndustriesGrid() {
+  const [modalOpen, setModalOpen] = useState(false)
+
   return (
     <section className="bg-white pb-24">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-6 md:grid-cols-2 lg:grid-cols-3">
@@ -78,17 +83,12 @@ export function IndustriesGrid() {
             transition={{ duration: 0.5, delay: i * 0.06 }}
             className="group relative block h-[380px] w-full overflow-hidden rounded-2xl shadow-lg transition-all hover:shadow-xl"
           >
-            {/* Image */}
             <img
               src={industry.image}
               alt={industry.title}
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
             />
-
-            {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-transparent" />
-
-            {/* Content */}
             <div className="absolute bottom-0 left-0 flex w-full flex-col justify-end p-8">
               <h3 className="mb-3 text-2xl font-bold text-white">{industry.title}</h3>
               <p className="mb-5 line-clamp-4 text-sm leading-relaxed text-slate-300">
@@ -105,6 +105,24 @@ export function IndustriesGrid() {
           </motion.a>
         ))}
       </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.45 }}
+        className="mt-16 flex justify-center"
+      >
+        <Button
+          size="lg"
+          className="bg-[#0f2447] font-semibold text-white shadow-lg shadow-[#0f2447]/20 hover:bg-[#162f5c]"
+          onPress={() => setModalOpen(true)}
+        >
+          Hire a Hero
+        </Button>
+      </motion.div>
+
+      <GetStartedModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </section>
   )
 }

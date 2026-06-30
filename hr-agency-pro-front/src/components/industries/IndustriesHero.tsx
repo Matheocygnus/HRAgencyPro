@@ -2,7 +2,7 @@ import { motion } from 'motion/react'
 
 export function IndustriesHero() {
   return (
-    <section className="bg-white py-24 lg:pb-16 lg:pt-32">
+    <section className="bg-white pb-12 pt-12 lg:pb-16 lg:pt-16">
       <div className="mx-auto max-w-4xl px-6 text-center">
         <motion.h1
           initial={{ opacity: 0, y: 24 }}
