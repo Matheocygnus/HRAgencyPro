@@ -18,8 +18,8 @@ const navItems: NavItem[] = [
       { label: 'Resume Sourcing', href: '/services/resume-sourcing' },
     ],
   },
-  { label: 'How It Works', href: '#how-it-works' },
-  { label: 'Industries', href: '#industries' },
+  { label: 'How It Works', href: '/how-it-works' },
+  { label: 'Industries', href: '/industries' },
   {
     label: 'Tools',
     children: [

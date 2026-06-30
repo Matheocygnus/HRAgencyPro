@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as IndustriesRouteImport } from './routes/industries'
+import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as CareersRouteImport } from './routes/careers'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -40,6 +42,16 @@ import { Route as AuthenticatedDashboardShellCompaniesIdRouteImport } from './ro
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndustriesRoute = IndustriesRouteImport.update({
+  id: '/industries',
+  path: '/industries',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CareersRoute = CareersRouteImport.update({
@@ -194,6 +206,8 @@ const AuthenticatedDashboardShellCompaniesIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/careers': typeof CareersRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
@@ -221,6 +235,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/careers': typeof CareersRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
@@ -250,6 +266,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/careers': typeof CareersRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
   '/_authenticated/_dashboard-shell': typeof AuthenticatedDashboardShellRouteWithChildren
   '/services/direct-hire': typeof ServicesDirectHireRoute
@@ -280,6 +298,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/careers'
+    | '/how-it-works'
+    | '/industries'
     | '/login'
     | '/services/direct-hire'
     | '/services/resume-sourcing'
@@ -307,6 +327,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/careers'
+    | '/how-it-works'
+    | '/industries'
     | '/login'
     | '/services/direct-hire'
     | '/services/resume-sourcing'
@@ -335,6 +357,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/careers'
+    | '/how-it-works'
+    | '/industries'
     | '/login'
     | '/_authenticated/_dashboard-shell'
     | '/services/direct-hire'
@@ -365,6 +389,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   CareersRoute: typeof CareersRoute
+  HowItWorksRoute: typeof HowItWorksRoute
+  IndustriesRoute: typeof IndustriesRoute
   LoginRoute: typeof LoginRoute
   ServicesDirectHireRoute: typeof ServicesDirectHireRoute
   ServicesResumeSourcingRoute: typeof ServicesResumeSourcingRoute
@@ -378,6 +404,20 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/industries': {
+      id: '/industries'
+      path: '/industries'
+      fullPath: '/industries'
+      preLoaderRoute: typeof IndustriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/careers': {
@@ -650,6 +690,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CareersRoute: CareersRoute,
+  HowItWorksRoute: HowItWorksRoute,
+  IndustriesRoute: IndustriesRoute,
   LoginRoute: LoginRoute,
   ServicesDirectHireRoute: ServicesDirectHireRoute,
   ServicesResumeSourcingRoute: ServicesResumeSourcingRoute,
