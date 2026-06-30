@@ -13,6 +13,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as CareersRouteImport } from './routes/careers'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ServicesRpoRouteImport } from './routes/services/rpo'
+import { Route as ServicesResumeSourcingRouteImport } from './routes/services/resume-sourcing'
+import { Route as ServicesDirectHireRouteImport } from './routes/services/direct-hire'
 import { Route as AuthenticatedDashboardShellRouteImport } from './routes/_authenticated/_dashboard-shell'
 import { Route as AuthenticatedDashboardShellUsersRouteImport } from './routes/_authenticated/_dashboard-shell/users'
 import { Route as AuthenticatedDashboardShellSettingsRouteImport } from './routes/_authenticated/_dashboard-shell/settings'
@@ -51,6 +54,21 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesRpoRoute = ServicesRpoRouteImport.update({
+  id: '/services/rpo',
+  path: '/services/rpo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesResumeSourcingRoute = ServicesResumeSourcingRouteImport.update({
+  id: '/services/resume-sourcing',
+  path: '/services/resume-sourcing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesDirectHireRoute = ServicesDirectHireRouteImport.update({
+  id: '/services/direct-hire',
+  path: '/services/direct-hire',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardShellRoute =
@@ -177,6 +195,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
+  '/services/direct-hire': typeof ServicesDirectHireRoute
+  '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
+  '/services/rpo': typeof ServicesRpoRoute
   '/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -201,6 +222,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
+  '/services/direct-hire': typeof ServicesDirectHireRoute
+  '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
+  '/services/rpo': typeof ServicesRpoRoute
   '/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -228,6 +252,9 @@ export interface FileRoutesById {
   '/careers': typeof CareersRoute
   '/login': typeof LoginRoute
   '/_authenticated/_dashboard-shell': typeof AuthenticatedDashboardShellRouteWithChildren
+  '/services/direct-hire': typeof ServicesDirectHireRoute
+  '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
+  '/services/rpo': typeof ServicesRpoRoute
   '/_authenticated/_dashboard-shell/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/_authenticated/_dashboard-shell/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/_authenticated/_dashboard-shell/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -254,6 +281,9 @@ export interface FileRouteTypes {
     | '/'
     | '/careers'
     | '/login'
+    | '/services/direct-hire'
+    | '/services/resume-sourcing'
+    | '/services/rpo'
     | '/client-dashboard'
     | '/clients'
     | '/contracts'
@@ -278,6 +308,9 @@ export interface FileRouteTypes {
     | '/'
     | '/careers'
     | '/login'
+    | '/services/direct-hire'
+    | '/services/resume-sourcing'
+    | '/services/rpo'
     | '/client-dashboard'
     | '/clients'
     | '/contracts'
@@ -304,6 +337,9 @@ export interface FileRouteTypes {
     | '/careers'
     | '/login'
     | '/_authenticated/_dashboard-shell'
+    | '/services/direct-hire'
+    | '/services/resume-sourcing'
+    | '/services/rpo'
     | '/_authenticated/_dashboard-shell/client-dashboard'
     | '/_authenticated/_dashboard-shell/clients'
     | '/_authenticated/_dashboard-shell/contracts'
@@ -330,6 +366,9 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   CareersRoute: typeof CareersRoute
   LoginRoute: typeof LoginRoute
+  ServicesDirectHireRoute: typeof ServicesDirectHireRoute
+  ServicesResumeSourcingRoute: typeof ServicesResumeSourcingRoute
+  ServicesRpoRoute: typeof ServicesRpoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -360,6 +399,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services/rpo': {
+      id: '/services/rpo'
+      path: '/services/rpo'
+      fullPath: '/services/rpo'
+      preLoaderRoute: typeof ServicesRpoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services/resume-sourcing': {
+      id: '/services/resume-sourcing'
+      path: '/services/resume-sourcing'
+      fullPath: '/services/resume-sourcing'
+      preLoaderRoute: typeof ServicesResumeSourcingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services/direct-hire': {
+      id: '/services/direct-hire'
+      path: '/services/direct-hire'
+      fullPath: '/services/direct-hire'
+      preLoaderRoute: typeof ServicesDirectHireRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_dashboard-shell': {
@@ -591,6 +651,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CareersRoute: CareersRoute,
   LoginRoute: LoginRoute,
+  ServicesDirectHireRoute: ServicesDirectHireRoute,
+  ServicesResumeSourcingRoute: ServicesResumeSourcingRoute,
+  ServicesRpoRoute: ServicesRpoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

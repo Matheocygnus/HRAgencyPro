@@ -3,7 +3,17 @@ import { Card, Avatar } from '@heroui/react'
 import { Star, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 
-const testimonials = [
+export type Testimonial = {
+  id: number
+  name: string
+  initials: string
+  role: string
+  company: string
+  avatarColor: string
+  text: string
+}
+
+const defaultTestimonials: Testimonial[] = [
   {
     id: 1,
     name: 'Jay A.',
@@ -67,7 +77,7 @@ function GoogleBadge() {
   )
 }
 
-function TestimonialCard({ t }: { t: (typeof testimonials)[0] }) {
+function TestimonialCard({ t }: { t: Testimonial }) {
   return (
     <Card className="flex h-full flex-col bg-white shadow-md shadow-slate-200/70">
       <Card.Header className="flex items-center gap-3 pb-2">
@@ -117,7 +127,7 @@ const NavButton = ({
   </button>
 )
 
-export function TestimonialsSection() {
+export function TestimonialsSection({ testimonials = defaultTestimonials }: { testimonials?: Testimonial[] }) {
   const [current, setCurrent] = useState(0)
   const [direction, setDirection] = useState(1)
   const count = testimonials.length

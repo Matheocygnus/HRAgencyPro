@@ -13,9 +13,9 @@ const navItems: NavItem[] = [
   {
     label: 'Services',
     children: [
-      { label: 'Recruitment Process Outsourcing', href: '#rpo' },
-      { label: 'Direct Hire & Placement', href: '#direct-hire' },
-      { label: 'Resume Sourcing', href: '#resume-sourcing' },
+      { label: 'Recruitment Process Outsourcing', href: '/services/rpo' },
+      { label: 'Direct Hire & Placement', href: '/services/direct-hire' },
+      { label: 'Resume Sourcing', href: '/services/resume-sourcing' },
     ],
   },
   { label: 'How It Works', href: '#how-it-works' },
@@ -119,7 +119,7 @@ export function PublicNavbar() {
   const closeMenu = () => setMobileOpen(false)
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 bg-white">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand */}
         <a href="/" className="flex shrink-0 items-center gap-2.5">
