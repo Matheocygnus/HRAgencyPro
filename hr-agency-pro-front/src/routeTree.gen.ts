@@ -16,6 +16,7 @@ import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as CareersRouteImport } from './routes/careers'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ToolsSalaryGuideRouteImport } from './routes/tools/salary-guide'
 import { Route as ServicesRpoRouteImport } from './routes/services/rpo'
 import { Route as ServicesResumeSourcingRouteImport } from './routes/services/resume-sourcing'
 import { Route as ServicesDirectHireRouteImport } from './routes/services/direct-hire'
@@ -72,6 +73,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsSalaryGuideRoute = ToolsSalaryGuideRouteImport.update({
+  id: '/tools/salary-guide',
+  path: '/tools/salary-guide',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ServicesRpoRoute = ServicesRpoRouteImport.update({
@@ -219,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
   '/services/rpo': typeof ServicesRpoRoute
+  '/tools/salary-guide': typeof ToolsSalaryGuideRoute
   '/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -249,6 +256,7 @@ export interface FileRoutesByTo {
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
   '/services/rpo': typeof ServicesRpoRoute
+  '/tools/salary-guide': typeof ToolsSalaryGuideRoute
   '/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -282,6 +290,7 @@ export interface FileRoutesById {
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
   '/services/rpo': typeof ServicesRpoRoute
+  '/tools/salary-guide': typeof ToolsSalaryGuideRoute
   '/_authenticated/_dashboard-shell/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/_authenticated/_dashboard-shell/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/_authenticated/_dashboard-shell/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/services/direct-hire'
     | '/services/resume-sourcing'
     | '/services/rpo'
+    | '/tools/salary-guide'
     | '/client-dashboard'
     | '/clients'
     | '/contracts'
@@ -344,6 +354,7 @@ export interface FileRouteTypes {
     | '/services/direct-hire'
     | '/services/resume-sourcing'
     | '/services/rpo'
+    | '/tools/salary-guide'
     | '/client-dashboard'
     | '/clients'
     | '/contracts'
@@ -376,6 +387,7 @@ export interface FileRouteTypes {
     | '/services/direct-hire'
     | '/services/resume-sourcing'
     | '/services/rpo'
+    | '/tools/salary-guide'
     | '/_authenticated/_dashboard-shell/client-dashboard'
     | '/_authenticated/_dashboard-shell/clients'
     | '/_authenticated/_dashboard-shell/contracts'
@@ -408,6 +420,7 @@ export interface RootRouteChildren {
   ServicesDirectHireRoute: typeof ServicesDirectHireRoute
   ServicesResumeSourcingRoute: typeof ServicesResumeSourcingRoute
   ServicesRpoRoute: typeof ServicesRpoRoute
+  ToolsSalaryGuideRoute: typeof ToolsSalaryGuideRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -459,6 +472,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/salary-guide': {
+      id: '/tools/salary-guide'
+      path: '/tools/salary-guide'
+      fullPath: '/tools/salary-guide'
+      preLoaderRoute: typeof ToolsSalaryGuideRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/services/rpo': {
@@ -717,6 +737,7 @@ const rootRouteChildren: RootRouteChildren = {
   ServicesDirectHireRoute: ServicesDirectHireRoute,
   ServicesResumeSourcingRoute: ServicesResumeSourcingRoute,
   ServicesRpoRoute: ServicesRpoRoute,
+  ToolsSalaryGuideRoute: ToolsSalaryGuideRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
