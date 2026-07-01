@@ -5,60 +5,9 @@ import { motion, AnimatePresence } from 'motion/react'
 import { PublicNavbar } from '../../components/landing/PublicNavbar'
 import { Footer } from '../../components/landing/Footer'
 import { GetStartedModal } from '../../components/how-it-works/GetStartedModal'
+import { CATEGORY_DATA, CATEGORIES } from '../../data/salaryData'
 
 // ── Static data ──────────────────────────────────────────────────────────────
-
-const CATEGORY_DATA: Record<string, Record<string, { us: number; rh: number }>> = {
-  Administrative: {
-    'Virtual Assistant': { us: 48000, rh: 21600 },
-    'Administrative Assistant': { us: 52000, rh: 21600 },
-    'Executive Assistant': { us: 72000, rh: 27000 },
-    'Data Entry Specialist': { us: 45000, rh: 21600 },
-    'Office Manager': { us: 65000, rh: 28800 },
-    'Personal Assistant': { us: 55000, rh: 25200 },
-    'Operations Assistant': { us: 50000, rh: 23400 },
-  },
-  Technology: {
-    'Software Engineer': { us: 120000, rh: 43200 },
-    'Frontend Developer': { us: 115000, rh: 48000 },
-    'Backend Developer': { us: 120000, rh: 50000 },
-    'Full-stack Developer': { us: 130000, rh: 55000 },
-    'Data Scientist': { us: 155000, rh: 48000 },
-    'DevOps Engineer': { us: 130000, rh: 45600 },
-    'Product Manager': { us: 140000, rh: 48000 },
-    'UI/UX Designer': { us: 95000, rh: 36000 },
-    'QA Tester': { us: 85000, rh: 36000 },
-  },
-  Marketing: {
-    'Digital Marketing Manager': { us: 85000, rh: 36000 },
-    'Marketing Specialist': { us: 70000, rh: 28800 },
-    'Content Creator': { us: 55000, rh: 24000 },
-    'SEO Specialist': { us: 72000, rh: 32000 },
-    'Social Media Manager': { us: 65000, rh: 29000 },
-    'Copywriter': { us: 62000, rh: 26400 },
-    'Email Marketing Specialist': { us: 68000, rh: 30500 },
-  },
-  'Customer Support': {
-    'Customer Success Manager': { us: 78000, rh: 32400 },
-    'Support Representative': { us: 47500, rh: 21600 },
-    'Technical Support Specialist': { us: 62000, rh: 27000 },
-    'Live Chat Agent': { us: 42000, rh: 21600 },
-    'Help Desk Specialist': { us: 52000, rh: 24000 },
-  },
-  Finance: {
-    'Bookkeeper': { us: 58000, rh: 24000 },
-    'Financial Analyst': { us: 78000, rh: 30000 },
-    'Staff Accountant': { us: 58000, rh: 25200 },
-    'Payroll Specialist': { us: 55000, rh: 22800 },
-    'Accounts Receivable Specialist': { us: 48000, rh: 21600 },
-  },
-  Operations: {
-    'Project Manager': { us: 108000, rh: 39600 },
-    'Operations Manager': { us: 95000, rh: 36000 },
-    'Operations Coordinator': { us: 62000, rh: 25200 },
-    'Appointment Setter': { us: 45000, rh: 21600 },
-  },
-}
 
 const SENIORITY_MULTIPLIERS: Record<string, number> = {
   'Junior (0-2 Yrs Exp)': 1,
@@ -68,8 +17,6 @@ const SENIORITY_MULTIPLIERS: Record<string, number> = {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-const CATEGORIES = Object.keys(CATEGORY_DATA)
 const SENIORITIES = Object.keys(SENIORITY_MULTIPLIERS)
 const BAR_HEIGHT = 192 // px — h-48
 

@@ -16,6 +16,8 @@ import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as CareersRouteImport } from './routes/careers'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ToolsTeamBuildingCalculatorRouteImport } from './routes/tools/team-building-calculator'
+import { Route as ToolsSavingsCalculatorRouteImport } from './routes/tools/savings-calculator'
 import { Route as ToolsSalaryGuideRouteImport } from './routes/tools/salary-guide'
 import { Route as ServicesRpoRouteImport } from './routes/services/rpo'
 import { Route as ServicesResumeSourcingRouteImport } from './routes/services/resume-sourcing'
@@ -73,6 +75,17 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsTeamBuildingCalculatorRoute =
+  ToolsTeamBuildingCalculatorRouteImport.update({
+    id: '/tools/team-building-calculator',
+    path: '/tools/team-building-calculator',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ToolsSavingsCalculatorRoute = ToolsSavingsCalculatorRouteImport.update({
+  id: '/tools/savings-calculator',
+  path: '/tools/savings-calculator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ToolsSalaryGuideRoute = ToolsSalaryGuideRouteImport.update({
@@ -226,6 +239,8 @@ export interface FileRoutesByFullPath {
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
   '/services/rpo': typeof ServicesRpoRoute
   '/tools/salary-guide': typeof ToolsSalaryGuideRoute
+  '/tools/savings-calculator': typeof ToolsSavingsCalculatorRoute
+  '/tools/team-building-calculator': typeof ToolsTeamBuildingCalculatorRoute
   '/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -257,6 +272,8 @@ export interface FileRoutesByTo {
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
   '/services/rpo': typeof ServicesRpoRoute
   '/tools/salary-guide': typeof ToolsSalaryGuideRoute
+  '/tools/savings-calculator': typeof ToolsSavingsCalculatorRoute
+  '/tools/team-building-calculator': typeof ToolsTeamBuildingCalculatorRoute
   '/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -291,6 +308,8 @@ export interface FileRoutesById {
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
   '/services/rpo': typeof ServicesRpoRoute
   '/tools/salary-guide': typeof ToolsSalaryGuideRoute
+  '/tools/savings-calculator': typeof ToolsSavingsCalculatorRoute
+  '/tools/team-building-calculator': typeof ToolsTeamBuildingCalculatorRoute
   '/_authenticated/_dashboard-shell/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/_authenticated/_dashboard-shell/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/_authenticated/_dashboard-shell/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -324,6 +343,8 @@ export interface FileRouteTypes {
     | '/services/resume-sourcing'
     | '/services/rpo'
     | '/tools/salary-guide'
+    | '/tools/savings-calculator'
+    | '/tools/team-building-calculator'
     | '/client-dashboard'
     | '/clients'
     | '/contracts'
@@ -355,6 +376,8 @@ export interface FileRouteTypes {
     | '/services/resume-sourcing'
     | '/services/rpo'
     | '/tools/salary-guide'
+    | '/tools/savings-calculator'
+    | '/tools/team-building-calculator'
     | '/client-dashboard'
     | '/clients'
     | '/contracts'
@@ -388,6 +411,8 @@ export interface FileRouteTypes {
     | '/services/resume-sourcing'
     | '/services/rpo'
     | '/tools/salary-guide'
+    | '/tools/savings-calculator'
+    | '/tools/team-building-calculator'
     | '/_authenticated/_dashboard-shell/client-dashboard'
     | '/_authenticated/_dashboard-shell/clients'
     | '/_authenticated/_dashboard-shell/contracts'
@@ -421,6 +446,8 @@ export interface RootRouteChildren {
   ServicesResumeSourcingRoute: typeof ServicesResumeSourcingRoute
   ServicesRpoRoute: typeof ServicesRpoRoute
   ToolsSalaryGuideRoute: typeof ToolsSalaryGuideRoute
+  ToolsSavingsCalculatorRoute: typeof ToolsSavingsCalculatorRoute
+  ToolsTeamBuildingCalculatorRoute: typeof ToolsTeamBuildingCalculatorRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -472,6 +499,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/team-building-calculator': {
+      id: '/tools/team-building-calculator'
+      path: '/tools/team-building-calculator'
+      fullPath: '/tools/team-building-calculator'
+      preLoaderRoute: typeof ToolsTeamBuildingCalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/savings-calculator': {
+      id: '/tools/savings-calculator'
+      path: '/tools/savings-calculator'
+      fullPath: '/tools/savings-calculator'
+      preLoaderRoute: typeof ToolsSavingsCalculatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tools/salary-guide': {
@@ -738,6 +779,8 @@ const rootRouteChildren: RootRouteChildren = {
   ServicesResumeSourcingRoute: ServicesResumeSourcingRoute,
   ServicesRpoRoute: ServicesRpoRoute,
   ToolsSalaryGuideRoute: ToolsSalaryGuideRoute,
+  ToolsSavingsCalculatorRoute: ToolsSavingsCalculatorRoute,
+  ToolsTeamBuildingCalculatorRoute: ToolsTeamBuildingCalculatorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -25,7 +25,7 @@ const navItems: NavItem[] = [
     children: [
       { label: 'Salary Guide', href: '/tools/salary-guide' },
       { label: 'Team Building Calculator', href: '/tools/team-building-calculator' },
-      { label: 'Scale Smart & Save Calculator', href: '#savings-calculator' },
+      { label: 'Scale Smart & Save Calculator', href: '/tools/savings-calculator' },
     ],
   },
   { label: 'Success Stories', href: '/success-stories' },

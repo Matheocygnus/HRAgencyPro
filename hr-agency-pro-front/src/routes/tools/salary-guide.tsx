@@ -1,83 +1,13 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Search, GraduationCap } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion } from 'motion/react'
 import { Button } from '@heroui/react'
 import { PublicNavbar } from '../../components/landing/PublicNavbar'
 import { Footer } from '../../components/landing/Footer'
 import { GetStartedModal } from '../../components/how-it-works/GetStartedModal'
+import { salaryData, type RoleEntry } from '../../data/salaryData'
 
-type Role = { role: string; category: string; usSalary: number; remoteHeroSalary: number }
-
-const roles: Role[] = [
-  { role: 'Virtual Assistant', category: 'Administrative', usSalary: 48000, remoteHeroSalary: 21600 },
-  { role: 'Administrative Assistant', category: 'Administrative', usSalary: 52000, remoteHeroSalary: 21600 },
-  { role: 'Executive Assistant', category: 'Administrative', usSalary: 72000, remoteHeroSalary: 27000 },
-  { role: 'Data Entry Specialist', category: 'Administrative', usSalary: 45000, remoteHeroSalary: 21600 },
-  { role: 'Office Manager', category: 'Administrative', usSalary: 65000, remoteHeroSalary: 28800 },
-  { role: 'Personal Assistant', category: 'Administrative', usSalary: 55000, remoteHeroSalary: 25200 },
-  { role: 'Operations Assistant', category: 'Administrative', usSalary: 50000, remoteHeroSalary: 23400 },
-  { role: 'Human Resources Manager', category: 'Human Resources', usSalary: 95000, remoteHeroSalary: 36000 },
-  { role: 'HR Coordinator', category: 'Human Resources', usSalary: 65000, remoteHeroSalary: 26400 },
-  { role: 'Bookkeeper', category: 'Finance', usSalary: 58000, remoteHeroSalary: 24000 },
-  { role: 'Finance Manager', category: 'Finance', usSalary: 115000, remoteHeroSalary: 42000 },
-  { role: 'Financial Analyst', category: 'Finance', usSalary: 78000, remoteHeroSalary: 30000 },
-  { role: 'Staff Accountant', category: 'Finance', usSalary: 58000, remoteHeroSalary: 25200 },
-  { role: 'Accounting Manager', category: 'Finance', usSalary: 88000, remoteHeroSalary: 36000 },
-  { role: 'Tax Specialist', category: 'Finance', usSalary: 72000, remoteHeroSalary: 28800 },
-  { role: 'Payroll Specialist', category: 'Finance', usSalary: 55000, remoteHeroSalary: 22800 },
-  { role: 'Accounts Receivable Specialist', category: 'Finance', usSalary: 48000, remoteHeroSalary: 21600 },
-  { role: 'Accounts Payable Specialist', category: 'Finance', usSalary: 46000, remoteHeroSalary: 21600 },
-  { role: 'FP&A Analyst', category: 'Finance', usSalary: 90000, remoteHeroSalary: 38000 },
-  { role: 'Accountant', category: 'Finance', usSalary: 75000, remoteHeroSalary: 32000 },
-  { role: 'Digital Marketing Manager', category: 'Marketing', usSalary: 85000, remoteHeroSalary: 36000 },
-  { role: 'Digital Marketing Specialist', category: 'Marketing', usSalary: 70000, remoteHeroSalary: 28800 },
-  { role: 'Marketing Coordinator', category: 'Marketing', usSalary: 52000, remoteHeroSalary: 21600 },
-  { role: 'Content Marketing Specialist', category: 'Marketing', usSalary: 65000, remoteHeroSalary: 26400 },
-  { role: 'Content Creator', category: 'Marketing', usSalary: 55000, remoteHeroSalary: 24000 },
-  { role: 'Marketing Manager', category: 'Marketing', usSalary: 95000, remoteHeroSalary: 38400 },
-  { role: 'SEO Specialist', category: 'Marketing', usSalary: 72000, remoteHeroSalary: 32000 },
-  { role: 'Paid Media Specialist', category: 'Marketing', usSalary: 75000, remoteHeroSalary: 33500 },
-  { role: 'Email Marketing Specialist', category: 'Marketing', usSalary: 68000, remoteHeroSalary: 30500 },
-  { role: 'Social Media Specialist', category: 'Marketing', usSalary: 65000, remoteHeroSalary: 29000 },
-  { role: 'Software Engineer', category: 'Technology', usSalary: 120000, remoteHeroSalary: 43200 },
-  { role: 'Developer', category: 'Technology', usSalary: 118000, remoteHeroSalary: 42000 },
-  { role: 'Data Scientist', category: 'Technology', usSalary: 155000, remoteHeroSalary: 48000 },
-  { role: 'DevOps Engineer', category: 'Technology', usSalary: 130000, remoteHeroSalary: 45600 },
-  { role: 'Product Manager', category: 'Technology', usSalary: 140000, remoteHeroSalary: 48000 },
-  { role: 'Back-end Developer', category: 'Technology', usSalary: 120000, remoteHeroSalary: 50000 },
-  { role: 'Front-end Developer', category: 'Technology', usSalary: 115000, remoteHeroSalary: 48000 },
-  { role: 'Full-stack Developer', category: 'Technology', usSalary: 130000, remoteHeroSalary: 55000 },
-  { role: 'Web Developer', category: 'Technology', usSalary: 110000, remoteHeroSalary: 46000 },
-  { role: 'Data Analyst', category: 'Technology', usSalary: 95000, remoteHeroSalary: 40000 },
-  { role: 'UI/UX Developer', category: 'Technology', usSalary: 105000, remoteHeroSalary: 45000 },
-  { role: 'QA Tester', category: 'Technology', usSalary: 85000, remoteHeroSalary: 36000 },
-  { role: 'IT Support Specialist', category: 'Technology', usSalary: 75000, remoteHeroSalary: 32000 },
-  { role: 'Graphic Designer', category: 'Creative', usSalary: 68000, remoteHeroSalary: 27600 },
-  { role: 'UI/UX Designer', category: 'Creative', usSalary: 95000, remoteHeroSalary: 36000 },
-  { role: 'Content Writer', category: 'Creative', usSalary: 58000, remoteHeroSalary: 24000 },
-  { role: 'Copywriter', category: 'Creative', usSalary: 62000, remoteHeroSalary: 26400 },
-  { role: 'Video Editor', category: 'Creative', usSalary: 65000, remoteHeroSalary: 28800 },
-  { role: 'Web Designer', category: 'Creative', usSalary: 72000, remoteHeroSalary: 30000 },
-  { role: 'Customer Success Manager', category: 'Customer Support', usSalary: 78000, remoteHeroSalary: 32400 },
-  { role: 'Customer Support Representative', category: 'Customer Support', usSalary: 47500, remoteHeroSalary: 21600 },
-  { role: 'Customer Support Manager', category: 'Customer Support', usSalary: 68000, remoteHeroSalary: 30000 },
-  { role: 'Technical Support Specialist', category: 'Customer Support', usSalary: 62000, remoteHeroSalary: 27000 },
-  { role: 'Live Chat Agent', category: 'Customer Support', usSalary: 42000, remoteHeroSalary: 21600 },
-  { role: 'Help Desk Specialist', category: 'Customer Support', usSalary: 52000, remoteHeroSalary: 24000 },
-  { role: 'Project Manager', category: 'Operations', usSalary: 108000, remoteHeroSalary: 39600 },
-  { role: 'Operations Manager', category: 'Operations', usSalary: 95000, remoteHeroSalary: 36000 },
-  { role: 'Operations Coordinator', category: 'Operations', usSalary: 62000, remoteHeroSalary: 25200 },
-  { role: 'Appointment Setter', category: 'Operations', usSalary: 45000, remoteHeroSalary: 21600 },
-  { role: 'Sales Development Representative', category: 'Sales', usSalary: 65000, remoteHeroSalary: 26400 },
-  { role: 'Account Executive', category: 'Sales', usSalary: 95000, remoteHeroSalary: 36000 },
-  { role: 'Sales Manager', category: 'Sales', usSalary: 125000, remoteHeroSalary: 45600 },
-  { role: 'Inside Sales Representative', category: 'Sales', usSalary: 58000, remoteHeroSalary: 24000 },
-  { role: 'Lead Generation Specialist', category: 'Sales', usSalary: 52000, remoteHeroSalary: 21600 },
-  { role: 'Sales Coordinator', category: 'Sales', usSalary: 48000, remoteHeroSalary: 21600 },
-]
-
-// Count-up hook — resets whenever target changes or component remounts
 function useCountUp(target: number, duration = 900) {
   const [value, setValue] = useState(0)
   useEffect(() => {
@@ -117,11 +47,11 @@ function AnimatedBar({ height, color, delay, role }: { height: number; color: st
   )
 }
 
-function SalaryChart({ r }: { r: Role }) {
-  const savings = r.usSalary - r.remoteHeroSalary
-  const rhH = Math.round((r.remoteHeroSalary / r.usSalary) * BAR_MAX)
-  const countUS = useCountUp(r.usSalary)
-  const countRH = useCountUp(r.remoteHeroSalary)
+function SalaryChart({ r }: { r: RoleEntry }) {
+  const savings = r.us - r.rh
+  const rhH = Math.round((r.rh / r.us) * BAR_MAX)
+  const countUS = useCountUp(r.us)
+  const countRH = useCountUp(r.rh)
   const countSav = useCountUp(savings)
 
   return (
@@ -170,18 +100,29 @@ function SalaryChart({ r }: { r: Role }) {
 
 function SalaryGuidePage() {
   const [query, setQuery] = useState('')
+  const [selectedRole, setSelectedRole] = useState<string>(salaryData[0].role)
   const [modalOpen, setModalOpen] = useState(false)
 
   const filtered = query
-    ? roles.filter((r) => r.role.toLowerCase().includes(query.toLowerCase()))
-    : roles
+    ? salaryData.filter((r) => r.role.toLowerCase().includes(query.toLowerCase()))
+    : salaryData
 
-  const active = filtered[0] ?? roles[0]
-  const savings = active.usSalary - active.remoteHeroSalary
+  const active = filtered.find((r) => r.role === selectedRole) ?? filtered[0] ?? salaryData[0]
 
-  // Count-up for text column — reset on role change via key (AnimatePresence unmounts)
-  const countUS = useCountUp(active.usSalary)
-  const countRH = useCountUp(active.remoteHeroSalary)
+  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const q = e.target.value
+    setQuery(q)
+    if (q) {
+      const first = salaryData.find((r) => r.role.toLowerCase().includes(q.toLowerCase()))
+      if (first) setSelectedRole(first.role)
+    } else {
+      setSelectedRole(salaryData[0].role)
+    }
+  }
+
+  const savings = active.us - active.rh
+  const countUS = useCountUp(active.us)
+  const countRH = useCountUp(active.rh)
   const countSav = useCountUp(savings)
 
   return (
@@ -189,19 +130,17 @@ function SalaryGuidePage() {
       <PublicNavbar />
       <main className="flex-1 bg-white">
 
-        {/* ── Hero + Search ─────────────────────────────── */}
-        <section className="bg-gradient-to-br from-slate-50 to-sky-50/40 px-6 py-24 lg:py-32">
-          <div className="mx-auto max-w-6xl">
-
-            {/* Badge */}
+        {/* ── Hero ──────────────────────────────────────── */}
+        <section className="bg-gradient-to-br from-slate-50 to-sky-50/40 px-6 py-16">
+          <div className="mx-auto max-w-7xl">
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45 }}
-              className="mb-6 flex items-center gap-3"
+              className="mb-5 flex items-center gap-3"
             >
-              <div className="flex size-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
-                <GraduationCap size={20} />
+              <div className="flex size-9 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+                <GraduationCap size={18} />
               </div>
               <span className="rounded-full bg-sky-100 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-sky-700">
                 Comparing Salaries: US vs. Remote Hero
@@ -212,7 +151,7 @@ function SalaryGuidePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.08 }}
-              className="mb-4 text-4xl font-extrabold tracking-tight text-slate-900 lg:text-5xl"
+              className="mb-3 text-4xl font-extrabold tracking-tight text-slate-900 lg:text-5xl"
             >
               2025 Salary Guide: US vs Remote Hero
             </motion.h1>
@@ -221,104 +160,119 @@ function SalaryGuidePage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.15 }}
-              className="mb-8 text-lg text-slate-500"
+              className="text-lg text-slate-500"
             >
-              Discover US and Remote Hero talent salaries by role.
+              Browse all {salaryData.length} roles and compare salaries side by side.
             </motion.p>
-
-            {/* Search */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.22 }}
-              className="relative mb-4 max-w-lg"
-            >
-              <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Virtual Assistant"
-                className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-base text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-              />
-            </motion.div>
-
-            {/* Contact Us callout */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.3 }}
-              className="flex max-w-lg items-start gap-4 rounded-2xl border border-sky-100 bg-sky-50 p-5 shadow-sm"
-            >
-              <Search className="mt-0.5 size-5 shrink-0 text-sky-500" />
-              <div>
-                <p className="mb-3 text-sm text-slate-600">
-                  {"Don't see the role you're looking for? We can still find it."}
-                </p>
-                <Button
-                  size="sm"
-                  className="bg-[#0f2447] font-semibold text-white hover:bg-[#162f5c]"
-                  onPress={() => setModalOpen(true)}
-                >
-                  Contact Us
-                </Button>
-              </div>
-            </motion.div>
-
           </div>
         </section>
 
-        {/* ── Role Detail ───────────────────────────────── */}
-        <section className="px-6 py-24 lg:py-32">
-          <div className="mx-auto max-w-6xl">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={active.role}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.35 }}
-                className="grid grid-cols-1 gap-16 lg:grid-cols-2"
-              >
-                {/* Left: dynamic text */}
-                <div className="flex flex-col justify-center">
-                  <h2 className="mb-6 text-3xl font-bold text-slate-900">{active.role}</h2>
+        {/* ── Main: role browser + detail ───────────────── */}
+        <section className="px-6 py-12">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
 
-                  <p className="mb-4 leading-relaxed text-slate-600">
-                    {`Looking to hire a ${active.role}? Remote Hero professionals offer exceptional quality at significantly lower costs compared to US-based talent.`}
-                  </p>
+              {/* Left: search + scrollable role list */}
+              <div className="flex flex-col gap-3">
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={handleQueryChange}
+                    placeholder="Search roles..."
+                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                  />
+                </div>
 
-                  <p className="mb-6 leading-relaxed text-slate-600">
-                    The average {active.role} in the US earns{' '}
-                    <span className="font-bold text-[#0f2447]">{fmt(countUS)}</span> annually,
-                    while top Remote Hero talent with similar skills and experience costs
-                    approximately{' '}
-                    <span className="font-bold text-[#0f2447]">{fmt(countRH)}</span> per year.
-                  </p>
+                <div
+                  className="overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm"
+                  style={{ maxHeight: '520px' }}
+                >
+                  {filtered.length === 0 ? (
+                    <p className="px-4 py-4 text-sm text-slate-400">No roles found</p>
+                  ) : (
+                    filtered.map((r) => (
+                      <button
+                        key={r.role}
+                        onClick={() => setSelectedRole(r.role)}
+                        className={`w-full border-b border-slate-100 px-4 py-3 text-left last:border-b-0 transition-colors hover:bg-sky-50 ${
+                          active.role === r.role
+                            ? 'border-l-[3px] border-l-sky-500 bg-sky-50'
+                            : 'border-l-[3px] border-l-transparent'
+                        }`}
+                      >
+                        <span className="block text-sm font-medium text-slate-900">{r.role}</span>
+                        <span className="text-xs text-slate-400">{r.category}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
 
-                  {/* Savings highlight box */}
-                  <div className="mb-6 cursor-default rounded-2xl border border-sky-100 bg-sky-50/80 p-5 shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md">
-                    <p className="text-base font-bold text-slate-900">
-                      Potential annual savings:{' '}
-                      <span className="text-xl text-sky-600">{fmt(countSav)}</span>
+                <div className="flex items-start gap-3 rounded-xl border border-sky-100 bg-sky-50 p-4">
+                  <Search className="mt-0.5 size-4 shrink-0 text-sky-500" />
+                  <div>
+                    <p className="mb-2 text-xs text-slate-600">
+                      {"Don't see the role you're looking for?"}
+                    </p>
+                    <Button
+                      size="sm"
+                      className="bg-[#0f2447] font-semibold text-white hover:bg-[#162f5c]"
+                      onPress={() => setModalOpen(true)}
+                    >
+                      Contact Us
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: role detail — no AnimatePresence, enter animation only */}
+              <div className="lg:col-span-2">
+                <motion.div
+                  key={active.role}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35 }}
+                  className="grid grid-cols-1 gap-10 lg:grid-cols-2"
+                >
+                  <div className="flex flex-col justify-center">
+                    <h2 className="mb-5 text-3xl font-bold text-slate-900">{active.role}</h2>
+
+                    <p className="mb-4 leading-relaxed text-slate-600">
+                      {`Looking to hire a ${active.role}? Remote Hero professionals offer exceptional quality at significantly lower costs compared to US-based talent.`}
+                    </p>
+
+                    <p className="mb-6 leading-relaxed text-slate-600">
+                      The average {active.role} in the US earns{' '}
+                      <span className="font-bold text-[#0f2447]">{fmt(countUS)}</span> annually,
+                      while top Remote Hero talent with similar skills and experience costs
+                      approximately{' '}
+                      <span className="font-bold text-[#0f2447]">{fmt(countRH)}</span> per year.
+                    </p>
+
+                    <div className="mb-6 cursor-default rounded-2xl border border-sky-100 bg-sky-50/80 p-5 shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md">
+                      <p className="text-base font-bold text-slate-900">
+                        Potential annual savings:{' '}
+                        <span className="text-xl text-sky-600">{fmt(countSav)}</span>
+                      </p>
+                    </div>
+
+                    <p className="leading-relaxed text-slate-600">
+                      {"Beyond cost savings, you'll benefit from team members who work in similar time zones, have strong English communication skills, and bring diverse perspectives to your organization."}
                     </p>
                   </div>
 
-                  <p className="leading-relaxed text-slate-600">
-                    {"Beyond cost savings, you'll benefit from team members who work in similar time zones, have strong English communication skills, and bring diverse perspectives to your organization."}
-                  </p>
-                </div>
+                  <SalaryChart r={active} />
+                </motion.div>
+              </div>
 
-                {/* Right: animated chart */}
-                <SalaryChart r={active} />
-              </motion.div>
-            </AnimatePresence>
+            </div>
           </div>
         </section>
 
         {/* ── CTA Banner ────────────────────────────────── */}
         <section className="bg-[#0f2447] px-6 py-16">
-          <div className="mx-auto flex max-w-6xl flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="mx-auto flex max-w-7xl flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="mb-2 text-2xl font-bold text-white lg:text-3xl">
                 Ready to hire top Remote Hero professionals?
