@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuccessStoriesRouteImport } from './routes/success-stories'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndustriesRouteImport } from './routes/industries'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
@@ -39,6 +40,11 @@ import { Route as AuthenticatedDashboardShellHeroesIndexRouteImport } from './ro
 import { Route as AuthenticatedDashboardShellHeroesIdRouteImport } from './routes/_authenticated/_dashboard-shell/heroes.$id'
 import { Route as AuthenticatedDashboardShellCompaniesIdRouteImport } from './routes/_authenticated/_dashboard-shell/companies.$id'
 
+const SuccessStoriesRoute = SuccessStoriesRouteImport.update({
+  id: '/success-stories',
+  path: '/success-stories',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
+  '/success-stories': typeof SuccessStoriesRoute
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
   '/services/rpo': typeof ServicesRpoRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
+  '/success-stories': typeof SuccessStoriesRoute
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
   '/services/rpo': typeof ServicesRpoRoute
@@ -269,6 +277,7 @@ export interface FileRoutesById {
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
+  '/success-stories': typeof SuccessStoriesRoute
   '/_authenticated/_dashboard-shell': typeof AuthenticatedDashboardShellRouteWithChildren
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
@@ -301,6 +310,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/industries'
     | '/login'
+    | '/success-stories'
     | '/services/direct-hire'
     | '/services/resume-sourcing'
     | '/services/rpo'
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/industries'
     | '/login'
+    | '/success-stories'
     | '/services/direct-hire'
     | '/services/resume-sourcing'
     | '/services/rpo'
@@ -360,6 +371,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/industries'
     | '/login'
+    | '/success-stories'
     | '/_authenticated/_dashboard-shell'
     | '/services/direct-hire'
     | '/services/resume-sourcing'
@@ -392,6 +404,7 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   IndustriesRoute: typeof IndustriesRoute
   LoginRoute: typeof LoginRoute
+  SuccessStoriesRoute: typeof SuccessStoriesRoute
   ServicesDirectHireRoute: typeof ServicesDirectHireRoute
   ServicesResumeSourcingRoute: typeof ServicesResumeSourcingRoute
   ServicesRpoRoute: typeof ServicesRpoRoute
@@ -399,6 +412,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/success-stories': {
+      id: '/success-stories'
+      path: '/success-stories'
+      fullPath: '/success-stories'
+      preLoaderRoute: typeof SuccessStoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -693,6 +713,7 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   IndustriesRoute: IndustriesRoute,
   LoginRoute: LoginRoute,
+  SuccessStoriesRoute: SuccessStoriesRoute,
   ServicesDirectHireRoute: ServicesDirectHireRoute,
   ServicesResumeSourcingRoute: ServicesResumeSourcingRoute,
   ServicesRpoRoute: ServicesRpoRoute,

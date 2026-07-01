@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
       { label: 'Scale Smart & Save Calculator', href: '#savings-calculator' },
     ],
   },
-  { label: 'Success Stories', href: '#success-stories' },
+  { label: 'Success Stories', href: '/success-stories' },
 ]
 
 function NavDropdown({ item }: { item: DropdownNavItem }) {
@@ -161,28 +161,26 @@ export function PublicNavbar() {
           )}
         </nav>
 
-        {/* Desktop CTAs */}
-        <div className="hidden items-center gap-3 lg:flex">
-          <button
-            className="rounded-xl px-4 py-2 text-base font-medium text-slate-700 transition-colors hover:bg-sky-50 hover:text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-            onClick={() => void (window.location.href = '/careers')}
-          >
-            Apply as Hero
-          </button>
-          <Button
-            variant="solid"
-            size="md"
-            className="text-base bg-[#0f2447] px-6 font-semibold text-white shadow-md shadow-[#0f2447]/20 hover:opacity-90"
-          >
-            Hire Talent
-          </Button>
+        {/* Desktop CTA */}
+        <div className="hidden items-center lg:flex">
+          <a href="https://form.typeform.com/to/aKI8I8lO" target="_blank" rel="noopener noreferrer">
+            <Button
+              variant="solid"
+              size="md"
+              className="text-base bg-[#0f2447] px-6 font-semibold text-white shadow-md shadow-[#0f2447]/20 hover:opacity-90"
+            >
+              Hire Talent
+            </Button>
+          </a>
         </div>
 
         {/* Mobile: CTA + hamburger */}
         <div className="flex items-center gap-3 lg:hidden">
-          <Button size="sm" className="bg-[#0f2447] font-semibold text-white">
-            Hire Talent
-          </Button>
+          <a href="https://form.typeform.com/to/aKI8I8lO" target="_blank" rel="noopener noreferrer">
+            <Button size="sm" className="bg-[#0f2447] font-semibold text-white">
+              Hire Talent
+            </Button>
+          </a>
           <button
             aria-label="Toggle menu"
             aria-expanded={mobileOpen}
@@ -257,11 +255,13 @@ export function PublicNavbar() {
               )}
               <div className="mt-3 border-t border-slate-100 pt-4">
                 <a
-                  href="/careers"
+                  href="https://form.typeform.com/to/aKI8I8lO"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={closeMenu}
-                  className="block rounded-md px-2 py-3 text-lg font-semibold text-sky-600"
+                  className="block rounded-md px-2 py-3 text-center text-lg font-semibold text-[#0f2447]"
                 >
-                  Apply as Hero →
+                  Hire Talent →
                 </a>
               </div>
             </div>
