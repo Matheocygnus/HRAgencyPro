@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Button, Dropdown } from '@heroui/react'
+import { useState, useEffect, useRef } from 'react'
+import { Button } from '@heroui/react'
 import { ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 
@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
     label: 'Tools',
     children: [
       { label: 'Salary Guide', href: '/tools/salary-guide' },
-      { label: 'Team Building Calculator', href: '#team-calculator' },
+      { label: 'Team Building Calculator', href: '/tools/team-building-calculator' },
       { label: 'Scale Smart & Save Calculator', href: '#savings-calculator' },
     ],
   },
@@ -33,36 +33,53 @@ const navItems: NavItem[] = [
 
 function NavDropdown({ item }: { item: DropdownNavItem }) {
   const [isOpen, setIsOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
 
   return (
-    <Dropdown isOpen={isOpen} onOpenChange={setIsOpen}>
-      <Dropdown.Trigger>
-        {/* Plain button — full Tailwind control, no HeroUI hover overrides */}
-        <button className="flex items-center gap-1 rounded-md px-3 py-2 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-[#0f2447] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
-          {item.label}
-          <ChevronDown
-            className={`size-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-          />
-        </button>
-      </Dropdown.Trigger>
-      <Dropdown.Popover
-        className="rounded-xl border border-slate-200 bg-white p-1 shadow-xl shadow-slate-200/60"
-        style={{ minWidth: '240px' }}
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setIsOpen((v) => !v)}
+        aria-haspopup="true"
+        aria-expanded={isOpen}
+        className="flex items-center gap-1 rounded-md px-3 py-2 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-[#0f2447] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
       >
-        <Dropdown.Menu onAction={(key) => void (window.location.href = String(key))}>
-          {item.children.map((child) => (
-            <Dropdown.Item
-              key={child.href}
-              id={child.href}
-              textValue={child.label}
-              className="rounded-lg px-3 py-2 text-sm text-slate-700 outline-none transition-colors data-[focused=true]:!bg-slate-100 data-[focused=true]:!text-[#0f2447] data-[hovered=true]:!bg-slate-100 data-[hovered=true]:!text-[#0f2447] data-[focus-visible=true]:!bg-slate-100"
-            >
-              {child.label}
-            </Dropdown.Item>
-          ))}
-        </Dropdown.Menu>
-      </Dropdown.Popover>
-    </Dropdown>
+        {item.label}
+        <ChevronDown
+          className={`size-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ duration: 0.14 }}
+            className="absolute left-0 top-full z-50 mt-1 min-w-[240px] rounded-xl border border-slate-200 bg-white p-1 shadow-xl shadow-slate-200/60"
+          >
+            {item.children.map((child) => (
+              <a
+                key={child.href}
+                href={child.href}
+                onClick={() => setIsOpen(false)}
+                className="block rounded-lg px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-100 hover:text-[#0f2447]"
+              >
+                {child.label}
+              </a>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
