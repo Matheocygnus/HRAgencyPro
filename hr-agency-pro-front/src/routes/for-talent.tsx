@@ -75,24 +75,29 @@ const skills = [
 
 const steps = [
   {
-    n: '01',
+    n: 1,
     title: 'Apply & Skills Assessment',
     desc: "Submit your application and basic information about your skills and experience. Complete a brief skills assessment to showcase your abilities.",
   },
   {
-    n: '02',
-    title: 'Profile Review & Matching',
-    desc: "Our talent specialists review your profile and match you with opportunities that align with your skills, experience, and career goals.",
+    n: 2,
+    title: 'Initial Screening',
+    desc: "If your profile matches our current openings, our recruitment team will schedule an initial screening call to learn more about your experience and career goals.",
   },
   {
-    n: '03',
-    title: 'Interviews & Placement',
-    desc: "Get introduced to vetted employers and complete the interview process. Our team supports you through every step, from preparation to offer.",
+    n: 3,
+    title: 'Technical & Culture Assessment',
+    desc: "Complete our comprehensive assessment process, which includes technical evaluations, English proficiency test, and culture fit interview.",
   },
   {
-    n: '04',
-    title: 'Start Working Remotely',
-    desc: "Begin your remote career with ongoing support from our team. We help you navigate contracts, communication, and career development every step of the way.",
+    n: 4,
+    title: 'Client Matching & Interview',
+    desc: "Once vetted, we match you with companies whose needs align with your skills. We'll prepare you for interviews with potential employers.",
+  },
+  {
+    n: 5,
+    title: 'Offer & Onboarding',
+    desc: "Upon receiving an offer, we help negotiate terms and support you through the onboarding process with your new employer. Our team remains available for ongoing support.",
   },
 ]
 
@@ -228,14 +233,14 @@ function ForTalentPage() {
         </section>
 
         {/* ── How It Works For Talent ───────────────────────────────────── */}
-        <section className="bg-white px-6 py-20">
-          <div className="mx-auto max-w-4xl">
+        <section className="bg-white px-6 py-24">
+          <div className="mx-auto max-w-5xl">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={VIEW}
               transition={{ duration: 0.5 }}
-              className="mb-16 text-center"
+              className="mb-20 text-center"
             >
               <h2 className="mb-3 text-3xl font-extrabold tracking-tight text-[#0f2447] lg:text-4xl">
                 How It Works For Talent
@@ -247,41 +252,52 @@ function ForTalentPage() {
             </motion.div>
 
             <div className="relative">
-              {/* Vertical connector line */}
-              <div className="absolute left-8 top-8 hidden h-[calc(100%-4rem)] w-px bg-sky-100 lg:left-1/2 lg:block" />
+              {/* Vertical gradient line — desktop only */}
+              <div className="absolute left-1/2 top-7 hidden h-[calc(100%-3.5rem)] w-0.5 -translate-x-1/2 bg-gradient-to-b from-sky-300 via-sky-200 to-sky-300 lg:block" />
 
               <div className="space-y-10">
                 {steps.map((step, i) => (
                   <motion.div
                     key={step.n}
-                    initial={{ opacity: 0, y: 28 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, x: i % 2 === 0 ? -40 : 40 }}
+                    whileInView={{ opacity: 1, x: 0 }}
                     viewport={VIEW}
-                    transition={{ duration: 0.5, delay: i * 0.1 }}
-                    className={`relative flex items-start gap-6 lg:gap-0 ${
-                      i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'
-                    }`}
+                    transition={{ duration: 0.55, delay: i * 0.08 }}
+                    className="flex items-center gap-5 lg:gap-0"
                   >
-                    {/* Text side */}
-                    <div
-                      className={`flex-1 rounded-2xl border border-sky-100 bg-sky-50 p-6 ${
-                        i % 2 === 0 ? 'lg:mr-16 lg:text-right' : 'lg:ml-16 lg:text-left'
-                      }`}
-                    >
-                      <p className="mb-1 text-xs font-bold uppercase tracking-widest text-sky-500">
-                        Step {step.n}
-                      </p>
-                      <h3 className="mb-2 text-lg font-extrabold text-[#0f2447]">{step.title}</h3>
-                      <p className="text-sm leading-relaxed text-[#0f2447]/60">{step.desc}</p>
+                    {/* Left slot: desktop even = card, odd = empty */}
+                    <div className="hidden flex-1 lg:block lg:pr-10">
+                      {i % 2 === 0 && (
+                        <div className="rounded-2xl border border-sky-100 bg-sky-50 p-6 text-right shadow-sm transition-shadow hover:shadow-md hover:shadow-sky-100">
+                          <p className="mb-1 text-xs font-bold uppercase tracking-widest text-sky-500">Step {step.n}</p>
+                          <h3 className="mb-2 text-lg font-extrabold text-[#0f2447]">{step.title}</h3>
+                          <p className="text-sm leading-relaxed text-[#0f2447]/60">{step.desc}</p>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Number circle — center on desktop, left on mobile */}
-                    <div className="relative z-10 flex size-16 shrink-0 items-center justify-center rounded-full bg-[#0f2447] text-xl font-extrabold text-white shadow-lg shadow-[#0f2447]/20 lg:absolute lg:left-1/2 lg:-translate-x-1/2">
+                    {/* Number circle */}
+                    <div className="relative z-10 flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-[#0f2447] text-xl font-extrabold text-white shadow-lg shadow-[#0f2447]/20 ring-4 ring-white">
                       {step.n}
                     </div>
 
-                    {/* Empty spacer for the other side (desktop) */}
-                    <div className="hidden flex-1 lg:block" />
+                    {/* Right slot + mobile fallback */}
+                    <div className="flex-1 lg:pl-10">
+                      {/* Mobile: always visible */}
+                      <div className="rounded-2xl border border-sky-100 bg-sky-50 p-6 shadow-sm transition-shadow hover:shadow-md hover:shadow-sky-100 lg:hidden">
+                        <p className="mb-1 text-xs font-bold uppercase tracking-widest text-sky-500">Step {step.n}</p>
+                        <h3 className="mb-2 text-lg font-extrabold text-[#0f2447]">{step.title}</h3>
+                        <p className="text-sm leading-relaxed text-[#0f2447]/60">{step.desc}</p>
+                      </div>
+                      {/* Desktop: odd steps only */}
+                      {i % 2 !== 0 && (
+                        <div className="hidden rounded-2xl border border-sky-100 bg-sky-50 p-6 shadow-sm transition-shadow hover:shadow-md hover:shadow-sky-100 lg:block">
+                          <p className="mb-1 text-xs font-bold uppercase tracking-widest text-sky-500">Step {step.n}</p>
+                          <h3 className="mb-2 text-lg font-extrabold text-[#0f2447]">{step.title}</h3>
+                          <p className="text-sm leading-relaxed text-[#0f2447]/60">{step.desc}</p>
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 ))}
               </div>
@@ -292,7 +308,7 @@ function ForTalentPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={VIEW}
               transition={{ duration: 0.4, delay: 0.3 }}
-              className="mt-14 text-center"
+              className="mt-16 text-center"
             >
               <PopupButton
                 id={TYPEFORM_ID}
@@ -324,7 +340,7 @@ function ForTalentPage() {
               transition={{ duration: 0.45, delay: 0.08 }}
               className="mb-10 text-lg text-sky-200"
             >
-              Join thousands of professionals who have already found rewarding remote opportunities through RemoteHero.
+              Join our talent network today and get matched with exciting remote opportunities.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -337,7 +353,7 @@ function ForTalentPage() {
                 size={70}
                 className="cursor-pointer rounded-xl bg-sky-500 px-10 py-4 text-base font-bold text-white shadow-lg shadow-sky-500/30 transition-opacity hover:opacity-90"
               >
-                Apply As Talent
+                Apply Now
               </PopupButton>
             </motion.div>
           </div>

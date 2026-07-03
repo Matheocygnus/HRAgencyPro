@@ -78,7 +78,7 @@ const plans = [
       'Ongoing support and guidance',
     ],
     cta: 'Learn About Our RPO Service',
-    href: 'https://remotehero.us/services/rpo',
+    href: '/services/rpo',
     highlight: true,
   },
   {
@@ -93,7 +93,7 @@ const plans = [
       '60-day replacement guarantee',
     ],
     cta: 'Learn More',
-    href: 'https://remotehero.us/services/direct-hire',
+    href: '/services/direct-hire',
     highlight: false,
   },
 ]
@@ -369,8 +369,6 @@ function ForEmployersPage() {
                   </ul>
                   <a
                     href={plan.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className={`inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-bold transition-all ${
                       plan.highlight
                         ? 'bg-[#0f2447] text-white shadow-md shadow-[#0f2447]/20 hover:opacity-90'
