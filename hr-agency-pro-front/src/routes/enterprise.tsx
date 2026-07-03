@@ -177,7 +177,7 @@ function EnterprisePage() {
                 Request a Consultation
               </PopupButton>
               <a
-                href={CALENDAR_URL}
+                href="https://form.typeform.com/to/aKI8I8lO"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-xl border-2 border-[#0f2447] px-9 py-4 text-base font-bold text-[#0f2447] transition-all hover:bg-[#0f2447] hover:text-white"
