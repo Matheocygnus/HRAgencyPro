@@ -24,20 +24,20 @@ const sections = [
   {
     title: 'Solutions',
     links: [
-      { label: 'For Employers', href: '#' },
-      { label: 'For Talent', href: '#' },
-      { label: 'For Agencies', href: '#' },
-      { label: 'Enterprise', href: '#' },
+      { label: 'For Employers', href: '/for-employers' },
+      { label: 'For Talent', href: '/for-talent' },
+      { label: 'For Agencies', href: '/for-agencies' },
+      { label: 'Enterprise', href: '/enterprise' },
     ],
   },
   {
     title: 'Company',
     links: [
-      { label: 'About', href: '#' },
+      { label: 'About', href: '/about' },
       { label: 'Blog', href: '#' },
-      { label: 'Careers', href: '#' },
-      { label: 'Contact', href: '#' },
-      { label: 'Sign In', href: '#' },
+      { label: 'Careers', href: '/careers' },
+      { label: 'Contact', href: 'https://form.typeform.com/to/aKI8I8lO' },
+      { label: 'Sign In', href: '/login' },
     ],
   },
   {
@@ -45,8 +45,8 @@ const sections = [
     links: [
       { label: 'Guides', href: '#' },
       { label: 'Remote Work Tips', href: '#' },
-      { label: 'Hiring Process', href: '#' },
-      { label: 'FAQs', href: '#' },
+      { label: 'Hiring Process', href: '/how-it-works' },
+      { label: 'FAQs', href: '/faq' },
     ],
   },
   {
