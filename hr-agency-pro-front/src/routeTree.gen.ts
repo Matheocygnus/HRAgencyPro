@@ -13,6 +13,8 @@ import { Route as SuccessStoriesRouteImport } from './routes/success-stories'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndustriesRouteImport } from './routes/industries'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as ForTalentRouteImport } from './routes/for-talent'
+import { Route as ForEmployersRouteImport } from './routes/for-employers'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CareersRouteImport } from './routes/careers'
 import { Route as BlogRouteImport } from './routes/blog'
@@ -66,6 +68,16 @@ const IndustriesRoute = IndustriesRouteImport.update({
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForTalentRoute = ForTalentRouteImport.update({
+  id: '/for-talent',
+  path: '/for-talent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForEmployersRoute = ForEmployersRouteImport.update({
+  id: '/for-employers',
+  path: '/for-employers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -264,6 +276,8 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogRouteWithChildren
   '/careers': typeof CareersRoute
   '/faq': typeof FaqRoute
+  '/for-employers': typeof ForEmployersRoute
+  '/for-talent': typeof ForTalentRoute
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
@@ -301,6 +315,8 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/careers': typeof CareersRoute
   '/faq': typeof FaqRoute
+  '/for-employers': typeof ForEmployersRoute
+  '/for-talent': typeof ForTalentRoute
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
@@ -341,6 +357,8 @@ export interface FileRoutesById {
   '/blog': typeof BlogRouteWithChildren
   '/careers': typeof CareersRoute
   '/faq': typeof FaqRoute
+  '/for-employers': typeof ForEmployersRoute
+  '/for-talent': typeof ForTalentRoute
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
@@ -382,6 +400,8 @@ export interface FileRouteTypes {
     | '/blog'
     | '/careers'
     | '/faq'
+    | '/for-employers'
+    | '/for-talent'
     | '/how-it-works'
     | '/industries'
     | '/login'
@@ -419,6 +439,8 @@ export interface FileRouteTypes {
     | '/about'
     | '/careers'
     | '/faq'
+    | '/for-employers'
+    | '/for-talent'
     | '/how-it-works'
     | '/industries'
     | '/login'
@@ -458,6 +480,8 @@ export interface FileRouteTypes {
     | '/blog'
     | '/careers'
     | '/faq'
+    | '/for-employers'
+    | '/for-talent'
     | '/how-it-works'
     | '/industries'
     | '/login'
@@ -499,6 +523,8 @@ export interface RootRouteChildren {
   BlogRoute: typeof BlogRouteWithChildren
   CareersRoute: typeof CareersRoute
   FaqRoute: typeof FaqRoute
+  ForEmployersRoute: typeof ForEmployersRoute
+  ForTalentRoute: typeof ForTalentRoute
   HowItWorksRoute: typeof HowItWorksRoute
   IndustriesRoute: typeof IndustriesRoute
   LoginRoute: typeof LoginRoute
@@ -539,6 +565,20 @@ declare module '@tanstack/react-router' {
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-talent': {
+      id: '/for-talent'
+      path: '/for-talent'
+      fullPath: '/for-talent'
+      preLoaderRoute: typeof ForTalentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-employers': {
+      id: '/for-employers'
+      path: '/for-employers'
+      fullPath: '/for-employers'
+      preLoaderRoute: typeof ForEmployersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -882,6 +922,8 @@ const rootRouteChildren: RootRouteChildren = {
   BlogRoute: BlogRouteWithChildren,
   CareersRoute: CareersRoute,
   FaqRoute: FaqRoute,
+  ForEmployersRoute: ForEmployersRoute,
+  ForTalentRoute: ForTalentRoute,
   HowItWorksRoute: HowItWorksRoute,
   IndustriesRoute: IndustriesRoute,
   LoginRoute: LoginRoute,

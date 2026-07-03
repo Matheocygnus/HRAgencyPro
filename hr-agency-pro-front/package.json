@@ -25,6 +25,7 @@
     "@tanstack/react-router": "^1.170.15",
     "@tanstack/react-router-devtools": "^1.167.0",
     "@tanstack/router-devtools": "^1.167.0",
+    "@typeform/embed-react": "^5.0.0",
     "axios": "^1.17.0",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
