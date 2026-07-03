@@ -34,7 +34,7 @@ const sections = [
     title: 'Company',
     links: [
       { label: 'About', href: '/about' },
-      { label: 'Blog', href: '#' },
+      { label: 'Blog', href: '/blog' },
       { label: 'Careers', href: '/careers' },
       { label: 'Contact', href: 'https://form.typeform.com/to/aKI8I8lO' },
       { label: 'Sign In', href: '/login' },

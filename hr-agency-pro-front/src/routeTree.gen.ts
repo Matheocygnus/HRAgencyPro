@@ -15,15 +15,18 @@ import { Route as IndustriesRouteImport } from './routes/industries'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CareersRouteImport } from './routes/careers'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BlogIndexRouteImport } from './routes/blog/index'
 import { Route as ToolsTeamBuildingCalculatorRouteImport } from './routes/tools/team-building-calculator'
 import { Route as ToolsSavingsCalculatorRouteImport } from './routes/tools/savings-calculator'
 import { Route as ToolsSalaryGuideRouteImport } from './routes/tools/salary-guide'
 import { Route as ServicesRpoRouteImport } from './routes/services/rpo'
 import { Route as ServicesResumeSourcingRouteImport } from './routes/services/resume-sourcing'
 import { Route as ServicesDirectHireRouteImport } from './routes/services/direct-hire'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as AuthenticatedDashboardShellRouteImport } from './routes/_authenticated/_dashboard-shell'
 import { Route as AuthenticatedDashboardShellUsersRouteImport } from './routes/_authenticated/_dashboard-shell/users'
 import { Route as AuthenticatedDashboardShellSettingsRouteImport } from './routes/_authenticated/_dashboard-shell/settings'
@@ -75,6 +78,11 @@ const CareersRoute = CareersRouteImport.update({
   path: '/careers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -88,6 +96,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BlogRoute,
 } as any)
 const ToolsTeamBuildingCalculatorRoute =
   ToolsTeamBuildingCalculatorRouteImport.update({
@@ -119,6 +132,11 @@ const ServicesDirectHireRoute = ServicesDirectHireRouteImport.update({
   id: '/services/direct-hire',
   path: '/services/direct-hire',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
 const AuthenticatedDashboardShellRoute =
   AuthenticatedDashboardShellRouteImport.update({
@@ -243,18 +261,21 @@ const AuthenticatedDashboardShellCompaniesIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/blog': typeof BlogRouteWithChildren
   '/careers': typeof CareersRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
   '/success-stories': typeof SuccessStoriesRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
   '/services/rpo': typeof ServicesRpoRoute
   '/tools/salary-guide': typeof ToolsSalaryGuideRoute
   '/tools/savings-calculator': typeof ToolsSavingsCalculatorRoute
   '/tools/team-building-calculator': typeof ToolsTeamBuildingCalculatorRoute
+  '/blog/': typeof BlogIndexRoute
   '/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -284,12 +305,14 @@ export interface FileRoutesByTo {
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
   '/success-stories': typeof SuccessStoriesRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
   '/services/rpo': typeof ServicesRpoRoute
   '/tools/salary-guide': typeof ToolsSalaryGuideRoute
   '/tools/savings-calculator': typeof ToolsSavingsCalculatorRoute
   '/tools/team-building-calculator': typeof ToolsTeamBuildingCalculatorRoute
+  '/blog': typeof BlogIndexRoute
   '/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -315,6 +338,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
+  '/blog': typeof BlogRouteWithChildren
   '/careers': typeof CareersRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -322,12 +346,14 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/success-stories': typeof SuccessStoriesRoute
   '/_authenticated/_dashboard-shell': typeof AuthenticatedDashboardShellRouteWithChildren
+  '/blog/$slug': typeof BlogSlugRoute
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
   '/services/rpo': typeof ServicesRpoRoute
   '/tools/salary-guide': typeof ToolsSalaryGuideRoute
   '/tools/savings-calculator': typeof ToolsSavingsCalculatorRoute
   '/tools/team-building-calculator': typeof ToolsTeamBuildingCalculatorRoute
+  '/blog/': typeof BlogIndexRoute
   '/_authenticated/_dashboard-shell/client-dashboard': typeof AuthenticatedDashboardShellClientDashboardRoute
   '/_authenticated/_dashboard-shell/clients': typeof AuthenticatedDashboardShellClientsRoute
   '/_authenticated/_dashboard-shell/contracts': typeof AuthenticatedDashboardShellContractsRoute
@@ -353,18 +379,21 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/blog'
     | '/careers'
     | '/faq'
     | '/how-it-works'
     | '/industries'
     | '/login'
     | '/success-stories'
+    | '/blog/$slug'
     | '/services/direct-hire'
     | '/services/resume-sourcing'
     | '/services/rpo'
     | '/tools/salary-guide'
     | '/tools/savings-calculator'
     | '/tools/team-building-calculator'
+    | '/blog/'
     | '/client-dashboard'
     | '/clients'
     | '/contracts'
@@ -394,12 +423,14 @@ export interface FileRouteTypes {
     | '/industries'
     | '/login'
     | '/success-stories'
+    | '/blog/$slug'
     | '/services/direct-hire'
     | '/services/resume-sourcing'
     | '/services/rpo'
     | '/tools/salary-guide'
     | '/tools/savings-calculator'
     | '/tools/team-building-calculator'
+    | '/blog'
     | '/client-dashboard'
     | '/clients'
     | '/contracts'
@@ -424,6 +455,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/about'
+    | '/blog'
     | '/careers'
     | '/faq'
     | '/how-it-works'
@@ -431,12 +463,14 @@ export interface FileRouteTypes {
     | '/login'
     | '/success-stories'
     | '/_authenticated/_dashboard-shell'
+    | '/blog/$slug'
     | '/services/direct-hire'
     | '/services/resume-sourcing'
     | '/services/rpo'
     | '/tools/salary-guide'
     | '/tools/savings-calculator'
     | '/tools/team-building-calculator'
+    | '/blog/'
     | '/_authenticated/_dashboard-shell/client-dashboard'
     | '/_authenticated/_dashboard-shell/clients'
     | '/_authenticated/_dashboard-shell/contracts'
@@ -462,6 +496,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
+  BlogRoute: typeof BlogRouteWithChildren
   CareersRoute: typeof CareersRoute
   FaqRoute: typeof FaqRoute
   HowItWorksRoute: typeof HowItWorksRoute
@@ -520,6 +555,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CareersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -540,6 +582,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/tools/team-building-calculator': {
       id: '/tools/team-building-calculator'
@@ -582,6 +631,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/services/direct-hire'
       preLoaderRoute: typeof ServicesDirectHireRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/_authenticated/_dashboard-shell': {
       id: '/_authenticated/_dashboard-shell'
@@ -807,10 +863,23 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
+  BlogRoute: BlogRouteWithChildren,
   CareersRoute: CareersRoute,
   FaqRoute: FaqRoute,
   HowItWorksRoute: HowItWorksRoute,
