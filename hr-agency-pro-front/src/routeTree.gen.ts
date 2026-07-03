@@ -17,6 +17,7 @@ import { Route as ForTalentRouteImport } from './routes/for-talent'
 import { Route as ForEmployersRouteImport } from './routes/for-employers'
 import { Route as ForAgenciesRouteImport } from './routes/for-agencies'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as EnterpriseRouteImport } from './routes/enterprise'
 import { Route as CareersRouteImport } from './routes/careers'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AboutRouteImport } from './routes/about'
@@ -89,6 +90,11 @@ const ForAgenciesRoute = ForAgenciesRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnterpriseRoute = EnterpriseRouteImport.update({
+  id: '/enterprise',
+  path: '/enterprise',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CareersRoute = CareersRouteImport.update({
@@ -281,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/blog': typeof BlogRouteWithChildren
   '/careers': typeof CareersRoute
+  '/enterprise': typeof EnterpriseRoute
   '/faq': typeof FaqRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-employers': typeof ForEmployersRoute
@@ -321,6 +328,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/careers': typeof CareersRoute
+  '/enterprise': typeof EnterpriseRoute
   '/faq': typeof FaqRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-employers': typeof ForEmployersRoute
@@ -364,6 +372,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/blog': typeof BlogRouteWithChildren
   '/careers': typeof CareersRoute
+  '/enterprise': typeof EnterpriseRoute
   '/faq': typeof FaqRoute
   '/for-agencies': typeof ForAgenciesRoute
   '/for-employers': typeof ForEmployersRoute
@@ -408,6 +417,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/blog'
     | '/careers'
+    | '/enterprise'
     | '/faq'
     | '/for-agencies'
     | '/for-employers'
@@ -448,6 +458,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/careers'
+    | '/enterprise'
     | '/faq'
     | '/for-agencies'
     | '/for-employers'
@@ -490,6 +501,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/blog'
     | '/careers'
+    | '/enterprise'
     | '/faq'
     | '/for-agencies'
     | '/for-employers'
@@ -534,6 +546,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   BlogRoute: typeof BlogRouteWithChildren
   CareersRoute: typeof CareersRoute
+  EnterpriseRoute: typeof EnterpriseRoute
   FaqRoute: typeof FaqRoute
   ForAgenciesRoute: typeof ForAgenciesRoute
   ForEmployersRoute: typeof ForEmployersRoute
@@ -606,6 +619,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enterprise': {
+      id: '/enterprise'
+      path: '/enterprise'
+      fullPath: '/enterprise'
+      preLoaderRoute: typeof EnterpriseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/careers': {
@@ -941,6 +961,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   BlogRoute: BlogRouteWithChildren,
   CareersRoute: CareersRoute,
+  EnterpriseRoute: EnterpriseRoute,
   FaqRoute: FaqRoute,
   ForAgenciesRoute: ForAgenciesRoute,
   ForEmployersRoute: ForEmployersRoute,
