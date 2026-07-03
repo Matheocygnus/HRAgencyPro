@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Zap,
   CheckCircle2,
-  ArrowRight,
 } from 'lucide-react'
 import { PopupButton } from '@typeform/embed-react'
 import { PublicNavbar } from '../components/landing/PublicNavbar'
@@ -303,21 +302,6 @@ function ForTalentPage() {
               </div>
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={VIEW}
-              transition={{ duration: 0.4, delay: 0.3 }}
-              className="mt-16 text-center"
-            >
-              <PopupButton
-                id={TYPEFORM_ID}
-                size={70}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0f2447] px-8 py-3.5 text-sm font-bold text-white shadow-md shadow-[#0f2447]/20 transition-opacity hover:opacity-90"
-              >
-                Start Your Application <ArrowRight size={15} />
-              </PopupButton>
-            </motion.div>
           </div>
         </section>
 
@@ -348,13 +332,14 @@ function ForTalentPage() {
               viewport={VIEW}
               transition={{ duration: 0.4, delay: 0.15 }}
             >
-              <PopupButton
-                id={TYPEFORM_ID}
-                size={70}
-                className="cursor-pointer rounded-xl bg-sky-500 px-10 py-4 text-base font-bold text-white shadow-lg shadow-sky-500/30 transition-opacity hover:opacity-90"
+              <a
+                href="https://airtable.com/appOWPxckxVIjvMdu/pagnHiNvYtKCl8mqf/form"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block rounded-xl bg-sky-500 px-10 py-4 text-base font-bold text-white shadow-lg shadow-sky-500/30 transition-opacity hover:opacity-90"
               >
                 Apply Now
-              </PopupButton>
+              </a>
             </motion.div>
           </div>
         </section>
