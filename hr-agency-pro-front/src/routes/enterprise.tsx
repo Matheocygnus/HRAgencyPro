@@ -8,9 +8,10 @@ import {
   Globe,
   Clock,
   CheckCircle2,
-  Building2,
   Briefcase,
-  Target,
+  LayoutGrid,
+  Map,
+  Search,
 } from 'lucide-react'
 import { PopupButton } from '@typeform/embed-react'
 import { PublicNavbar } from '../components/landing/PublicNavbar'
@@ -22,7 +23,8 @@ export const Route = createFileRoute('/enterprise')({
 
 const VIEW = { once: true, margin: '-80px' } as const
 const TYPEFORM_ID = 'aKI8I8lO'
-const TYPEFORM_URL = 'https://form.typeform.com/to/aKI8I8lO'
+const CALENDAR_URL =
+  'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ3rsj860PQZ_X3IlSZEGb7BlVGKLseUeK8CKuBFA4YTvcgxDThlsxfoD0irpGZdv02GLrGENtw2'
 
 const reasons = [
   {
@@ -57,49 +59,77 @@ const reasons = [
   },
 ]
 
-const plans = [
-  {
-    Icon: Building2,
-    badge: 'Most Popular',
-    title: 'Dedicated Remote Teams',
-    desc: 'Build a fully integrated remote team that operates as an extension of your organization. Ideal for enterprises looking to scale quickly with consistent talent.',
-    perks: [
-      'Fully managed team of 5–50+ professionals',
-      'Dedicated HR and compliance support',
-      'Custom onboarding and training protocols',
-      'Fixed monthly rate with full transparency',
-      'SLA-backed performance guarantees',
-      'Quarterly business reviews',
-    ],
-    highlight: true,
-  },
+const solutions = [
   {
     Icon: Briefcase,
-    badge: null,
     title: 'Enterprise RPO',
-    desc: 'Outsource your entire recruitment function to RemoteHero. We manage sourcing, screening, and hiring at scale while you focus on running your business.',
+    desc: 'Our enterprise-grade Recruitment Process Outsourcing service is designed for high-volume, ongoing talent acquisition needs across multiple departments or regions.',
     perks: [
-      'End-to-end recruitment process management',
-      'Dedicated talent acquisition team',
-      'ATS integration and reporting dashboards',
-      'Volume hiring with consistent quality',
-      '60-day replacement guarantee',
+      'Dedicated enterprise account team',
+      'High-volume hiring capabilities',
+      'Custom recruiting workflows',
+      'Advanced reporting and analytics',
+      'Integration with your HRIS/ATS',
     ],
-    highlight: false,
   },
   {
-    Icon: Target,
-    badge: null,
-    title: 'Executive Search',
-    desc: 'For critical leadership and specialized roles, our Executive Search service delivers top-tier candidates through a rigorous, confidential search process.',
+    Icon: Globe,
+    title: 'Global Workforce Management',
+    desc: 'End-to-end solutions for building and managing distributed teams across international borders, including compliance, payroll, and operational support.',
     perks: [
-      'C-suite and VP-level talent sourcing',
-      'Custom executive assessment framework',
-      'Confidential search process',
-      'Market intelligence and compensation benchmarking',
-      '90-day replacement guarantee',
+      'Multi-country employment solutions',
+      'Compliant contracts and payments',
+      'Global payroll management',
+      'Benefits administration',
+      'Ongoing support and retention',
     ],
-    highlight: false,
+  },
+  {
+    Icon: Map,
+    title: 'Strategic Workforce Planning',
+    desc: 'Partner with our experts to develop comprehensive global talent strategies aligned with your business objectives, cost targets, and growth plans.',
+    perks: [
+      'Workforce needs assessment',
+      'Global talent market insights',
+      'Cost optimization strategies',
+      'Long-term talent roadmapping',
+      'Risk management planning',
+    ],
+  },
+  {
+    Icon: Search,
+    title: 'Executive Search',
+    desc: 'Specialized talent acquisition for C-suite, senior leadership, and key strategic roles across global markets with a focus on cultural alignment and long-term retention.',
+    perks: [
+      'Senior executive placement',
+      'Comprehensive leadership assessment',
+      'Cultural alignment evaluation',
+      'Competitive market analysis',
+      'Extended placement guarantee',
+    ],
+  },
+]
+
+const approachSteps = [
+  {
+    n: 1,
+    title: 'Discovery & Needs Assessment',
+    desc: "We begin with a thorough understanding of your enterprise's unique requirements, goals, and challenges.",
+  },
+  {
+    n: 2,
+    title: 'Strategic Planning',
+    desc: 'Our team develops a customized enterprise solution that aligns with your business objectives and budget.',
+  },
+  {
+    n: 3,
+    title: 'Implementation & Management',
+    desc: 'We execute the plan and handle all aspects of talent acquisition, compliance, and onboarding.',
+  },
+  {
+    n: 4,
+    title: 'Ongoing Support & Optimization',
+    desc: 'Continuous improvement through regular reviews, analytics, and program refinements for long-term success.',
   },
 ]
 
@@ -147,7 +177,7 @@ function EnterprisePage() {
                 Request a Consultation
               </PopupButton>
               <a
-                href={TYPEFORM_URL}
+                href={CALENDAR_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-xl border-2 border-[#0f2447] px-9 py-4 text-base font-bold text-[#0f2447] transition-all hover:bg-[#0f2447] hover:text-white"
@@ -199,7 +229,7 @@ function EnterprisePage() {
           </div>
         </section>
 
-        {/* ── Enterprise Solutions ──────────────────────────────────────── */}
+        {/* ── Comprehensive Enterprise Solutions ────────────────────────── */}
         <section className="bg-sky-50 px-6 py-20">
           <div className="mx-auto max-w-6xl">
             <motion.div
@@ -210,61 +240,124 @@ function EnterprisePage() {
               className="mb-14 text-center"
             >
               <h2 className="mb-3 text-3xl font-extrabold tracking-tight text-[#0f2447] lg:text-4xl">
-                Enterprise Solutions
+                Comprehensive Enterprise Solutions
               </h2>
               <p className="text-lg text-[#0f2447]/60">
-                Tailored engagement models designed for the scale and complexity of enterprise hiring
+                Custom talent solutions designed for enterprise-scale requirements
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {plans.map((plan, i) => (
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {solutions.map((s, i) => (
                 <motion.div
-                  key={plan.title}
-                  initial={{ opacity: 0, y: 30 }}
+                  key={s.title}
+                  initial={{ opacity: 0, y: 28 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={VIEW}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  transition={{ duration: 0.5, delay: (i % 2) * 0.1 }}
                   whileHover={{ y: -4 }}
-                  className={`relative flex flex-col rounded-2xl border p-8 transition-all duration-300 hover:shadow-xl ${
-                    plan.highlight
-                      ? 'border-sky-300 bg-white shadow-lg shadow-sky-100'
-                      : 'border-sky-100 bg-white hover:shadow-sky-100'
-                  }`}
+                  className="flex flex-col rounded-2xl border border-sky-100 bg-white p-8 transition-all duration-300 hover:border-sky-200 hover:shadow-xl hover:shadow-sky-100"
                 >
-                  {plan.badge && (
-                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#0f2447] px-4 py-1 text-xs font-bold uppercase tracking-widest text-white">
-                      {plan.badge}
-                    </span>
-                  )}
-
                   <div className="mb-5 flex size-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
-                    <plan.Icon size={22} />
+                    <s.Icon size={22} />
                   </div>
-
-                  <h3 className="mb-3 text-xl font-extrabold text-[#0f2447]">{plan.title}</h3>
-                  <p className="mb-6 text-sm leading-relaxed text-[#0f2447]/60">{plan.desc}</p>
-
-                  <ul className="mb-8 flex-1 space-y-3">
-                    {plan.perks.map((perk) => (
-                      <li key={perk} className="flex items-start gap-3 text-sm text-[#0f2447]/70">
-                        <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-sky-500" />
+                  <h3 className="mb-3 text-xl font-extrabold text-[#0f2447]">{s.title}</h3>
+                  <p className="mb-6 text-sm leading-relaxed text-[#0f2447]/60">{s.desc}</p>
+                  <ul className="mb-8 flex-1 space-y-2.5">
+                    {s.perks.map((perk) => (
+                      <li key={perk} className="flex items-center gap-3 text-sm text-[#0f2447]/70">
+                        <CheckCircle2 size={15} className="shrink-0 text-sky-500" />
                         {perk}
                       </li>
                     ))}
                   </ul>
-
                   <PopupButton
                     id={TYPEFORM_ID}
                     size={70}
-                    className={`inline-flex w-full cursor-pointer items-center justify-center rounded-xl px-6 py-3.5 text-sm font-bold transition-all ${
-                      plan.highlight
-                        ? 'bg-[#0f2447] text-white shadow-md shadow-[#0f2447]/20 hover:opacity-90'
-                        : 'border border-[#0f2447] text-[#0f2447] hover:bg-[#0f2447] hover:text-white'
-                    }`}
+                    className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl bg-[#0f2447] px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-[#0f2447]/20 transition-opacity hover:opacity-90"
                   >
-                    Request a Consultation
+                    Learn More
                   </PopupButton>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Client Testimonial ────────────────────────────────────────── */}
+        <section className="bg-white px-6 py-20">
+          <div className="mx-auto max-w-4xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={VIEW}
+              transition={{ duration: 0.5 }}
+              className="mb-12 text-center"
+            >
+              <h2 className="mb-3 text-3xl font-extrabold tracking-tight text-[#0f2447] lg:text-4xl">
+                Client Testimonials
+              </h2>
+              <p className="text-lg text-[#0f2447]/60">
+                What our enterprise clients say about working with RemoteHero
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={VIEW}
+              transition={{ duration: 0.55 }}
+              className="rounded-2xl bg-[#0f2447] px-10 py-12 text-center"
+            >
+              <p className="mb-8 text-xl font-semibold italic leading-relaxed text-white lg:text-2xl">
+                "RemoteHero transformed our global hiring strategy. We found exceptional talent faster and at a significant cost advantage."
+              </p>
+              <div className="flex items-center justify-center gap-4">
+                <div className="flex size-12 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">
+                  PT
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-white">Perla Tapiero</p>
+                  <p className="text-sm text-sky-300">CEO of Chai Mazel</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ── Our Enterprise Approach ───────────────────────────────────── */}
+        <section className="bg-sky-50 px-6 py-20">
+          <div className="mx-auto max-w-6xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={VIEW}
+              transition={{ duration: 0.5 }}
+              className="mb-14 text-center"
+            >
+              <h2 className="mb-3 text-3xl font-extrabold tracking-tight text-[#0f2447] lg:text-4xl">
+                Our Enterprise Approach
+              </h2>
+              <p className="text-lg text-[#0f2447]/60">
+                A strategic partnership from initial consultation through ongoing support
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {approachSteps.map((step, i) => (
+                <motion.div
+                  key={step.n}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={VIEW}
+                  transition={{ duration: 0.45, delay: i * 0.1 }}
+                  className="rounded-2xl border border-sky-100 bg-white p-6"
+                >
+                  <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-[#0f2447] text-sm font-extrabold text-white shadow-md shadow-[#0f2447]/20">
+                    {step.n}
+                  </div>
+                  <h3 className="mb-2 text-base font-extrabold text-[#0f2447]">{step.title}</h3>
+                  <p className="text-sm leading-relaxed text-[#0f2447]/60">{step.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -281,7 +374,7 @@ function EnterprisePage() {
               transition={{ duration: 0.5 }}
               className="mb-4 text-3xl font-extrabold tracking-tight text-white lg:text-4xl"
             >
-              Ready to Transform Your Enterprise Workforce?
+              Ready to scale your enterprise with global talent?
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 14 }}
@@ -290,7 +383,7 @@ function EnterprisePage() {
               transition={{ duration: 0.45, delay: 0.08 }}
               className="mb-10 text-lg text-sky-200"
             >
-              Join leading enterprises that trust RemoteHero to build high-performing global teams at a fraction of the cost.
+              Get in touch with our enterprise solutions team to discuss your specific needs and discover how RemoteHero can transform your global workforce strategy.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -304,15 +397,15 @@ function EnterprisePage() {
                 size={70}
                 className="cursor-pointer rounded-xl bg-sky-500 px-9 py-4 text-base font-bold text-white shadow-lg shadow-sky-500/30 transition-opacity hover:opacity-90"
               >
-                Request a Consultation
+                Schedule a Consultation
               </PopupButton>
               <a
-                href={TYPEFORM_URL}
+                href={CALENDAR_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-xl border-2 border-white px-9 py-4 text-base font-bold text-white transition-all hover:bg-white hover:text-[#0f2447]"
               >
-                Book a Discovery Call
+                Book Discovery Call
               </a>
             </motion.div>
           </div>
