@@ -36,8 +36,8 @@ const sections = [
       { label: 'About', href: '/about' },
       { label: 'Blog', href: '/blog' },
       { label: 'Careers', href: '/careers' },
-      { label: 'Contact', href: 'https://form.typeform.com/to/aKI8I8lO' },
-      { label: 'Sign In', href: '/login' },
+      { label: 'Contact', href: '/contact' },
+      { label: 'Sign In', href: 'https://form.typeform.com/to/aKI8I8lO' },
     ],
   },
   {
