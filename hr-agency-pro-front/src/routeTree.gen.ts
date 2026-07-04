@@ -14,6 +14,7 @@ import { Route as RemoteWorkTipsRouteImport } from './routes/remote-work-tips'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndustriesRouteImport } from './routes/industries'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as HiringProcessRouteImport } from './routes/hiring-process'
 import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as ForTalentRouteImport } from './routes/for-talent'
 import { Route as ForEmployersRouteImport } from './routes/for-employers'
@@ -78,6 +79,11 @@ const IndustriesRoute = IndustriesRouteImport.update({
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HiringProcessRoute = HiringProcessRouteImport.update({
+  id: '/hiring-process',
+  path: '/hiring-process',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuidesRoute = GuidesRouteImport.update({
@@ -312,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/for-employers': typeof ForEmployersRoute
   '/for-talent': typeof ForTalentRoute
   '/guides': typeof GuidesRoute
+  '/hiring-process': typeof HiringProcessRoute
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
@@ -356,6 +363,7 @@ export interface FileRoutesByTo {
   '/for-employers': typeof ForEmployersRoute
   '/for-talent': typeof ForTalentRoute
   '/guides': typeof GuidesRoute
+  '/hiring-process': typeof HiringProcessRoute
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
@@ -403,6 +411,7 @@ export interface FileRoutesById {
   '/for-employers': typeof ForEmployersRoute
   '/for-talent': typeof ForTalentRoute
   '/guides': typeof GuidesRoute
+  '/hiring-process': typeof HiringProcessRoute
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
@@ -451,6 +460,7 @@ export interface FileRouteTypes {
     | '/for-employers'
     | '/for-talent'
     | '/guides'
+    | '/hiring-process'
     | '/how-it-works'
     | '/industries'
     | '/login'
@@ -495,6 +505,7 @@ export interface FileRouteTypes {
     | '/for-employers'
     | '/for-talent'
     | '/guides'
+    | '/hiring-process'
     | '/how-it-works'
     | '/industries'
     | '/login'
@@ -541,6 +552,7 @@ export interface FileRouteTypes {
     | '/for-employers'
     | '/for-talent'
     | '/guides'
+    | '/hiring-process'
     | '/how-it-works'
     | '/industries'
     | '/login'
@@ -589,6 +601,7 @@ export interface RootRouteChildren {
   ForEmployersRoute: typeof ForEmployersRoute
   ForTalentRoute: typeof ForTalentRoute
   GuidesRoute: typeof GuidesRoute
+  HiringProcessRoute: typeof HiringProcessRoute
   HowItWorksRoute: typeof HowItWorksRoute
   IndustriesRoute: typeof IndustriesRoute
   LoginRoute: typeof LoginRoute
@@ -637,6 +650,13 @@ declare module '@tanstack/react-router' {
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hiring-process': {
+      id: '/hiring-process'
+      path: '/hiring-process'
+      fullPath: '/hiring-process'
+      preLoaderRoute: typeof HiringProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guides': {
@@ -1028,6 +1048,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForEmployersRoute: ForEmployersRoute,
   ForTalentRoute: ForTalentRoute,
   GuidesRoute: GuidesRoute,
+  HiringProcessRoute: HiringProcessRoute,
   HowItWorksRoute: HowItWorksRoute,
   IndustriesRoute: IndustriesRoute,
   LoginRoute: LoginRoute,

@@ -45,7 +45,7 @@ const sections = [
     links: [
       { label: 'Guides', href: '/guides' },
       { label: 'Remote Work Tips', href: '/remote-work-tips' },
-      { label: 'Hiring Process', href: '/how-it-works' },
+      { label: 'Hiring Process', href: '/hiring-process' },
       { label: 'FAQs', href: '/faq' },
     ],
   },
