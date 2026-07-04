@@ -12,12 +12,13 @@ import {
   DollarSign,
   Globe,
   ShieldCheck,
-  Laptop,
-  Wifi,
-  TrendingUp,
-  CreditCard,
-  Star,
+  Monitor,
+  Award,
+  FileText,
+  PieChart,
   MapPin,
+  CreditCard,
+  BookOpen,
 } from 'lucide-react'
 import { PopupButton } from '@typeform/embed-react'
 import { PublicNavbar } from '../components/landing/PublicNavbar'
@@ -87,34 +88,39 @@ const employerGuides = [
 
 const workerGuides = [
   {
-    Icon: Star,
-    title: 'How to Land Your First Remote Job',
-    desc: 'A step-by-step roadmap for breaking into remote work — from crafting the perfect application to acing a video interview.',
+    Icon: Monitor,
+    title: 'Getting Started as a Remote Worker',
+    desc: 'Essential tips for professionals transitioning to remote work, from setting up your workspace to managing your schedule effectively.',
   },
   {
-    Icon: Laptop,
-    title: 'Building Your Remote Work Setup',
-    desc: 'Everything you need to create an ergonomic, productive home office that keeps you focused and professional on camera.',
+    Icon: Award,
+    title: 'Building a Stand-Out Remote Worker Profile',
+    desc: 'How to showcase your skills, experience, and remote work capabilities to attract top employers in a competitive global market.',
   },
   {
-    Icon: TrendingUp,
-    title: 'Remote Work Productivity Mastery',
-    desc: 'Proven frameworks and habits for staying deeply productive when your home is also your office — without burning out.',
+    Icon: FileText,
+    title: 'Remote Job Interview Preparation',
+    desc: 'Prepare for remote job interviews with tips on virtual presentation, technical preparation, and demonstrating your remote work skills.',
   },
   {
-    Icon: Wifi,
-    title: 'Negotiating Remote Work Arrangements',
-    desc: 'How to confidently negotiate salary, benefits, and flexibility with international employers for the compensation you deserve.',
+    Icon: PieChart,
+    title: 'Productivity Strategies for Remote Professionals',
+    desc: 'Advanced techniques for maintaining focus, managing your time, and delivering exceptional results while working remotely.',
   },
   {
     Icon: MapPin,
-    title: 'Building Your Personal Brand Online',
-    desc: 'Practical tactics for showcasing your skills on LinkedIn and beyond so top remote employers find you before you find them.',
+    title: 'Navigating the Digital Nomad Lifestyle',
+    desc: 'Practical advice for professionals who want to work remotely while traveling, including visa considerations and location selection.',
   },
   {
     Icon: CreditCard,
-    title: 'Managing Finances as a Remote Worker',
-    desc: 'Smart financial strategies for managing multiple currencies, tax obligations, and savings goals as an international remote professional.',
+    title: 'Financial Planning for Remote Workers',
+    desc: 'Guidance on managing your finances as a remote worker, including tax considerations, international payments, and benefits planning.',
+  },
+  {
+    Icon: BookOpen,
+    title: 'Continuous Learning for Remote Career Growth',
+    desc: 'Strategies for developing your skills and advancing your career trajectory while working in a remote environment.',
   },
 ]
 
