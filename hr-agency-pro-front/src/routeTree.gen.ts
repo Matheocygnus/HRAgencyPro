@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuccessStoriesRouteImport } from './routes/success-stories'
 import { Route as RemoteWorkTipsRouteImport } from './routes/remote-work-tips'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndustriesRouteImport } from './routes/industries'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
@@ -64,6 +65,11 @@ const SuccessStoriesRoute = SuccessStoriesRouteImport.update({
 const RemoteWorkTipsRoute = RemoteWorkTipsRouteImport.update({
   id: '/remote-work-tips',
   path: '/remote-work-tips',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -322,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/remote-work-tips': typeof RemoteWorkTipsRoute
   '/success-stories': typeof SuccessStoriesRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -367,6 +374,7 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/remote-work-tips': typeof RemoteWorkTipsRoute
   '/success-stories': typeof SuccessStoriesRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -415,6 +423,7 @@ export interface FileRoutesById {
   '/how-it-works': typeof HowItWorksRoute
   '/industries': typeof IndustriesRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/remote-work-tips': typeof RemoteWorkTipsRoute
   '/success-stories': typeof SuccessStoriesRoute
   '/_authenticated/_dashboard-shell': typeof AuthenticatedDashboardShellRouteWithChildren
@@ -464,6 +473,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/industries'
     | '/login'
+    | '/privacy'
     | '/remote-work-tips'
     | '/success-stories'
     | '/blog/$slug'
@@ -509,6 +519,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/industries'
     | '/login'
+    | '/privacy'
     | '/remote-work-tips'
     | '/success-stories'
     | '/blog/$slug'
@@ -556,6 +567,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/industries'
     | '/login'
+    | '/privacy'
     | '/remote-work-tips'
     | '/success-stories'
     | '/_authenticated/_dashboard-shell'
@@ -605,6 +617,7 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   IndustriesRoute: typeof IndustriesRoute
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
   RemoteWorkTipsRoute: typeof RemoteWorkTipsRoute
   SuccessStoriesRoute: typeof SuccessStoriesRoute
   ServicesDirectHireRoute: typeof ServicesDirectHireRoute
@@ -629,6 +642,13 @@ declare module '@tanstack/react-router' {
       path: '/remote-work-tips'
       fullPath: '/remote-work-tips'
       preLoaderRoute: typeof RemoteWorkTipsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1052,6 +1072,7 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   IndustriesRoute: IndustriesRoute,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
   RemoteWorkTipsRoute: RemoteWorkTipsRoute,
   SuccessStoriesRoute: SuccessStoriesRoute,
   ServicesDirectHireRoute: ServicesDirectHireRoute,
