@@ -11,6 +11,7 @@ import { SavingsCalculatorSection } from '../components/landing/SavingsCalculato
 import { PricingSection } from '../components/landing/PricingSection'
 import { PlanYourTeamCTA } from '../components/landing/PlanYourTeamCTA'
 import { FAQSection } from '../components/landing/FAQSection'
+import { ReadyToBuildCTA } from '../components/landing/ReadyToBuildCTA'
 import { Footer } from '../components/landing/Footer'
 
 export const Route = createFileRoute('/')({
@@ -33,6 +34,7 @@ function LandingPage() {
         <PricingSection />
         <PlanYourTeamCTA />
         <FAQSection />
+        <ReadyToBuildCTA />
       </main>
       <Footer />
     </div>
