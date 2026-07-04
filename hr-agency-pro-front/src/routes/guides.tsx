@@ -29,6 +29,8 @@ export const Route = createFileRoute('/guides')({
 
 const VIEW = { once: true, margin: '-80px' } as const
 const TYPEFORM_ID = 'aKI8I8lO'
+const CALENDAR_URL =
+  'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ3rsj860PQZ_X3IlSZEGb7BlVGKLseUeK8CKuBFA4YTvcgxDThlsxfoD0irpGZdv02GLrGENtw2'
 
 const employerGuides = [
   {
@@ -264,19 +266,21 @@ function GuidesPage() {
               transition={{ duration: 0.4, delay: 0.15 }}
               className="flex flex-col items-center justify-center gap-4 sm:flex-row"
             >
+              <a
+                href={CALENDAR_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl bg-[#0f2447] px-9 py-4 text-base font-bold text-white shadow-lg shadow-[#0f2447]/20 transition-opacity hover:opacity-90"
+              >
+                Schedule a Consultation
+              </a>
               <PopupButton
                 id={TYPEFORM_ID}
                 size={70}
-                className="cursor-pointer rounded-xl bg-[#0f2447] px-9 py-4 text-base font-bold text-white shadow-lg shadow-[#0f2447]/20 transition-opacity hover:opacity-90"
-              >
-                Schedule a Consultation
-              </PopupButton>
-              <a
-                href="/contact"
-                className="rounded-xl border-2 border-[#0f2447] px-9 py-4 text-base font-bold text-[#0f2447] transition-all hover:bg-[#0f2447] hover:text-white"
+                className="cursor-pointer rounded-xl border-2 border-[#0f2447] px-9 py-4 text-base font-bold text-[#0f2447] transition-all hover:bg-[#0f2447] hover:text-white"
               >
                 Contact Us
-              </a>
+              </PopupButton>
             </motion.div>
           </div>
         </section>
