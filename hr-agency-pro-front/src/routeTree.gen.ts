@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SuccessStoriesRouteImport } from './routes/success-stories'
 import { Route as RemoteWorkTipsRouteImport } from './routes/remote-work-tips'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -57,6 +58,11 @@ import { Route as AuthenticatedDashboardShellHeroesIndexRouteImport } from './ro
 import { Route as AuthenticatedDashboardShellHeroesIdRouteImport } from './routes/_authenticated/_dashboard-shell/heroes.$id'
 import { Route as AuthenticatedDashboardShellCompaniesIdRouteImport } from './routes/_authenticated/_dashboard-shell/companies.$id'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SuccessStoriesRoute = SuccessStoriesRouteImport.update({
   id: '/success-stories',
   path: '/success-stories',
@@ -331,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/remote-work-tips': typeof RemoteWorkTipsRoute
   '/success-stories': typeof SuccessStoriesRoute
+  '/terms': typeof TermsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
@@ -377,6 +384,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/remote-work-tips': typeof RemoteWorkTipsRoute
   '/success-stories': typeof SuccessStoriesRoute
+  '/terms': typeof TermsRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/services/direct-hire': typeof ServicesDirectHireRoute
   '/services/resume-sourcing': typeof ServicesResumeSourcingRoute
@@ -426,6 +434,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/remote-work-tips': typeof RemoteWorkTipsRoute
   '/success-stories': typeof SuccessStoriesRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/_dashboard-shell': typeof AuthenticatedDashboardShellRouteWithChildren
   '/blog/$slug': typeof BlogSlugRoute
   '/services/direct-hire': typeof ServicesDirectHireRoute
@@ -476,6 +485,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/remote-work-tips'
     | '/success-stories'
+    | '/terms'
     | '/blog/$slug'
     | '/services/direct-hire'
     | '/services/resume-sourcing'
@@ -522,6 +532,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/remote-work-tips'
     | '/success-stories'
+    | '/terms'
     | '/blog/$slug'
     | '/services/direct-hire'
     | '/services/resume-sourcing'
@@ -570,6 +581,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/remote-work-tips'
     | '/success-stories'
+    | '/terms'
     | '/_authenticated/_dashboard-shell'
     | '/blog/$slug'
     | '/services/direct-hire'
@@ -620,6 +632,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RemoteWorkTipsRoute: typeof RemoteWorkTipsRoute
   SuccessStoriesRoute: typeof SuccessStoriesRoute
+  TermsRoute: typeof TermsRoute
   ServicesDirectHireRoute: typeof ServicesDirectHireRoute
   ServicesResumeSourcingRoute: typeof ServicesResumeSourcingRoute
   ServicesRpoRoute: typeof ServicesRpoRoute
@@ -630,6 +643,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/success-stories': {
       id: '/success-stories'
       path: '/success-stories'
@@ -1075,6 +1095,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RemoteWorkTipsRoute: RemoteWorkTipsRoute,
   SuccessStoriesRoute: SuccessStoriesRoute,
+  TermsRoute: TermsRoute,
   ServicesDirectHireRoute: ServicesDirectHireRoute,
   ServicesResumeSourcingRoute: ServicesResumeSourcingRoute,
   ServicesRpoRoute: ServicesRpoRoute,
