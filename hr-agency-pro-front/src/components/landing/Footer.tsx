@@ -56,7 +56,7 @@ const sections = [
       { label: 'Terms', href: '/terms' },
       { label: 'Cookies', href: '/cookies' },
       { label: 'Accessibility', href: '/accessibility' },
-      { label: 'Communications', href: '#' },
+      { label: 'Communications', href: '/communications' },
     ],
   },
 ]

@@ -25,6 +25,7 @@ import { Route as FaqRouteImport } from './routes/faq'
 import { Route as EnterpriseRouteImport } from './routes/enterprise'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CommunicationsRouteImport } from './routes/communications'
 import { Route as CareersRouteImport } from './routes/careers'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AccessibilityRouteImport } from './routes/accessibility'
@@ -138,6 +139,11 @@ const CookiesRoute = CookiesRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunicationsRoute = CommunicationsRouteImport.update({
+  id: '/communications',
+  path: '/communications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CareersRoute = CareersRouteImport.update({
@@ -336,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/accessibility': typeof AccessibilityRoute
   '/blog': typeof BlogRouteWithChildren
   '/careers': typeof CareersRoute
+  '/communications': typeof CommunicationsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/enterprise': typeof EnterpriseRoute
@@ -385,6 +392,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
   '/careers': typeof CareersRoute
+  '/communications': typeof CommunicationsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/enterprise': typeof EnterpriseRoute
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/accessibility': typeof AccessibilityRoute
   '/blog': typeof BlogRouteWithChildren
   '/careers': typeof CareersRoute
+  '/communications': typeof CommunicationsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/enterprise': typeof EnterpriseRoute
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
     | '/accessibility'
     | '/blog'
     | '/careers'
+    | '/communications'
     | '/contact'
     | '/cookies'
     | '/enterprise'
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/accessibility'
     | '/careers'
+    | '/communications'
     | '/contact'
     | '/cookies'
     | '/enterprise'
@@ -590,6 +601,7 @@ export interface FileRouteTypes {
     | '/accessibility'
     | '/blog'
     | '/careers'
+    | '/communications'
     | '/contact'
     | '/cookies'
     | '/enterprise'
@@ -643,6 +655,7 @@ export interface RootRouteChildren {
   AccessibilityRoute: typeof AccessibilityRoute
   BlogRoute: typeof BlogRouteWithChildren
   CareersRoute: typeof CareersRoute
+  CommunicationsRoute: typeof CommunicationsRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
   EnterpriseRoute: typeof EnterpriseRoute
@@ -779,6 +792,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/communications': {
+      id: '/communications'
+      path: '/communications'
+      fullPath: '/communications'
+      preLoaderRoute: typeof CommunicationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/careers': {
@@ -1122,6 +1142,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccessibilityRoute: AccessibilityRoute,
   BlogRoute: BlogRouteWithChildren,
   CareersRoute: CareersRoute,
+  CommunicationsRoute: CommunicationsRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
   EnterpriseRoute: EnterpriseRoute,
