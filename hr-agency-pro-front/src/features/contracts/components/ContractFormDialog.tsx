@@ -44,6 +44,7 @@ export function ContractFormDialog({
     handleSubmit,
     watch,
     reset,
+    setValue,
     control,
     formState: { errors, dirtyFields },
   } = useForm<FormValues>({
@@ -93,6 +94,17 @@ export function ContractFormDialog({
   const filteredCompanies = selectedClient
     ? (companies as any[]).filter(c => c.name === selectedClient.name)
     : companies
+
+  // Clear a previously selected company when it no longer belongs to the
+  // selected client — otherwise the stale id stays in form state
+  const selectedCompanyId = watch('companyId')
+  useEffect(() => {
+    if (!companies.length || !selectedCompanyId) return
+    if (!filteredCompanies.some((c: any) => c.id === Number(selectedCompanyId))) {
+      setValue('companyId', 0)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClientId, companies])
 
   useEffect(() => {
     if (open) {

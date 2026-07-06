@@ -7,6 +7,7 @@ import { Modal, Button, Label, TextField } from '@heroui/react'
 import { prospectsApi } from '../../../api/prospects.api'
 import { clientsApi } from '../../../api/clients.api'
 import { companiesApi } from '../../../api/companies.api'
+import { heroesApi } from '../../../api/heroes.api'
 import { SearchableSelect } from '../../../components/SearchableSelect'
 
 function buildSchema(isEditing: boolean) {
@@ -62,17 +63,49 @@ export function HeroFormDialog({ open, onClose, onSubmit, defaultValues, isEditi
     enabled: open && !isEditing,
   })
 
+  // Prospects already promoted to hero must be excluded — creating a hero
+  // for them violates a backend constraint and returns 500
+  const { data: existingHeroes = [] } = useQuery({
+    queryKey: ['heroes'],
+    queryFn: () => heroesApi.list(),
+    enabled: open && !isEditing,
+  })
+
+  const promotedProspectIds = new Set((existingHeroes as any[]).map(h => h.prospectId))
+  const availableProspects = (prospects as any[]).filter(p => !promotedProspectIds.has(p.id))
+
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: () => clientsApi.list(),
     enabled: open,
   })
 
+  // Backend ignores clientId filter — always returns all companies.
+  // Filter client-side: each client's name matches exactly one company's name.
   const { data: companies = [] } = useQuery({
-    queryKey: ['companies', selectedClientId],
-    queryFn: () => companiesApi.list(selectedClientId ? { clientId: Number(selectedClientId) } : undefined),
+    queryKey: ['companies'],
+    queryFn: () => companiesApi.list(),
     enabled: open,
   })
+
+  const selectedClient = selectedClientId
+    ? (clients as any[]).find(c => c.id === Number(selectedClientId))
+    : null
+
+  const filteredCompanies = selectedClient
+    ? (companies as any[]).filter(c => c.name === selectedClient.name)
+    : companies
+
+  // Clear a previously selected company when it no longer belongs to the
+  // selected client — otherwise the stale id stays in form state
+  const selectedCompanyId = watch('companyId')
+  useEffect(() => {
+    if (!companies.length || !selectedCompanyId) return
+    if (!filteredCompanies.some((c: any) => c.id === Number(selectedCompanyId))) {
+      setValue('companyId', '' as any)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClientId, companies])
 
   useEffect(() => {
     if (open) {
@@ -133,7 +166,7 @@ export function HeroFormDialog({ open, onClose, onSubmit, defaultValues, isEditi
                   <Label>Prospect</Label>
                   <select {...register('prospectId')} className="input w-full">
                     <option value="">Select prospect...</option>
-                    {prospects.map((p: any) => (
+                    {availableProspects.map((p: any) => (
                       <option key={p.id} value={p.id}>
                         {p.firstName} {p.lastName} — {p.email}
                       </option>
@@ -169,7 +202,7 @@ export function HeroFormDialog({ open, onClose, onSubmit, defaultValues, isEditi
                 <Label>Company</Label>
                 <select {...register('companyId')} className="input w-full">
                   <option value="">Select company...</option>
-                  {companies.map((c: any) => (
+                  {filteredCompanies.map((c: any) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
