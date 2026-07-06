@@ -31,7 +31,9 @@ function formatScheduledDate(dateStr: string): string {
 
 export function InterviewsPage() {
   const { can } = usePermissions()
-  if (!can('interviews')) return <AccessDenied />
+  const canView = can('interviews') || can('client_dashboard')
+  if (!canView) return <AccessDenied />
+  const isRecruiter = can('interviews')
   const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Interview | null>(null)
@@ -85,9 +87,11 @@ export function InterviewsPage() {
           <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">Interviews</h1>
           <p className="text-xs text-muted md:text-sm">Schedule and track candidate interviews</p>
         </div>
-        <Button color="primary" size="sm" startContent={<Plus className="size-4" />} onPress={() => setDialogOpen(true)}>
-          Schedule Interview
-        </Button>
+        {isRecruiter && (
+          <Button color="primary" size="sm" startContent={<Plus className="size-4" />} onPress={() => setDialogOpen(true)}>
+            Schedule Interview
+          </Button>
+        )}
       </div>
 
       {/* Date range filter */}
@@ -133,7 +137,7 @@ export function InterviewsPage() {
                   <Table.Column>Duration</Table.Column>
                   <Table.Column>Status</Table.Column>
                   <Table.Column>Notes</Table.Column>
-                  <Table.Column>Actions</Table.Column>
+                  {isRecruiter && <Table.Column>Actions</Table.Column>}
                 </Table.Header>
                 <Table.Body
                   renderEmptyState={() => (
@@ -153,24 +157,26 @@ export function InterviewsPage() {
                         </Chip>
                       </Table.Cell>
                       <Table.Cell>{interview.notes ?? '—'}</Table.Cell>
-                      <Table.Cell>
-                        <div className="flex gap-1">
-                          {interview.meetingLink ? (
-                            <a
-                              href={/^https?:\/\//i.test(interview.meetingLink) ? interview.meetingLink : `https://${interview.meetingLink}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-400 hover:text-blue-300 hover:underline transition-colors"
-                            >
-                              Join Video Call
-                            </a>
-                          ) : (
-                            <span className="px-2 py-1 text-xs text-muted italic">No Link</span>
-                          )}
-                          <Button size="sm" variant="ghost" color="primary" onPress={() => setEditTarget(interview)}>Edit</Button>
-                          <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteTarget(interview.id)}>Delete</Button>
-                        </div>
-                      </Table.Cell>
+                      {isRecruiter && (
+                        <Table.Cell>
+                          <div className="flex gap-1">
+                            {interview.meetingLink ? (
+                              <a
+                                href={/^https?:\/\//i.test(interview.meetingLink) ? interview.meetingLink : `https://${interview.meetingLink}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                              >
+                                Join Video Call
+                              </a>
+                            ) : (
+                              <span className="px-2 py-1 text-xs text-muted italic">No Link</span>
+                            )}
+                            <Button size="sm" variant="ghost" color="primary" onPress={() => setEditTarget(interview)}>Edit</Button>
+                            <Button size="sm" variant="ghost" color="danger" onPress={() => setDeleteTarget(interview.id)}>Delete</Button>
+                          </div>
+                        </Table.Cell>
+                      )}
                     </Table.Row>
                   ))}
                 </Table.Body>

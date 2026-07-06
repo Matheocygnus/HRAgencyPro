@@ -37,12 +37,13 @@ const ROUTE_ICONS: Record<string, React.ElementType> = {
 }
 
 function SidebarContent({ currentPath }: { currentPath: string }) {
-  const { can } = usePermissions()
+  const { can, permissions } = usePermissions()
   const { isOpen } = useSidebar()
+  const hasRole = (p: string) => permissions.includes(p)
   const visibleItems = navigationItems.filter(item => {
     if (!can(item.permission)) return false
-    if (item.hiddenFor?.some(p => can(p))) return false
-    if (item.visibleFor && !item.visibleFor.some(p => can(p))) return false
+    if (item.hiddenFor?.some(p => hasRole(p))) return false
+    if (item.visibleFor && !item.visibleFor.some(p => hasRole(p))) return false
     return true
   })
 

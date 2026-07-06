@@ -12,7 +12,10 @@ import { ContractFormDialog } from '../../../features/contracts/components/Contr
 import { QuickEditDialog } from '../../../features/contracts/components/QuickEditDialog'
 import { ConfirmDialog } from '../../../components/ConfirmDialog'
 
+import { guardAllRoles } from '../../../lib/route-guard'
+
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/contracts')({
+  beforeLoad: guardAllRoles(),
   component: ContractsPage,
 })
 
@@ -26,7 +29,7 @@ const statusColor: Record<string, 'default' | 'primary' | 'success' | 'warning' 
 }
 
 export function ContractsPage() {
-  const { can } = usePermissions()
+  const { can, permissions } = usePermissions()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<StatusTab>('all')
   const [search, setSearch] = useState('')
@@ -35,7 +38,7 @@ export function ContractsPage() {
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
 
   const isRecruiter = can('contracts')
-  const isHero = can('hero_dashboard')
+  const isHero = permissions.includes('hero_dashboard')
   const canView = isRecruiter || can('contracts:read')
 
   const { data: contracts = [], isLoading } = useQuery<Contract[]>({

@@ -126,7 +126,7 @@ function HeroPerformance({ contracts, startDate }: { contracts: Contract[]; star
 
 export function HeroDetail() {
   // ALL hooks FIRST — no early returns before them
-  const { can } = usePermissions()
+  const { can, permissions } = usePermissions()
   const { user } = useAuthContext()
   const { id } = Route.useParams()
   const heroId = Number(id)
@@ -137,7 +137,7 @@ export function HeroDetail() {
   const queryClient = useQueryClient()
 
   const isRecruiter = can('contracts')
-  const isHero = can('hero_dashboard')
+  const isHero = permissions.includes('hero_dashboard')
 
   const skillsMutation = useMutation({
     mutationFn: ({ prospectId, skills }: { prospectId: number; skills: string }) =>

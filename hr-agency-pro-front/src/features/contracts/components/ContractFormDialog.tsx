@@ -78,11 +78,21 @@ export function ContractFormDialog({
     enabled: open,
   })
 
+  // Backend ignores clientId filter — always returns all companies.
+  // Filter client-side: each client's name matches exactly one company's name.
   const { data: companies = [] } = useQuery({
-    queryKey: ['companies', selectedClientId],
-    queryFn: () => companiesApi.list(selectedClientId ? { clientId: Number(selectedClientId) } : undefined),
+    queryKey: ['companies'],
+    queryFn: () => companiesApi.list(),
     enabled: open,
   })
+
+  const selectedClient = selectedClientId
+    ? (clients as any[]).find(c => c.id === Number(selectedClientId))
+    : null
+
+  const filteredCompanies = selectedClient
+    ? (companies as any[]).filter(c => c.name === selectedClient.name)
+    : companies
 
   useEffect(() => {
     if (open) {
@@ -183,7 +193,7 @@ export function ContractFormDialog({
                 <Label className="field-required">Company</Label>
                 <select {...register('companyId')} className={cls('companyId')}>
                   <option value="">Select company...</option>
-                  {companies.map((c: any) => (
+                  {filteredCompanies.map((c: any) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>

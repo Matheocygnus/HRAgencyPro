@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Table, Chip, Button, Card, Skeleton } from '@heroui/react'
 import { Plus, ShoppingBag } from 'lucide-react'
 import { hasPermission } from '../../../lib/permissions'
+import { getRoleLanding } from '../../../lib/role-landing'
 import { jobsApi } from '../../../api/jobs.api'
 import { useAuth } from '../../../features/auth/use-auth'
 import type { JobRequest } from '../../../types/job.types'
@@ -15,8 +16,9 @@ import { GenerateJobPostDialog } from '../../../features/jobs/components/Generat
 
 export const Route = createFileRoute('/_authenticated/_dashboard-shell/job-requests')({
   beforeLoad: ({ context }) => {
-    if (!context?.permissions || !hasPermission(context.permissions, 'job-requests')) {
-      throw redirect({ to: '/dashboard' })
+    const p: string[] = context?.permissions ?? []
+    if (!hasPermission(p, 'job-requests')) {
+      throw redirect({ to: getRoleLanding(p) as any })
     }
   },
   component: JobRequestsPage,

@@ -7,5 +7,6 @@ export function usePermissions() {
 
   return {
     can: (perm: string) => hasPermission(permissions, perm),
+    permissions,
   }
 }

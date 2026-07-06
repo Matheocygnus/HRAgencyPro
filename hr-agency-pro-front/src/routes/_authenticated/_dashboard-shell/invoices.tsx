@@ -38,9 +38,9 @@ function isEffectivelyOverdue(invoice: Invoice): boolean {
 }
 
 export function InvoicesPage() {
-  const { can } = usePermissions()
+  const { can, permissions } = usePermissions()
   const { user } = useAuthContext()
-  const isHero = can('hero_dashboard')
+  const isHero = permissions.includes('hero_dashboard')
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<StatusTab>('all')
   const [search, setSearch] = useState('')
